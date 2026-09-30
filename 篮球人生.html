@@ -7006,7 +7006,7 @@ function competeHonors(res,cfgIn){
   /* 全明星：MVP 榜前 N（联盟规模决定名额），不再是掷骰子 */
   if(cfg.allStar&&cfg.allStarN&&rank('mvp')<=cfg.allStarN)H.push(cfg.allStar);
   /* 最佳新秀：新秀里排第一（只在新秀赛季参评） */
-  const rookie=(S.nbaSeasons||0)<=1&&S.age<=23;
+  const rookie=(S.history||[]).filter(h=>h.league===S.league).length<=0&&S.age<=23;
   if(cfg.roy&&rookie&&E.my.mvpRookie===1)H.push(cfg.roy);
   if(!cfg.roy&&rookie&&E.my.mvpRookie===1)H.push('最佳新秀');
   if(cfg.six&&!S.starter&&rank('mvp')<=8)H.push(cfg.six);
@@ -7234,7 +7234,7 @@ function renderCoachRes(res){
   <button class="btn" onclick="coachNext()">继续执教下一季 ▶</button>
   <button class="btn ghost" onclick="coachQuit()">功成身退 🏁</button>`;
 }
-function coachNext(){S.coach.evDone=0;UI={mode:'coachEv',ev:coachEvent()};save();renderGame();}
+function coachNext(){S.age++;S.coach.evDone=0;UI={mode:'coachEv',ev:coachEvent()};save();renderGame();}
 function coachQuit(){UI={mode:'end',endMode:'coach'};save();showEnd();}
 /* ═══════════ 09 生涯评语 / 终章 / 档案 ═══════════ */
 function careerReview(){
@@ -7292,7 +7292,7 @@ function showEnd(){
   let html=isCoach?`${sceneArt({title:'执教 谢幕',scene:''})}<h1 class="trophy">🏀 执教生涯谢幕</h1>`
                   :`${endArt()}<h1 class="trophy">🏀 生涯终章</h1>`;
   if(isCoach){
-    const ch=(S.coach.honors||[]).map(h=>h.t);
+    const ch=(S.coach.honors||[]).map(h=>(h.y?h.y+' · ':'')+h.t);
     html+=`<div class="summ"><h3>${esc(S.name)} · 执教履历</h3>
     <div class="row"><span>执教球队</span><b>${esc(S.coach.team)}</b></div>
     <div class="row"><span>执教战绩</span><b>${S.coach.wins}胜${S.coach.losses}负</b></div>
