@@ -53,9 +53,6 @@
   --glow:0 14px 34px -18px rgba(249,115,22,.55);
   --inner:inset 0 1px 0 rgba(255,255,255,.05);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-html,body{min-height:100%}
-html{scroll-behavior:smooth}
 #stage{min-height:220px}
 body{
   margin:0;color:var(--txt);line-height:1.62;
@@ -68,6 +65,9 @@ body{
     linear-gradient(180deg,#0a0d16 0%,#080a11 45%,#06080e 100%);
   background-attachment:fixed;
 }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html,body{min-height:100%}
+html{scroll-behavior:smooth}
 /* 球场氛围：中线 + 中圈，纯 CSS 画，很淡，只在页面底部露一点 */
 body::before{
   content:'';position:fixed;left:0;right:0;bottom:0;height:180px;pointer-events:none;z-index:0;
@@ -649,7 +649,6 @@ document.addEventListener('touchend',function(e){
   _lastTapT=now;_lastTapEl=e.target;
 },{passive:false});
 document.addEventListener('dblclick',function(e){e.preventDefault();});
-
 /* ═══════════ 02 静态配置与数据 ═══════════ */
 const CFG={
   SKILL_BASE:55,SKILL_CAP:66,ALLOC_POINTS:30,
@@ -929,7 +928,6 @@ function load(){
   }catch(e){return null;}
 }
 function eraseSave(){localStorage.removeItem(CFG.SAVE_KEY);}
-
 /* 兼容修复：为旧存档补齐字段（幂等，可反复调用） */
 function ensureState(){
   S.flags=S.flags||{};S.used=S.used||{};S.log=S.log||[];S.honors=S.honors||[];
@@ -955,10 +953,33 @@ function ensureState(){
   ['fga','fgm','tpa','tpm','fta','ftm'].forEach(k=>{if(typeof S.career[k]!=='number')S.career[k]=0;});
   /* 联盟有他人：榜单历史与宿敌（老存档从本赛季开始记） */
   S.worldHistory=S.worldHistory||[];S.rivals=S.rivals||[];
+  /* 老存档修复：本赛季那条「没有玩家」的榜单是旧版留下的临时条目（结算后没被替换）→
+   * 补上 pro 标记，赛季结算时就会重算，玩家不会整季被除名。 */
+  (function(){const y=seasonLabel();
+    (S.worldHistory||[]).forEach(e=>{if(e&&e.y===y&&!e.my&&!e.pro&&e.lg)e.pro=1;});})();
   if(S.camp===undefined)S.camp=null;if(S.lastLossTeam===undefined)S.lastLossTeam=null;
   /* 伤病时间化：老存档补齐状态与老伤表 */
   if(S.injury===undefined)S.injury=null;S.injSites=S.injSites||{};
   if(typeof S.injuryMissed!=='number')S.injuryMissed=0;
+  /* 缺阵场次的基数（已结清的那几段伤停）：老档的 injuryMissed 是虚高的，
+   * 从这里开始按「这一次伤停走过多少场」重算，不再背着历史膨胀 */
+  if(typeof S.injuryMissedBase!=='number')S.injuryMissedBase=0;
+  if(S.injury){
+    if(typeof S.injury.from!=='number')S.injury.from=seasonGamesElapsed();
+    if(typeof S.injury.len!=='number')S.injury.len=Math.max(0,injOut());
+  }
+  /* 老存档修复：旧版每段新伤都把 _lastGame 归零，导致整季已打场次被记成缺阵
+   * （实测 2028-29 记成「缺阵 50/52 场、出场 2 场」）。本赛季的伤停日志里写着每段的
+   * 「预计缺阵 N 场」，对得上就用它当基数重算，别让虚高的数字继续污染战绩与生涯总量。 */
+  (function(){
+    const y=seasonLabel();let sum=0,hit=0;
+    (S.log||[]).forEach(l=>{if(!l||l.y!==y)return;const m=/^受伤：.*预计缺阵 (\d+) 场/.exec(l.t||'');if(m){sum+=(parseInt(m[1],10)||0);hit++;}});
+    if(!hit)return;
+    if(S.injuryMissed>(S.injuryMissedBase||0)+sum){
+      S.injuryMissedBase=Math.max(0,sum-(S.injury?injOut():0));
+      S.injuryMissed=injSettleMissed();
+    }
+  })();
   /* 金钱系统：老存档补齐（旧档没有现金/资产/经纪人的概念） */
   S.cash=(typeof S.cash==='number')?S.cash:Math.max(0,Math.round((S.value||1)*.2));
   S.agent=S.agent||{name:'普通经纪人',rate:.04,neg:0};
@@ -1022,7 +1043,6 @@ function tendCareerText(t){
   const r=tendOf(t),d=r.score-r.pass;
   return `${TEND_NAME.score} ×${r.score} / ${TEND_NAME.pass} ×${r.pass}（${d>=3?'进攻接管型':d<=-3?'组织串联型':'均衡型'}）`;
 }
-
 /* ---- 成长：训练积累（grind）抬高上限 ---- */
 function addGrind(n){if(!n)return;S.grind=(S.grind||0)+n;}
 function grindBonus(){const g=S.grind||0;return Math.min(GROWTH.grindMax,Math.floor(Math.sqrt(g*GROWTH.grindCurve)));}
@@ -1078,7 +1098,6 @@ function baseValue(){
   let v=Math.pow(Math.max(.5,(o-40)/10),3.4)*8*lm*ageCurve(S.age);
   return Math.max(1,Math.round(v));
 }
-
 /* ═══════════ 03.4 金钱系统（收入 / 消费 / 投资 / 训练投入） ═══════════
  * 钱不是记分牌：①赛季结算把工资、代言、奖金打进攻现金账户，扣经纪人佣金与生活开销；
  * ②现金可以在「💼 财务」面板花出去——训练投入换真实能力（受天赋上限约束）、投资形成
@@ -2044,7 +2063,11 @@ const GATED={
   w39:()=>ovr()>=78,    /* 全明星同队 */
   w46:()=>{const st=S.h.stability||60;return st<72;}  /* 手感冰点：只有进攻不稳定的人才会遇上 */
 };
-function poolKey(){return (S.league==='青训'?'youth':'')+S.stage;}
+/* 池子注册名是 camelCase（spring / youthSpring），而 S.stage 是小写（spring/summer/autumn/winter）——
+ * 直接拼字符串会拼出 'youthspring' 这种没人注册的 key，44 条青训事件全部变成死代码
+ * （图鉴里青训四季永远 0/11，16 岁的青年球员抽到的是"国家队的电话"这种职业池事件）。 */
+const STAGE_KEY={spring:'Spring',summer:'Summer',autumn:'Autumn',winter:'Winter'};
+function poolKey(){return (S.league==='青训'?'youth':'')+(STAGE_KEY[S.stage]||'Spring');}
 /* ── 事件分档与题材 ──────────────────────────────────────────────
  * 池子里 400 多条事件，如果全按「等概率随机」抽，玩家一季看到的几乎都是
  * 「加练 / 休息 / 带队友」这类日常（实测戏剧冲突类只占 8%），三四个赛季就麻木了。
@@ -2374,10 +2397,15 @@ function marchSimNpc(){
     m.winner=(a.str>=b.str)?'a':'b';   /* winner 存的是 'a'/'b'（对阵图那套引用解析认这个） */
   });
   return B;
-}function evMarchIntro(){
+}
+function evMarchIntro(){
   const B=S.bracket,pm=marchPlayerMatch();
   const opp=pm?marchOpp(B.currentStage,pm.i):{team:'对手',str:6};
-  return {id:'march_intro',title:'疯狂三月 · 抽签出炉',special:true,
+  /* 抽签夜只是预告，本身不是比赛：它必须把玩家交给第一场 8 强赛。
+   * 少了这个交接，advance() 会把它当成普通事件走通用分支 → stageEnd() 把 'playoffs'
+   * 往前推一格（SEASON_ORDER 里没有 playoffs → indexOf = -1 → 回卷到 spring），
+   * 于是白打一个"幽灵赛季"，最终赛季总结还按青年联赛写。 */
+  return {id:'march_intro',title:'疯狂三月 · 抽签出炉',special:true,marchIntro:true,
     scene:`三月的第一周，全美都在看同一张对阵表。${myTeamName()}以 ${B.playerSeed} 号种子进入 8 强，第一个对手是 ${opp.team}。\n\n一场定胜负。输了就回家，没有第二场。更衣室的白板上只写了一行字：Win or go home.`,
     choices:[
       ch('研究对手录像到深夜',{play:1,stability:1},'他把对手最近五场的每个回合都看了一遍。'),
@@ -2414,14 +2442,14 @@ function marchAdvance(won){
   return {over:false,event:evMarchGame()||evMarchExit(n)};
 }
 function evMarchExit(n,champ){
-  if(champ)return {id:'march_champ',title:'疯狂三月 · 冠军',special:true,
+  if(champ)return {id:'march_champ',title:'疯狂三月 · 冠军',special:true,marchEnd:true,
     scene:`终场哨响的那一刻，替补席冲进场内。彩带从穹顶落下来，${S.name}被压在人群最下面，笑着骂了句脏话。\n\n一个赛季的疯狂，最后只剩下一个剪下来的篮网。`,
     choices:[ch('把篮网剪下来挂进宿舍',{ts:2,valuePct:.08,finishSeason:true},'他用剪刀剪下那截篮网，挂在床头。')]};
   const round=n===1?'八强':n===2?'四强':'决赛';
-  return {id:'march_exit',title:`疯狂三月 · 止步${round}`,special:true,
+  return {id:'march_exit',title:`疯狂三月 · 止步${round}`,special:true,marchEnd:true,
     scene:`输了。更衣室里没有人说话，球鞋砸在地板上的声音格外响。\n\n${S.name}坐在柜子前很久，毛巾搭在头上。三月的灯光灭了，但这一年的球没有白打。`,
     choices:[
-      ch('把这场记进训练计划',{stability:1,play:1},'第二天一早，他第一个到了球馆。'),
+      ch('把这场记进训练计划',{stability:1,play:1,finishSeason:true},'第二天一早，他第一个到了球馆。'),
       ch('和队友一起收拾更衣室',{mate:6,ts:1,finishSeason:true},'他把每个人的东西都收拾整齐，最后一个关灯。')
     ]};
 }
@@ -2437,7 +2465,6 @@ const FOCUS_PACK={
   finale:{extra:'常规赛最后一场，季后赛对位就看今晚。',c:['火力全开',{form:3},'把所有人的状态都调起来',{mate:5},'防守端先立威',{hustle:2}]},
   revenge:{extra:'上一次交手，他们把你们送出了季后赛。',c:['今晚必须赢回来',{form:4},'用传球撕开他们的换防',{play:2},'把他们的核心按在地上',{hustle:2}]}
 };
-
 /* ═══════════ 07.4 伤病时间化（状态而不是赛季末一掷） ═══════════
  * 旧版：赛季末掷一次骰子 → 弹一个事件 → 结束，伤病对赛程没有任何影响。
  * 现在：S.injury={part,sev,out,until,rein} —— 部位/严重度/剩余场次是真实状态：
@@ -2492,21 +2519,34 @@ function injStart(inj,outGames){
   const sev=inj.sev||1;
   const g=outGames!=null?outGames:R.int(INJ_SEV[sev].g[0],INJ_SEV[sev].g[1]);
   const from=seasonGamesElapsed();
-  S.injury={part:inj.part,sev:sev,out:g,until:from+g,from:from,rein:inj.rein||0,y:seasonLabel()};
+  const base=injSettleMissed();            /* 上一段伤停结清进基数，别让它跟着新伤一起被重算 */
+  S.injury={part:inj.part,sev:sev,out:g,until:from+g,from:from,len:g,rein:inj.rein||0,y:seasonLabel()};
+  S.injuryMissedBase=base;
+  S.injuryMissed=base;
   const t=injSites();t[inj.part]=(t[inj.part]||0)+1;
   S.log.push({y:seasonLabel(),t:'受伤：'+inj.part+'（'+INJ_SEV[sev].n+'，预计缺阵 '+g+' 场）'});
   return S.injury;
+}
+/* 本季缺阵场次：只看「这一次伤停从受伤那一刻走到现在」走了多少场，最多算到预计复出场次。
+ * 旧写法靠 _lastGame 累加差值，而每次 injStart 都会造一个新对象（_lastGame 归零）→
+ * 新伤一上来就把本赛季已打的场次全部记成缺阵（实测 2028-29 记成"缺阵 50/52 场、出场 2 场"），
+ * 连带污染出场数、命中率、球队战绩与生涯总量。 */
+function injSettleMissed(){
+  const base=S.injuryMissedBase||0;
+  if(!S.injury)return base;
+  const now=seasonGamesElapsed();
+  const len=(S.injury.len!=null)?S.injury.len:injOut();
+  return base+clamp(now-(S.injury.from||0),0,Math.max(0,len));
 }
 /* 伤停时钟：每次事件/比赛之后调用。康复了就把状态清掉（并记一条大事记） */
 function injTick(){
   if(!S.injury)return null;
   const out=injOut();
   S.injury.out=out;
-  const seen=S.injury._lastGame==null?0:S.injury._lastGame;
-  const now=seasonGamesElapsed();
-  if(now>seen){S.injuryMissed=(S.injuryMissed||0)+(now-seen);S.injury._lastGame=now;}
+  S.injuryMissed=injSettleMissed();
   if(out<=0){
     const p=S.injury.part,sev=S.injury.sev;
+    S.injuryMissedBase=S.injuryMissed;   /* 这段伤停结清 */
     S.injury=null;
     S.log.push({y:seasonLabel(),t:'伤愈复出（'+p+' · '+INJ_SEV[sev].n+'）'});
     return 'healed';
@@ -2560,7 +2600,6 @@ function injHTML(){
   if(S.injuryMissed)rows.push(`<div class="mini">本季已缺阵 <b>${S.injuryMissed}</b> 场（球队战绩在缺阵期间要打折算）</div>`);
   return rows.join('');
 }
-
 /* 特定（脚本/里程碑）事件规则表：[无副作用条件, 执行(设标记并返回事件)]
  * getEvent 与 pendingSpecial 共用此表，保证"实际触发"与"探测"永远一致 */
 const SPECIAL_RULES=[
@@ -3511,88 +3550,89 @@ const SUMMER_POOL=[
     ch('向管理层建议留下他',{ts:2},'管理层听取了他的建议，开出了一份诚意合同。')
   ]),
   /* ---- 合同事件 ---- */
-  evt('ct1','夏 · 续约谈判',()=>{const c=S.contract;return `谈判桌摆在会议室。${S.team}总经理把一份续约合同推过来：€${c?Math.round(c.wage*1.1):wageFor(S.league)}万/年，期限三年。
+  {
+    id:'ct1',title:'夏 · 续约谈判',scene:()=>{const c=S.contract;return `谈判桌摆在会议室。${S.team}总经理把一份续约合同推过来：€${c?Math.round(c.wage*1.1):wageFor(S.league)}万/年，期限三年。
 
-这是球队的诚意，但经纪人认为还能更高。`;},[
-    ch('接受报价，续约三年',{extendContract:3,wageMult:1.1,stability:1},'他签下名字。稳定，是一种奢侈。'),
-    ch('狮子大开口，要顶薪',{wageMult:1.25,ts:-1},'合同涨了，但管理层对他的态度冷淡了几分。'),
-    ch('再观望一年，不急着签',{stability:1,clutch:1},'合同还有时间。他把谈判交给时间。')
-  ]),
-  evt('ct2','夏 · 争冠降薪',()=>`争冠豪门通过经纪人递来消息：想签${S.name}，但薪金空间有限——需要他接受降薪。
+这是球队的诚意，但经纪人认为还能更高。`;},choices:[
+    {t:'接受报价，续约三年',fx:{extendContract:3,wageMult:1.1,stability:1},o:'他签下名字。稳定，是一种奢侈。'},
+    {t:'狮子大开口，要顶薪',fx:{wageMult:1.25,ts:-1},o:'合同涨了，但管理层对他的态度冷淡了几分。'},
+    {t:'再观望一年，不急着签',fx:{stability:1,clutch:1},o:'合同还有时间。他把谈判交给时间。'}
+  ]},
+  {id:'ct2',title:'夏 · 争冠降薪',scene:()=>`争冠豪门通过经纪人递来消息：想签${S.name}，但薪金空间有限——需要他接受降薪。
 
-冠军的诱惑，还是实打实的收入？`,[
-    ch('降薪加盟争冠球队',{rollTrans:'strong',wageMult:.7,valuePct:.1,clutch:1},'为了那枚戒指，他放弃了真金白银。'),
-    ch('留队，不降薪',{extendContract:2,stability:1},'忠诚与收入，他都要。'),
-    ch('提议先签后换',{play:1,ts:1},'几方谈判后，方案落地——母队得到筹码，他得到冠军机会。')
-  ]),
-  evt('ct3','夏 · 海外巨额报价',()=>{const w=Math.round(wageFor('欧洲')*1.5);return `海外俱乐部递来一份令人心跳加速的报价：€${w}万/年，还有一笔签字费。
+冠军的诱惑，还是实打实的收入？`,choices:[
+    {t:'降薪加盟争冠球队',fx:{rollTrans:'strong',wageMult:.7,valuePct:.1,clutch:1},o:'为了那枚戒指，他放弃了真金白银。'},
+    {t:'留队，不降薪',fx:{extendContract:2,stability:1},o:'忠诚与收入，他都要。'},
+    {t:'提议先签后换',fx:{play:1,ts:1},o:'几方谈判后，方案落地——母队得到筹码，他得到冠军机会。'}
+  ]},
+  {id:'ct3',title:'夏 · 海外巨额报价',scene:()=>{const w=Math.round(wageFor('欧洲')*1.5);return `海外俱乐部递来一份令人心跳加速的报价：€${w}万/年，还有一笔签字费。
 
-语言的障碍，生活的不适应——都被这份数字冲淡了。`;},[
-    ch('接受报价，远走海外',{rollTrans:'abroad',wageMult:1.5},'他在合同上签字。新的联赛，新的故事。'),
-    ch('留队，向母队争取加薪',{extendContract:2,wageMult:1.05,ts:-1},'母队勉强匹配了一部分。他留下了。'),
-    ch('婉拒，忠诚无价',{stability:1,ts:1},'他把报价单折好放进抽屉。这里有他放不下的人。')
-  ]),
-  evt('ct4','夏 · 买断协议',()=>{const w=S.contract?Math.round(S.contract.wage*1.5):100;return `球队重建，管理层提出买断${S.name}的合同，补偿金€${w}万，换取自由身。
+语言的障碍，生活的不适应——都被这份数字冲淡了。`;},choices:[
+    {t:'接受报价，远走海外',fx:{rollTrans:'abroad',wageMult:1.5},o:'他在合同上签字。新的联赛，新的故事。'},
+    {t:'留队，向母队争取加薪',fx:{extendContract:2,wageMult:1.05,ts:-1},o:'母队勉强匹配了一部分。他留下了。'},
+    {t:'婉拒，忠诚无价',fx:{stability:1,ts:1},o:'他把报价单折好放进抽屉。这里有他放不下的人。'}
+  ]},
+  {id:'ct4',title:'夏 · 买断协议',scene:()=>{const w=S.contract?Math.round(S.contract.wage*1.5):100;return `球队重建，管理层提出买断${S.name}的合同，补偿金€${w}万，换取自由身。
 
-是拿钱走人，还是留下并肩？`;},[
-    ch('接受买断，重获自由',{voidContract:1,valuePct:.15,ts:-1},'他拿过支票。下一站，自己说了算。'),
-    ch('拒绝买断',{stability:1,ts:1},'他说：我签的合同，会把它打完。'),
-    ch('协商买断+联系下家',{rollTrans:'strong',wageMult:.8},'他为自己铺好了路。走，也要走得体面。')
-  ]),
-  evt('ct5','夏 · 球员选项',()=>{const yrs=S.contract?S.contract.years:1;return `合同里的球员选项条款到了执行节点——剩${yrs}年，是留是走，他有一票决定权。`;},[
-    ch('执行选项，再战一年',{extendContract:1,stability:1},'多一年熟悉，也多一年机会。'),
-    ch('跳出合同，试水自由市场',{voidContract:1,clutch:1},'他赌上了自由。市场会给出答案。'),
-    ch('与球队改谈长约',{extendContract:3,wageMult:.95},'长约落地。未来几年，心定了。')
-  ]),
-  evt('ct6','夏 · 数据激励条款',()=>`球队在合同中附加激励条款：场均得分、出场次数、球队胜场，达标有额外奖金。
+是拿钱走人，还是留下并肩？`;},choices:[
+    {t:'接受买断，重获自由',fx:{voidContract:1,valuePct:.15,ts:-1},o:'他拿过支票。下一站，自己说了算。'},
+    {t:'拒绝买断',fx:{stability:1,ts:1},o:'他说：我签的合同，会把它打完。'},
+    {t:'协商买断+联系下家',fx:{rollTrans:'strong',wageMult:.8},o:'他为自己铺好了路。走，也要走得体面。'},
+  ]},
+  {id:'ct5',title:'夏 · 球员选项',scene:()=>{const yrs=S.contract?S.contract.years:1;return `合同里的球员选项条款到了执行节点——剩${yrs}年，是留是走，他有一票决定权。`;},choices:[
+    {t:'执行选项，再战一年',fx:{extendContract:1,stability:1},o:'多一年熟悉，也多一年机会。'},
+    {t:'跳出合同，试水自由市场',fx:{voidContract:1,clutch:1},o:'他赌上了自由。市场会给出答案。'},
+    {t:'与球队改谈长约',fx:{extendContract:3,wageMult:.95},o:'长约落地。未来几年，心定了。'},
+  ]},
+  {id:'ct6',title:'夏 · 数据激励条款',scene:()=>`球队在合同中附加激励条款：场均得分、出场次数、球队胜场，达标有额外奖金。
 
-有挑战，也有风险。`,[
-    ch('签下激励条款',{wageMult:.9,clutch:1,outside:1},'他把目标贴在了更衣柜上。数据，是最好的回应。'),
-    ch('拒绝，要固定合同',{stability:1},'落袋为安。他不赌。'),
-    ch('谈出场时间保障',{wageMult:.95,ts:1},'合同里多了一条出场时间承诺。')
-  ]),
-  evt('ct7','夏 · 经纪人施压',()=>`经纪人在电话里语气强硬：以${S.name}的数据，现在的年薪配不上他。如果不加薪，他将拒绝一切谈判。
+有挑战，也有风险。`,choices:[
+    {t:'签下激励条款',fx:{wageMult:.9,clutch:1,outside:1},o:'他把目标贴在了更衣柜上。数据，是最好的回应。'},
+    {t:'拒绝，要固定合同',fx:{stability:1},o:'落袋为安。他不赌。'},
+    {t:'谈出场时间保障',fx:{wageMult:.95,ts:1},o:'合同里多了一条出场时间承诺。'},
+  ]},
+  {id:'ct7',title:'夏 · 经纪人施压',scene:()=>`经纪人在电话里语气强硬：以${S.name}的数据，现在的年薪配不上他。如果不加薪，他将拒绝一切谈判。
 
-一边是经纪人，一边是球队。`,[
-    ch('同意经纪人，要求加薪',{wageMult:1.15,ts:-1},'钱要到了，但也伤了和气。'),
-    ch('解雇经纪人，亲自出马',{stability:1,valuePct:.01},'他自己坐到谈判桌上。事情反而顺了。'),
-    ch('安抚双方，慢慢谈',{play:1,ts:1},'两边都给了台阶。加薪不多，情分不少。')
-  ]),
-  evt('ct8','夏 · 合同年爆发',()=>`这是合同的最后一年。历史无数次证明：合同年的球员会打出超常表现。
+一边是经纪人，一边是球队。`,choices:[
+    {t:'同意经纪人，要求加薪',fx:{wageMult:1.15,ts:-1},o:'钱要到了，但也伤了和气。'},
+    {t:'解雇经纪人，亲自出马',fx:{stability:1,valuePct:.01},o:'他自己坐到谈判桌上。事情反而顺了。'},
+    {t:'安抚双方，慢慢谈',fx:{play:1,ts:1},o:'两边都给了台阶。加薪不多，情分不少。'},
+  ]},
+  {id:'ct8',title:'夏 · 合同年爆发',scene:()=>`这是合同的最后一年。历史无数次证明：合同年的球员会打出超常表现。
 
-${S.name}的训练计划表上，圈满了红色的加练。`,[
-    ch('全力爆发，为合同而战',{ath:1,outside:1,wageMult:1.1,durability:-1},'他的数据全面上涨。谈判桌上，筹码堆成了山。'),
-    ch('稳扎稳打，避免伤病',{durability:2,stability:1},'健康比爆发更重要。他深谙此道。'),
-    ch('公开表态：我值得顶薪',{ts:1,clutch:1},'他的宣言上了头条。管理层连夜开会。')
-  ]),
-  evt('ct9','夏 · 伤病保险条款',()=>`新合同中，球队提议加入伤病保险条款：若因伤报销，工资按比例发放，但基础年薪会调低。
+${S.name}的训练计划表上，圈满了红色的加练。`,choices:[
+    {t:'全力爆发，为合同而战',fx:{ath:1,outside:1,wageMult:1.1,durability:-1},o:'他的数据全面上涨。谈判桌上，筹码堆成了山。'},
+    {t:'稳扎稳打，避免伤病',fx:{durability:2,stability:1},o:'健康比爆发更重要。他深谙此道。'},
+    {t:'公开表态：我值得顶薪',fx:{ts:1,clutch:1},o:'他的宣言上了头条。管理层连夜开会。'},
+  ]},
+  {id:'ct9',title:'夏 · 伤病保险条款',scene:()=>`新合同中，球队提议加入伤病保险条款：若因伤报销，工资按比例发放，但基础年薪会调低。
 
-有保障，也有代价。`,[
-    ch('加入保险条款',{durability:2,wageMult:.9},'万一那天来了，他不至于一无所有。'),
-    ch('不加，拿全额合同',{stability:1},'他相信自己的身体。'),
-    ch('谈条件性保障',{durability:1,wageMult:.95,ts:1},'折中方案，双方都满意。')
-  ]),
-  evt('ct10','夏 · 资质报价',()=>{const w=Math.round(wageFor(S.league)*.8);return `作为受限自由球员，母队递上一份资质报价：€${w}万/年，一年期。
+有保障，也有代价。`,choices:[
+    {t:'加入保险条款',fx:{durability:2,wageMult:.9},o:'万一那天来了，他不至于一无所有。'},
+    {t:'不加，拿全额合同',fx:{stability:1},o:'他相信自己的身体。'},
+    {t:'谈条件性保障',fx:{durability:1,wageMult:.95,ts:1},o:'折中方案，双方都满意。'},
+  ]},
+  {id:'ct10',title:'夏 · 资质报价',scene:()=>{const w=Math.round(wageFor(S.league)*.8);return `作为受限自由球员，母队递上一份资质报价：€${w}万/年，一年期。
 
-其他球队的报价更高，但母队有权匹配。`;},[
-    ch('接受资质报价',{extendContract:1,wageMult:.8,stability:1},'留一年，看看这个团队能走多远。'),
-    ch('寻求更大合同',{rollTrans:'strong',wageMult:1.2,clutch:1},'他试水市场，签下了更大的一份。'),
-    ch('与母队谈长约',{extendContract:3},'长约谈成，母队得到了他的心。')
-  ]),
-  evt('ct11','夏 · 老将底薪',()=>`${S.age}岁了，争冠球队的招募电话一个接一个：来我们这里，拿底薪，冲击冠军。
+其他球队的报价更高，但母队有权匹配。`;},choices:[
+    {t:'接受资质报价',fx:{extendContract:1,wageMult:.8,stability:1},o:'留一年，看看这个团队能走多远。'},
+    {t:'寻求更大合同',fx:{rollTrans:'strong',wageMult:1.2,clutch:1},o:'他试水市场，签下了更大的一份。'},
+    {t:'与母队谈长约',fx:{extendContract:3},o:'长约谈成，母队得到了他的心。'},
+  ]},
+  {id:'ct11',title:'夏 · 老将底薪',scene:()=>`${S.age}岁了，争冠球队的招募电话一个接一个：来我们这里，拿底薪，冲击冠军。
 
-底薪是种姿态：钱不重要，冠军重要。`,[
-    ch('底薪加盟争冠队',{rollTrans:'strong',wageMult:.5,ts:1,valuePct:.05},'他成了更衣室里最受尊敬的老兵。'),
-    ch('留队拿老将合同',{extendContract:2,wageMult:.85,ts:1},'这里的一草一木，他都熟悉。'),
-    ch('去海外赚最后一桶金',{rollTrans:'abroad',wageMult:1.3},'职业生涯的黄昏，也要为家人再拼一次。')
-  ]),
-  evt('ct12','夏 · 商业代言合同',()=>{const w=R.int(30,120);return `一家饮料品牌递上代言合同：€${w}万/年，绑定两年，需要拍三条广告。
+底薪是种姿态：钱不重要，冠军重要。`,choices:[
+    {t:'底薪加盟争冠队',fx:{rollTrans:'strong',wageMult:.5,ts:1,valuePct:.05},o:'他成了更衣室里最受尊敬的老兵。'},
+    {t:'留队拿老将合同',fx:{extendContract:2,wageMult:.85,ts:1},o:'这里的一草一木，他都熟悉。'},
+    {t:'去海外赚最后一桶金',fx:{rollTrans:'abroad',wageMult:1.3},o:'职业生涯的黄昏，也要为家人再拼一次。'},
+  ]},
+  {id:'ct12',title:'夏 · 商业代言合同',scene:()=>{const w=R.int(30,120);return `一家饮料品牌递上代言合同：€${w}万/年，绑定两年，需要拍三条广告。
 
-商业价值与球场专注的平衡，老问题。`;},[
-    ch('签下代言',{valuePct:.08,ts:1},'广告上线，超市货架上他的脸随处可见。'),
-    ch('谈分成模式',{valuePct:.12,stability:1},'销量分成让收入翻倍。商业嗅觉满分。'),
-    ch('婉拒，专注球场',{stability:1},'球场才是他的主战场。')
-  ]),
+商业价值与球场专注的平衡，老问题。`;},choices:[
+    {t:'签下代言',fx:{valuePct:.08,ts:1},o:'广告上线，超市货架上他的脸随处可见。'},
+    {t:'谈分成模式',fx:{valuePct:.12,stability:1},o:'销量分成让收入翻倍。商业嗅觉满分。'},
+    {t:'婉拒，专注球场',fx:{stability:1},o:'球场才是他的主战场。'},
+  ]},
   evt('su39','夏 · 水上运动日',()=>`休赛期的水上运动日，队里组织冲浪、皮划艇和帆船体验。`,[
     ch('挑战冲浪',{ath:2},'他在浪里摔了十几次，最后一次终于站了起来。'),
     ch('皮划艇，练核心',{durability:1,ath:1},'划了一个下午，核心肌群酸得彻底。'),
@@ -3883,7 +3923,7 @@ ${S.name}的训练计划表上，圈满了红色的加练。`,[
   ]),
   evt('sud8','夏 · 家里的那通电话',()=>{const hm=homeTown();return `深夜电话：${hm}的家里出了事。球队的夏季特训后天开始，教练只批了三天假。`;},[
     ch('请假回家，陪到最后一天',{stability:2,ts:-1},'他在家里待了十天。回来时，眼神比之前沉了一些，也稳了一些。'),
-    ch('把家人接到身边',{valuePct:-.02,stability:2,hustle:1},'他租了一套带院子的房子。训练结束就能看到灯亮着。'),
+    ch('把家人接到身边',{valuePct:-.02,stability:2,hustle:1},'他租了一套带院子的大房子。训练结束就能看到灯亮着。'),
     ch('不请假，把事交给家人处理',{ath:2,clutch:1,stability:-2},'他在训练馆里练到深夜，手机关机。有些东西被他压在了心底。')
   ])
 ];
@@ -4974,7 +5014,6 @@ function evCbaUndrafted(){
   else chs.push({t:'赴欧洲试训，被婉拒后签约弱队',fx:{freeCBA:1,clutch:1},o:'欧洲的大门暂时关着。他先签下一份弱队合同，等待下一次机会。'});
   return {id:'cbaUnd',title:'夏 · 选秀落选',scene:`选秀大会落幕，${S.name}的名字没有被念到。经纪人安慰他：落选不是终点，路还没断。`,choices:chs};
 }
-
 /* ═══════════ 06.11 里程碑事件 ═══════════ */
 function evU17(){return {id:'u17',title:'春 · 国青队的召唤',scene:`U17国家青年队集训名单公布，${S.name}的名字赫然在列。${S.team}全队都来祝贺，主教练拍着他的肩膀：去了就好好表现。
 
@@ -5424,6 +5463,15 @@ function advance(){
         if(STORY[ch0.next]){codexInit();S.stat.story=(S.stat.story||0)+1;}   /* 成就：走进剧情线后续 */
         UI={mode:'event',ev:nev};save();renderGame();return;}}
     }
+    if(ev.marchIntro){ /* 疯狂三月：抽签夜 → 第一场 8 强赛（预告不占日历，也不推进赛季） */
+      const g=evMarchGame();
+      UI={mode:'event',ev:g||evMarchExit(1)};
+      save();renderGame();return;
+    }
+    /* 三月收尾：不管选哪个选项，赛季都必须在这里结束。
+     * （旧版淘汰事件的第一个选项漏了 finishSeason，会掉进通用分支 → stageEnd 把 'playoffs'
+     *   往前推一格 → SEASON_ORDER 里没有 playoffs → 回卷到 spring，白跑一个幽灵赛季） */
+    if(ev.marchEnd){finishSeason();return;}
     if(ev.march){ /* 疯狂三月：8 强单场淘汰（复用焦点战的比赛层，choose() 里走 ev.game 分支） */
       const r=ev.game&&ev.game.res;
       const won=!!(r&&r.win);
@@ -5516,11 +5564,15 @@ function advance(){
 }
 function stageEnd(){
   if(S.stage==='winter'){seasonEnd();return;}
-  S.stage=SEASON_ORDER[SEASON_ORDER.indexOf(S.stage)+1]||'spring';S.stageDone=0;S.stageTotal=0;
+  const i=SEASON_ORDER.indexOf(S.stage);
+  /* 收尾阶段（季后赛 / 疯狂三月）不是四季之一：这里没有「下一季」。
+   * 旧写法 indexOf 返回 -1 → SEASON_ORDER[0] → 日历回卷到春天，白跑一个幽灵赛季。
+   * 兜底：直接按赛季收尾结算，绝不把日历往回推。 */
+  if(i<0){finishSeason();return;}
+  S.stage=SEASON_ORDER[i+1]||'spring';S.stageDone=0;S.stageTotal=0;
   S.stageNeed=stageNeedFor();
   UI={mode:'event',ev:getEvent()};save();renderGame();
 }
-
 /* ═══════════ 07.05 比赛层：焦点战（让「比赛」成为一等公民） ═══════════
  * 设计（20/80 原则）：每季只真打 8 场（快速模式 4 场）——
  *   秋：揭幕战、首个客场；冬：圣诞/元旦大战、德比、背靠背硬仗、老东家之战、卡位战、收官战。
@@ -6010,7 +6062,6 @@ function boxHTML(g){
   </div>`;
 }
 
-
 /* ═══════════ 07.06 季后赛系列赛（7 场 4 胜 · 2-2-1-1-1） ═══════════
  * 旧版一轮系列赛只掷一次骰子——这是最不篮球的一处。现在：
  *   · 玩家链路逐场打：每场都走 simGame，出比分与 box，先到 4 胜才结算这一轮；
@@ -6137,7 +6188,6 @@ function matchSeriesText(stage,idx){
   if(m&&m.series)return m.series.w+'-'+m.series.l;
   return '';
 }
-
 /* ═══════════ 07.1 赛季结算（含季后赛数据 + NBA个人奖项） ═══════════ */
 
 function injProb(){return .12+(100-S.h.durability)*.0016+(S.age>=33?.06:0)+(S.age>=37?.10:0);}
@@ -6450,7 +6500,6 @@ function determineChampion(){
   }
   return null;
 }
-
 function seasonEnd(){
 
   S.flags.injDone=false;
@@ -6783,9 +6832,11 @@ function npcSeasonLine(p,lg){
 /* NPC 的 MVP 评分：与玩家的 perfScore 同口径（数据 + 球队战绩），保证排名可比 */
 function npcMvpScore(line,wpc){return (line.ppg||0)*1.6+(line.rpg||0)*.9+(line.apg||0)*.9+wpc*28;}
 function npcDefScore(line,wpc){return (line.spg||0)*7+(line.bpg||0)*6+(line.rpg||0)*1.2+wpc*22;}
-function curBoard(){                     /* 当前赛季的榜单条目（没生成过就返回 null） */
+/* 当前赛季的榜单条目：结算后的正式条目优先，赛季初那条临时榜单（pro=1，里面没有玩家）只作兜底 */
+function curBoard(){
   const y=seasonLabel();
-  return (S.worldHistory||[]).filter(e=>e.y===y).pop()||null;
+  const all=(S.worldHistory||[]).filter(e=>e.y===y);
+  return all.filter(e=>!e.pro).pop()||all.pop()||null;
 }
 function boardTop(list,n,k){return list.slice(0,n).map(x=>[x.n,x.t,Math.round((x.v[k]||0)*10)/10]);}
 /* 榜单：把玩家插进 NPC 里一起排 */
@@ -6793,8 +6844,14 @@ function simWorldStats(res){
   ensureWorld();
   const y=seasonLabel();
   S.worldHistory=S.worldHistory||[];
-  const prev=S.worldHistory.filter(e=>e.y===y).pop();
-  if(prev)return prev;
+  /* 赛季一开始（nextYear → worldTick）会先挂一条「临时榜单」pro=1：那时本赛季还没打，
+   * 里面只有 NPC 的预计产量、没有玩家。赛季结算时（res 有值）必须重算并原地替换，
+   * 否则第 2 季起玩家会整季从联盟榜上消失——MVP / 最佳阵容 / 全明星 / 最佳新秀 /
+   * 最佳第六人 / FMVP（都读 E.my 的排名）与宿敌系统会一起失效。 */
+  let prevIdx=-1;
+  S.worldHistory.forEach((e,i)=>{if(e.y===y)prevIdx=i;});
+  const prev=prevIdx>=0?S.worldHistory[prevIdx]:null;
+  if(prev&&(res==null||!prev.pro))return prev;
   const lg=myLeagueKey();
   if(!lg)return null;                 /* 青训没有职业联赛榜单：等进了 CBA/NBA/欧洲 再排 */
   const games=seasonGames(lg);
@@ -6844,7 +6901,7 @@ function simWorldStats(res){
   const rookies=pool.filter(x=>x.rk||(x.me&&isRookieMe)).sort((a,b)=>b.mvp-a.mvp);
   const myRookieRank=isRookieMe?(rookies.findIndex(x=>x.me)+1):null;
   const rankIn=(l)=>{const i=l.findIndex(x=>x.me);return i<0?null:i+1;};
-  const entry={y:y,lg:lg,g:games,
+  const entry={y:y,lg:lg,g:games,pro:(res==null)?1:0,
     top:{p:boardTop(byP,10,'ppg'),r:boardTop(byR,10,'rpg'),a:boardTop(byA,10,'apg'),
       s:boardTop(byS,5,'spg'),b:boardTop(byB,5,'bpg')},
     tm:teams.sort((a,b)=>b.w-a.w).slice(0,10).map(t=>[t.t,t.w,t.l]),
@@ -6869,7 +6926,8 @@ function simWorldStats(res){
     const strs=(TEAMS[o]||[]).map(t=>[t[0],teamStrength(o,t[0],t[1])]).sort((a,b)=>b[1]-a[1]);
     entry.other[o]=[best.n,best.t,Math.round(best.v.ppg*10)/10,strs.length?strs[0][0]:''];
   });
-  S.worldHistory.push(entry);
+  if(prevIdx>=0)S.worldHistory[prevIdx]=entry;   /* 结算时替换掉赛季初那条临时榜单 */
+  else S.worldHistory.push(entry);
   if(S.worldHistory.length>30)S.worldHistory=S.worldHistory.slice(-30);   /* 封顶 30 季 */
   noteRivals(entry,null);        /* 宿敌：谁在榜单上一直压着你（每个联赛、每条路径都会走到） */
   return entry;
@@ -6956,7 +7014,7 @@ function competeHonors(res,cfgIn){
   return [...new Set(H)];
 }
 /* ── 榜单展示：赛季页一行摘要 + 奖项页完整榜单 ── */
-function boardOf(y){return (S.worldHistory||[]).filter(e=>e.y===y).pop()||null;}
+function boardOf(y){const all=(S.worldHistory||[]).filter(e=>e.y===y);return all.filter(e=>!e.pro).pop()||all.pop()||null;}
 const BOARD_CAT={p:'得分',r:'篮板',a:'助攻',s:'抢断',b:'盖帽'};
 function boardRows(E,n){
   if(!E)return '';
@@ -6980,7 +7038,7 @@ function boardLine(E){
 }
 /* 历年联盟（档案页）：冠军 + 得分王，一条一季 */
 function historyBoardHTML(){
-  const H=(S.worldHistory||[]);
+  const H=(S.worldHistory||[]).filter(e=>!e.pro);   /* 历年 = 打完的赛季，赛季初那条临时榜单不算 */
   if(!H.length)return '<div class="mini">还没有赛季记录</div>';
   return '<div class="timeline">'+H.slice(-10).reverse().map(e=>{
     const sc=e.aw&&e.aw.scorer;
@@ -7028,8 +7086,11 @@ function nextYear(){
   S.form=clamp(Math.round((formNow()+60*2)/3),35,90);   /* 休赛期把状态拉回中位 */
   S.focus=null;                                          /* 新赛季重新排焦点战 */
   S._marchDone=false;S._noPlayoff=null;   /* 疯狂三月与季后赛标记按赛季重置 */
-  S.injuryMissed=0;                       /* 本季缺阵场次重新计 */
-  if(S.injury)S.injury.until=Math.max(1,S.injury.out);   /* 伤没好：休赛期不计场次，剩余场次顺延到新赛季 */
+  S.injuryMissed=0;S.injuryMissedBase=0;  /* 本季缺阵场次重新计（基数 = 已结清的那几段伤停） */
+  if(S.injury){                           /* 伤没好：休赛期不计场次，剩余场次顺延到新赛季 */
+    S.injury.until=Math.max(1,S.injury.out);
+    S.injury.from=0;S.injury.len=S.injury.until;   /* 计入新赛季：从第 0 场开始算缺阵 */
+  }
   S.camp=null;                            /* 上一季的训练营加成到期（秋天会重新选） */
   worldTick();
   /* 世界推进完立刻接上赛季数据（worldTick 后挂 simWorldStats）：
@@ -7175,7 +7236,6 @@ function renderCoachRes(res){
 }
 function coachNext(){S.coach.evDone=0;UI={mode:'coachEv',ev:coachEvent()};save();renderGame();}
 function coachQuit(){UI={mode:'end',endMode:'coach'};save();showEnd();}
-
 /* ═══════════ 09 生涯评语 / 终章 / 档案 ═══════════ */
 function careerReview(){
   const hs=S.honors.map(h=>h.t);
@@ -7689,7 +7749,8 @@ function showMoney(){
   openOvl(h,'mid');
 }
 /* ═══════════ 10 渲染层 ═══════════ */
-function openOvl(html,width){const box=document.querySelector('#ovl .box');if(box){box.classList.remove('wide','mid');if(width==='wide')box.classList.add('wide');else if(width==='mid')box.classList.add('mid');}$('#ovlBody').innerHTML=html;$('#ovl').classList.add('on');$('#ovl').scrollTop=0; /* 每次打开从顶部开始 */}
+function openOvl(html,width){const box=document.querySelector('#ovl .box');if(box){box.classList.remove('wide','mid');if(width==='wide')box.classList.add('wide');else if(width==='mid')box.classList.add('mid');}$('#ovlBody').innerHTML=html;$('#ovl').classList.add('on');$('#ovl').scrollTop=0; /* 每次打开从顶部开始 */
+}
 function closeOvl(){$('#ovl').classList.remove('on');}
 function saveNow(){save();toast('已存档 💾');}
 
@@ -7754,7 +7815,6 @@ function continueGame(){
     renderGame();
   }catch(e){toast('存档异常，已自动修复');S=null;UI=null;renderMenu();}
 }
-
 /* ---- 10.2 建档 ---- */
 let selPos='PG';
 let bodyEdited=false;
@@ -7836,7 +7896,6 @@ function doCreate(){
   allocLeft=CFG.ALLOC_POINTS;
   renderAlloc();
 }
-
 /* ---- 10.3 属性分配 ---- */
 let allocSkills=null,allocLeft=0;
 /* ---- 开发者选项（调试用，需二次确认开启） ---- */
@@ -7964,7 +8023,6 @@ function confirmAlloc(){
   UI={mode:'event',ev:getEvent()};
   save();renderGame();
 }
-
 /* ---- 10.4 游戏主界面 ---- */
 /* ═══════════ 画面组件：顶栏圆环 / 阶段条 / 数据卡 / 荣誉徽章 / 变化胶囊 ═══════════
  * 这些小组件只负责「把数字画成看得懂的东西」，不含任何规则计算。 */
@@ -8467,7 +8525,6 @@ function renderSeason(res){
   <div class="summ"><h3>🏅 本赛季荣誉</h3>${hons}</div>
   <button class="btn" onclick="nextYear()">进入下一年 · 春 ▶</button>`;
 }
-
 /* ═══════════ 11 容错恢复与启动 ═══════════ */
 let recovering=false;
 function recover(){
