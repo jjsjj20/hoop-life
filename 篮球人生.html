@@ -5213,18 +5213,18 @@ function evU17(){return {id:'u17',title:'春 · 国青队的召唤',scene:`U17�
 function evPath(){
   const atIMG=S.team==='美国IMG学院';
   const atEuro=(S.team&&S.team.includes('皇家马德里'))||S.league==='欧洲';
-  let scene=`${S.birthYear+S.age}年春天，${S.name}年满十八岁。青训合同到期，摆在他面前的是三条截然不同的路。
+  let scene=`${seasonLabel()}的春天，${S.name}年满十八岁。青训合同到期，摆在他面前的是三条截然不同的路。
 
 经纪人摊开几份文件，窗外的梧桐树哗哗作响。选择从来没有标准答案。`;
   let chs;
-  if(atIMG){scene=`${S.birthYear+S.age}年春天，${S.name}年满十八岁。在IMG学院的日子里，他的语言关已经过了，对美国篮球的节奏也不再陌生。
+  if(atIMG){scene=`${seasonLabel()}的春天，${S.name}年满十八岁。在IMG学院的日子里，他的语言关已经过了，对美国篮球的节奏也不再陌生。
 
 经纪人摊开几份文件：是留在美国冲击NCAA，还是回国参加CBA选秀，又或者转战欧洲。选择从来没有标准答案。`;
     chs=[
       {t:'留在美国，冲击NCAA',fx:{clutch:1,setPath:'ncaa'},next:'pickCollege',o:'不需要横渡重洋，他只需要继续在这片土地打下去。'},
       {t:'回国参加CBA选秀',fx:{stability:1,setPath:'cba'},next:'draftCBA',o:'把在美国学到的一切带回家乡的赛场。'},
       {t:'转战欧洲，加盟豪门',fx:{play:1,stability:1,setPath:'euro'},next:'pickEuro',o:'另一种篮球哲学，另一条成才之路。'}];}
-  else if(atEuro){scene=`${S.birthYear+S.age}年春天，${S.name}年满十八岁。在欧洲青训体系里的几年，让他见识了世界上对战术细节最苛刻的训练。
+  else if(atEuro){scene=`${seasonLabel()}的春天，${S.name}年满十八岁。在欧洲青训体系里的几年，让他见识了世界上对战术细节最苛刻的训练。
 
 经纪人摊开几份文件：留在欧洲晋升职业队，还是回国参加CBA选秀，又或者远赴美国。选择从来没有标准答案。`;
     chs=[
@@ -6059,7 +6059,7 @@ function shotSourceText(inp){
   const r=shotRates(inp||{}),st=shotTend();
   const pos=(inp&&inp.pos)||S.pos,twS=inp&&inp.skills?inp.skills.three:(S.skills?S.skills.three:60);
   return `出手结构：三分占比 ${pctText(r.share)}（位置 ${POS[pos]?POS[pos].n:'—'} 权 ${Math.round(((r.pw.outside||.2))*100)}%`
-    +` × 三分技能 ${twS} × 外线选择 +${st.outside}）｜ 罚球率 ${pctText(r.ftRate)}（终结 + 内线选择 +${st.inside}）`
+    +` × 三分技能 ${twS} × 外线选择 +${(st.outside||0).toFixed(1)}）｜ 罚球率 ${pctText(r.ftRate)}（终结 + 内线选择 +${(st.inside||0).toFixed(1)}）`
     +` ｜ 每出手折合 ${Math.round((2*(1-r.share)*r.p2+3*r.share*r.p3+r.ftRate*r.pft)*1000)/1000} 分`;
 }
 function simGame(game,plan){
@@ -6397,6 +6397,11 @@ function injProb(){return .12+(100-S.h.durability)*.0016+(S.age>=33?.06:0)+(S.ag
  *   青训/NCAA 不参与排名系统（沿用原有结算） */
 function seasonGames(lg){return {nba:82,cba:52,euro:34,ncaa:30}[lg]||34;}
 function computeStandings(lg){
+  /* 唯一口径（v3.9）：一个赛季只摇一次并缓存——排名面板/联盟榜单/赛季总结/报纸全部读同一份 */
+  const _sy=seasonLabel();
+  if(S._stCache&&S._stCache.lg===lg&&S._stCache.season===_sy&&Array.isArray(S._stCache.rows)&&S._stCache.rows.length){
+    return S._stCache.rows.map(r=>Object.assign({},r));
+  }
   const games=seasonGames(lg);
   const rows=(TEAMS[lg]||[]).map(t=>{
     /* 球队实力跟着阵容走：新星崛起 → 球队变强 → 排名上升（静态底子只占 45%） */
@@ -6413,6 +6418,7 @@ function computeStandings(lg){
   });
   rows.sort((a,b)=>b.wins-a.wins||b.str-a.str); /* 同胜场按球队实力决名次（tiebreak） */
   rows.forEach((r,i)=>r.rank=i+1);
+  S._stCache={lg:lg,season:seasonLabel(),rows:rows.map(r=>Object.assign({},r))};
   return rows;
 }
 /* 判定玩家球队季后赛资格，返回 {seed,playin,label,conf,confLabel} 或 null */
@@ -6722,7 +6728,7 @@ function seasonEnd(){
      * 本队那一行不由「球队实力」决定，而是直接写成年赛季战绩（applyFocusRecord → seasonRecordOf）：
      * 焦点战的真实胜负 ±1~2 场、伤病缺阵按每场 0.22 个胜场折算，全部算在这一个数里。 */
     const rows=applyFocusRecord(computeStandings(myLeagueKey()));
-    S.standings={lg:myLeagueKey(),rows};
+    S.standings={lg:myLeagueKey(),season:seasonLabel(),rows};
     const q=qualify(rows);
     if(q){
       S._noPlayoff=false;
@@ -6835,7 +6841,7 @@ function computeSeason(pr,wpcIn,po){
       champ=pr.champ===true;
     }else{playoffs=pr.kind==='playin'?'附加赛出局':pr.level?(LV[pr.level]||'季后赛'):(['季后赛止步首轮','止步半决赛','总决赛憾负','🏆 勇夺总冠军！'][pr.rounds]||'季后赛');champ=pr.champ===true;}
   }
-  else if(youth){playoffs=R.chance(wpc*.5)?'青年联赛冠军！':'青年联赛前四';champ=playoffs.includes('冠军');}
+  else if(youth){playoffs=wpc>=.7?'青年联赛冠军！':wpc>=.52?'青年联赛前四':wpc>=.35?'青年联赛八强':'青年联赛小组出局';champ=playoffs.includes('冠军');}
   else if(S._noPlayoff){playoffs='无缘季后赛';}
   else if(wpc<.42){playoffs='无缘季后赛';}
   else{const depth=R.chance(wpc*.6+.1)?R.int(1,5):1;playoffs=['季后赛止步首轮','止步八强','止步四强','总决赛憾负','🏆 勇夺总冠军！'][depth-1];champ=depth===5;}
@@ -7082,13 +7088,9 @@ function simWorldStats(res){
   const lg=myLeagueKey();
   if(!lg)return null;                 /* 青训没有职业联赛榜单：等进了 CBA/NBA/欧洲 再排 */
   const games=seasonGames(lg);
-  /* 各队战绩（与玩家队同一口径：阵容实力 → 胜率） */
-  const teams=(TEAMS[lg]||[]).map(t=>{
-    const st=teamStrength(lg,t[0],t[1]);
-    const wpc=clamp(.5+(st-6.5)*.09,.12,.92);
-    const w=Math.round(games*wpc);
-    return {t:t[0],w:w,l:games-w,str:Math.round(st*10)/10,wpc:wpc};
-  });
+  /* 各队战绩：唯一口径（v3.9）——读 computeStandings 的本季排名，与排名面板/赛季总结/报纸同源 */
+  const stRows=(S.standings&&S.standings.season===y&&S.standings.lg===lg&&Array.isArray(S.standings.rows)&&S.standings.rows.length)?S.standings.rows:computeStandings(lg);
+  const teams=stRows.map(r=>({t:r.team,w:r.wins,l:r.losses,str:r.str,wpc:r.wins/Math.max(1,r.wins+r.losses)}));
   const teamWpc={};teams.forEach(t=>{teamWpc[t.t]=t.wpc;});
   const pool=[];
   /* 队内能力排名决定替补的出场时间（第 6 人 21 分钟，第 15 人 7 分钟） */
@@ -7449,7 +7451,7 @@ function coachSeasonEnd(){
   S.coach.wins+=wins;S.coach.losses+=g-wins;
   /* 生成联赛排名（供排名榜查看；玩家球队带教练加成） */
   const lg=({CBA:'cba',NBA:'nba',欧洲:'euro'})[S.coach.league]||'cba';
-  S.standings={lg,rows:computeStandings(lg)};
+  S.standings={lg,season:seasonLabel(),rows:computeStandings(lg)};
   let txt='常规赛 '+wins+'胜'+(g-wins)+'负';
   if(wpc>.62&&R.chance(.5)){txt+=' · 🏆 夺冠！';S.coach.honors.push({y:seasonLabel(),t:S.coach.team+' 冠军'});S.log.push({y:seasonLabel(),t:'执教夺冠：'+S.coach.team});}
   S.coach.season++;
@@ -7853,11 +7855,11 @@ function showArchive(){
   /* 出手结构：位置 × 技能 × 生涯选择 → 三分占比 / 罚球率（点出去的点数在这里看得见） */
   const stt=shotTend();
   h+=`<label>🎯 出手结构（命中率从哪来）</label><div class="mini">${esc(shotSourceText({pos:S.pos,skills:S.skills}))}<br>
-   生涯累计选择：<b style="color:var(--accent-txt)">外线 +${stt.outside}</b> ｜ <b style="color:#ffb37a">内线 +${stt.inside}</b>
+   生涯累计选择：<b style="color:var(--accent-txt)">外线 +${(stt.outside||0).toFixed(1)}</b> ｜ <b style="color:#ffb37a">内线 +${(stt.inside||0).toFixed(1)}</b>
    （初始 30 点分配 + 每一次「外线/内线」训练都记在这里，最后反映到三分占比与罚球率上）</div>`;
   const cf=S.career||{};
   h+=`<label>📊 生涯命中率</label><div class="mini">${cf.fga?shotLineText(cf):'还没有赛季数据'}</div>
-   ${cf.fga?`<div class="mini">真实命中率 TS% = <b>${pctText((cf.pts||0)/(2*((cf.fga||0)+.44*(cf.fta||0))))}</b>（得分 ÷ 2×(出手+0.44×罚球)）
+   ${cf.fga?`<div class="mini">真实命中率 TS% = <b>${pctText(careerT('ppg')/(2*((cf.fga||0)+.44*(cf.fta||0))))}</b>（生涯总得分 ÷ 2×(总出手+0.44×总罚球)；v3.9 修正：分子此前误用「场均之和」口径）
     ｜ 三分占比 ${pctText((cf.tpa||0)/(cf.fga||1))} ｜ 罚球率 ${pctText((cf.fta||0)/(cf.fga||1))}</div>`:''}
   <label>📈 命中率曲线（FG%）</label>${sparkSVG('fg','%',420,104)}`;
   /* 联盟有他人：宿敌 + 历年联盟（谁在抢你的荣誉、这几年联盟是谁的） */
@@ -7983,7 +7985,7 @@ function showMoney(){
 /* ═══════════ 10 渲染层 ═══════════ */
 function openOvl(html,width){const box=document.querySelector('#ovl .box');if(box){box.classList.remove('wide','mid');if(width==='wide')box.classList.add('wide');else if(width==='mid')box.classList.add('mid');}$('#ovlBody').innerHTML=html;$('#ovl').classList.add('on');$('#ovl').scrollTop=0; /* 每次打开从顶部开始 */
 }
-function closeOvl(){$('#ovl').classList.remove('on');}
+function closeOvl(){$('#ovl').classList.remove('on');const b=$('#ovlBody');if(b)b.innerHTML='';}
 function saveNow(){toast(save()?'已存档 💾':'⚠️ 存档失败：浏览器存储空间不足');}
 
 /* ---- 10.1 主菜单 ---- */
@@ -8132,7 +8134,9 @@ function doCreate(){
 let allocSkills=null,allocLeft=0;
 /* ---- 开发者选项（调试用，需二次确认开启） ---- */
 let devOn=false,devTier=null;
+const DEV_OK=/[?&]dev=1/.test(location.search); /* 开发者选项入口默认隐藏；地址栏加 ?dev=1 才显示 */
 function devToggle(){
+  if(!DEV_OK){toast('🛠 开发者选项仅限调试：在地址栏加 ?dev=1 后刷新即可开启');return;}
   if(!devOn){
     if(!confirm('⚠️ 开发者选项用于调试：可任意指定天赋档位与能力值，会破坏游戏平衡。\n\n确定开启？'))return;
     devOn=true;
@@ -8175,7 +8179,7 @@ function renderAlloc(){
    <div id="allocShot" class="mini" style="margin:10px 0 4px"></div>
    <button class="minibtn" onclick="allocRandom()">🎲 随机分配</button>
    <button class="minibtn" onclick="allocReset()">↺ 全部重置</button>
-   <button class="minibtn" onclick="devToggle()">🛠 开发者选项</button>
+   ${DEV_OK?'<button class="minibtn" onclick="devToggle()">🛠 开发者选项</button>':''}
    <div id="devPanel"></div>
   </div>
   <button class="btn" id="allocGo" onclick="confirmAlloc()">🏁 开始生涯</button>
