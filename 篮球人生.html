@@ -5586,17 +5586,23 @@ function focusSlots(stage){
   if(stage==='autumn')return quick?['opener']:['opener','road'];
   if(stage==='winter'){
     if(quick)return ['marquee','seeding','finale'];
-    /* 冬段保持 6 场：奇数赛季把「背靠背硬仗」换成「复仇战」（对阵上一次把你淘汰的球队） */
+    /* 冬段保持 6 场：奇数赛季把「背靠背硬仗」换成「复仇战」（对阵上一次把你淘汰的球队）；
+     * 复仇对手必须仍在当前联赛名单里；找不到就退回「背靠背硬仗」——不会安排 NBA 约战青训/大学队。 */
     const y=S.birthYear+S.age;
-    return y%2?['marquee','derby','revenge','ex','seeding','finale']
-              :['marquee','derby','grind','ex','seeding','finale'];
+    const LG=TEAMS[myLeagueKey()]||[];
+    const rvOk=!!(S.lastLossTeam&&S.lastLossTeam!==myTeamName()&&LG.some(t=>t[0]===S.lastLossTeam));
+    if(y%2){const arr=['marquee','derby','revenge','ex','seeding','finale'];if(!rvOk)arr[2]='grind';return arr;}
+    return ['marquee','derby','grind','ex','seeding','finale'];
   }
   return [];
 }
 function focusPlayable(kind){
   if(S.injury&&injOut()>0)return false;   /* 伤停：球队照打，但没有你 */
-  if(kind==='ex')return (S.played||[]).some(t=>t&&t!==S.team);   /* 得有老东家才谈得上复仇 */
-  if(kind==='revenge')return !!(S.lastLossTeam&&S.lastLossTeam!==S.team)||(S.played||[]).some(t=>t&&t!==S.team);
+  /* 老东家/复仇战的对手必须在「当前联赛」的球队名单里：NBA 赛程不可能出现青训学院或大学球队 */
+  const LG=TEAMS[myLeagueKey()]||[];
+  const inLg=t=>LG.some(x=>x[0]===t);
+  if(kind==='ex')return (S.played||[]).some(t=>t&&t!==S.team&&inLg(t));   /* 得有同联赛的老东家 */
+  if(kind==='revenge')return !!(S.lastLossTeam&&S.lastLossTeam!==myTeamName()&&inLg(S.lastLossTeam));
   return true;
 }
 function focusPlayed(stage){
@@ -5631,17 +5637,17 @@ function focusOpponent(kind){
   const strengthOf=nm=>{const row=(TEAMS[lg]||[]).find(t=>t[0]===nm);return row?str(row):6;};
   if(!teams.length)return {team:oppTeam(),str:5,home:true};
   if(kind==='ex'){
-    const old=(S.played||[]).filter(t=>t&&t!==S.team);
+    /* 老东家之战：只跟本联赛的老东家交手（NBA 客场不可能是青训学院/大学母校） */
+    const old=(S.played||[]).filter(t=>t&&t!==S.team&&teams.some(x=>x[0]===t));
     const nm=old.length?old[R.int(0,old.length-1)]:teams[0][0];
     return {team:nm,str:strengthOf(nm),home:false};
   }
   if(kind==='revenge'){
-    /* 复仇对象：上一次把你淘汰出季后赛的球队；没有就找老东家 */
-    const old=(S.played||[]).filter(t=>t&&t!==S.team);
-    const nm=(S.lastLossTeam&&S.lastLossTeam!==myTeamName())?S.lastLossTeam:(old.length?old[0]:teams[0][0]);
+    /* 复仇对象：上一次把你淘汰出季后赛的球队（必须仍在本联赛名单里）；兜底：联赛内随机对手 */
+    const nm=(S.lastLossTeam&&S.lastLossTeam!==myTeamName()&&teams.some(x=>x[0]===S.lastLossTeam))?S.lastLossTeam:teams[R.int(0,teams.length-1)][0];
     return {team:nm,str:strengthOf(nm),home:true};
   }
-  const mine=teamStrength(lg,myTeamName(),S.teamStr);
+const mine=teamStrength(lg,myTeamName(),S.teamStr);
   const byStrength=teams.slice().sort((a,b)=>str(b)-str(a));
   const faced={};(S.gameLog||[]).forEach(g=>{faced[g.opp]=1;});
   const fresh=list=>list.filter(t=>!faced[t[0]]);
