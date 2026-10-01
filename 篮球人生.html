@@ -8136,8 +8136,10 @@ let allocSkills=null,allocLeft=0;
 let devOn=false,devTier=null;
 const DEV_OK=/[?&]dev=1/.test(location.search); /* 开发者选项入口默认隐藏；地址栏加 ?dev=1 才显示 */
 function devToggle(){
-  if(!DEV_OK){toast('🛠 开发者选项仅限调试：在地址栏加 ?dev=1 后刷新即可开启');return;}
+  if(!DEV_OK){toast('🛠 开发者选项仅限调试：地址栏加 ?dev=1 刷新后，再输入密码开启');return;}
   if(!devOn){
+    const _pw=(prompt('🛠 开发者选项受密码保护，请输入密码：')||'').trim();
+    if(_pw!=='03180318'){toast('❌ 密码不对：开发者选项拒绝开启');return;}
     if(!confirm('⚠️ 开发者选项用于调试：可任意指定天赋档位与能力值，会破坏游戏平衡。\n\n确定开启？'))return;
     devOn=true;
   }else{devOn=false;}
