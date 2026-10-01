@@ -608,41 +608,45 @@ function paras(t){return (t||'').split('\n\n').map(p=>'<p>'+esc(p).replace(/\n/g
  *   · 全部音量过一个 Master Gain（SFX_MASTER），各音效只写相对音量：笔记本小喇叭也听得见；
  *   · 任何环节不可用（无 AudioContext / 静音 / 播放失败）都静默降级，绝不阻断游戏；
  *   · 开关状态存在 localStorage；工具条有 🔊 开关，档案面板里有「音效自检」能看真实状态并试听。 */
-const SFX_KEY='hoop.sfx.v1',SFX_MASTER=2.4,CUE_ATTACK=.008;
+const SFX_KEY='hoop.sfx.v1',SFX_MASTER=2.9,CUE_ATTACK=.008;
 /* ── 音色库 v3.6：21 种音色（10 升级 + 11 新增）──────────────────────────
  * 音符格式 [频率,时长,延迟,波形?,微分音?]，缺省波形取 cue.t；微分音单位音分（加一层微偏振荡器增厚）。
  * nz 噪声层 [时长,延迟,带通中心Hz,音量,Q?,起音?]；vb 颤音 [速率Hz,深度Hz]；lp 低通 Hz（数字越小越闷）。
  * 新增音色：msg 消息 / achieve 成就 / sign 签约 / swish 空心入网 / rim 打铁 / dribble 运球 / refwhistle 裁判哨
  *           / buzzer 蜂鸣器 / fanfare 夺冠号角 / draft 选秀 / injury 伤病闷响。 */
+/* ── 音色库 v3.7（更爽版）：21 种音色全面重调 ─────────────────────────
+ * 音符格式 [频率,时长,延迟,波形?,微分音?,声场?,滑音目标Hz?]；缺省波形取 cue.t；微分音单位音分。
+ * nz 噪声层 [时长,延迟,带通中心Hz,音量,Q?,起音?,声场?]；vb 颤音 [速率Hz,深度Hz]；lp 低通 Hz；rvb 混响量 0~1。
+ * v3.7：新增滑音（低音炮/上扬音）、立体声声场、混响空间、总线压限器；所有音色加厚分层。 */
 const SFX_LIB={
   /* ── 界面反馈 ── */
-  click:{n:[[660,.05,0,'triangle',10]],g:.07,lp:3600},                 /* 按钮轻点（更短更软） */
-  pick:{n:[[540,.06,0,'triangle',9],[860,.11,.045]],g:.09},            /* 选定 */
-  msg:{n:[[880,.08,0,'sine'],[1174,.16,.07,'sine',6]],g:.075},         /* 消息提示：AI 出稿 / 报纸出刊 */
-  achieve:{n:[[1046,.07,0,'triangle'],[1318,.07,.055],[1568,.11,.11],[2093,.24,.18]],g:.085},  /* 成就解锁 / 里程碑 */
+  click:{n:[[620,.04,0,'triangle',8,-.08],[1240,.028,.012,'sine',0,.12],[92,.045,.002,'sine']],g:.055,lp:4200},                 /* 按钮：主音+高频闪+低频颗粒，更清脆 */
+  pick:{n:[[520,.05,0,'triangle',9,-.12],[880,.09,.04,'triangle',6,.15],[1320,.1,.085,'sine',0,.25],[112,.06,0,'sine']],g:.085}, /* 选定：三连上行+低频托底，更满足 */
+  msg:{n:[[880,.07,0,'sine',0,-.2],[1174,.14,.06,'sine',6,.2],[1760,.18,.14,'sine',0,.3]],g:.075,rvb:.3},                       /* 消息：双音+高音尾+空间感 */
+  achieve:{n:[[1046,.06,0,'triangle',8,-.2],[1318,.06,.05,'triangle',8,.2],[1568,.09,.1,'triangle',6,0],[2093,.18,.16,'sine',0,.2],[2637,.28,.24,'sine',0,0],[3136,.36,.34,'sine',0,-.2]],g:.08,rvb:.45}, /* 成就：五连升+星空回声 */
   /* ── 数值与财务 ── */
-  up:{n:[[660,.07,0,'sine'],[990,.12,.05],[1320,.1,.11]],g:.08},       /* 数据上涨（加一粒高音闪点） */
-  down:{n:[[400,.09,0,'sine'],[300,.16,.06]],g:.075,lp:2400},          /* 数据下滑（更闷更柔） */
-  coin:{n:[[988,.06,0,'square',7],[1319,.13,.045]],g:.055,lp:5200},    /* 进账 */
-  sign:{n:[[180,.07,0,'square'],[988,.06,.09,'square'],[1319,.12,.12,'square']],g:.06},  /* 签约：落笔 + 进账 */
+  up:{n:[[660,.06,0,'sine',0,-.15],[990,.09,.05,'sine',0,.15],[1320,.11,.1,'sine',0,0],[1980,.2,.18,'sine',0,.2]],g:.075},       /* 上涨：四连升+尾部闪光 */
+  down:{n:[[420,.09,0,'sine',0,.1],[330,.13,.06,'sine',0,-.1],[262,.18,.12,'sine']],g:.07,lp:2600},                              /* 下滑：三连降，柔和不刺耳 */
+  coin:{n:[[988,.05,0,'square',7,-.15],[1319,.12,.04,'square',7,.15],[1760,.16,.1,'square',0,.2],[1245,.08,.015,'sine']],g:.055,lp:5600}, /* 进账：经典双音+闪烁尾音 */
+  sign:{n:[[150,.06,0,'square',4],[988,.05,.08,'square',7],[1319,.12,.11,'square',7],[1760,.18,.17,'triangle',0,.2]],g:.06,rvb:.35},  /* 签约：落笔+进账+高音尾 */
   /* ── 球场现场 ── */
-  swish:{nz:[[.16,0,2100,.05,1.4],[.12,.03,1200,.028,1]],n:[[1150,.05,0,'sine']],g:.05},    /* 空心入网 */
-  rim:{n:[[416,.08,0,'square',16],[622,.16,.012,'triangle']],nz:[[.03,0,2600,.028]],g:.055,lp:3600},  /* 打铁 */
-  dribble:{n:[[150,.08,0,'sine'],[92,.11,.055,'sine']],nz:[[.02,0,2600,.024]],g:.09},       /* 运球 */
-  refwhistle:{n:[[1820,.09,0,'square'],[1820,.09,.13,'square']],vb:[42,90],nz:[[.09,0,3400,.02,1.2],[.09,.13,3400,.02,1.2]],g:.045},  /* 裁判短哨（双短声） */
-  whistle:{n:[[1720,.12,0,'square'],[1720,.12,.16,'square']],vb:[40,80],nz:[[.12,0,3300,.028,1.2],[.12,.16,3300,.028,1.2]],g:.05},   /* 终场哨（高频震颤 + 气声） */
-  buzzer:{n:[[233,.65,0,'square',12],[116.5,.65,0,'square']],g:.05,lp:2600},                /* 终场蜂鸣器 */
+  swish:{nz:[[.12,0,2600,.045,1.3],[.09,.035,1300,.03,1],[.04,.008,5200,.025,2]],n:[[1150,.04,0,'sine'],[138,.09,.015,'sine',0,0,75],[210,.05,.05,'sine',0,0,140]],g:.055}, /* 空心入网：网花三连+落地闷响 */
+  rim:{n:[[415,.06,0,'square',16],[622,.13,.011,'triangle'],[830,.17,.02,'square',22],[1245,.09,.028,'triangle',10]],nz:[[.022,0,3000,.03,1.4]],g:.06,lp:4600}, /* 打铁：四层金属泛音，更真实 */
+  dribble:{n:[[150,.06,0,'sine',0,-.15,105],[95,.09,.05,'sine',0,.1],[170,.05,.1,'sine',0,0,125],[72,.1,.15,'sine',0,-.05]],nz:[[.016,0,2700,.024],[.014,.05,2400,.02],[.012,.1,2600,.018]],g:.095}, /* 运球：三连拍球+地板颗粒 */
+  refwhistle:{n:[[1860,.085,0,'square',0,-.2],[1860,.085,.125,'square',0,.2]],vb:[46,120],nz:[[.085,0,3600,.022,1.3],[.085,.125,3600,.022,1.3]],g:.05,rvb:.3}, /* 裁判哨：双短声+高频震颤 */
+  whistle:{n:[[1760,.13,0,'square',0,-.2],[1760,.13,.17,'square',0,.2],[880,.45,.03,'square',0]],vb:[42,100],nz:[[.13,0,3450,.028,1.3],[.13,.17,3450,.028,1.3],[.3,0,1800,.015,1]],g:.055,rvb:.35}, /* 终场哨：双长声+震颤+气声+低八度余韵 */
+  buzzer:{n:[[233,.68,0,'square',12,-.1],[116.5,.68,0,'square',0,.1],[466,.68,0,'square',6,0],[233,.68,0,'sawtooth',3]],g:.05,lp:3000}, /* 蜂鸣器：四层轰鸣 */
   /* ── 比赛结果 ── */
-  win:{n:[[523,.13,0,'triangle',9],[659,.13,.09],[784,.17,.18],[1046,.3,.3],[1318,.2,.46]],nz:[[.9,0,1000,.03,.8,.3]],g:.095},  /* 系列赛胜出 + 欢呼 */
-  lose:{n:[[392,.2,0,'sine'],[311,.28,.15],[247,.46,.32]],g:.085,lp:2000},                  /* 系列赛失利 */
-  fanfare:{n:[[392,.42,0,'triangle',4],[523,.12,0],[659,.12,.1],[784,.12,.2],[1046,.16,.3],[1568,.55,.42]],nz:[[1.6,.3,1100,.05,.8,.5]],g:.085},  /* 夺冠：号角 + 全场欢呼 */
-  trophy:{n:[[784,.1,0,'triangle',10],[988,.1,.085],[1175,.14,.17],[1568,.42,.26]],g:.095}, /* 颁奖 */
-  curtain:{n:[[300,.55,0,'sine'],[226,.9,.26]],g:.08,lp:1800},                              /* 落幕 */
+  win:{n:[[160,.28,0,'sine',0,0,45],[523,.12,0,'triangle',9,-.25],[659,.12,.075,'triangle',9,.25],[784,.15,.15,'triangle',8,-.2],[1046,.24,.24,'triangle',8,.2],[1318,.19,.36,'triangle',6,.25],[1568,.28,.46,'sine',0,-.2]],nz:[[.8,0,1000,.03,.8,.35],[.45,.3,2500,.018,1,.4]],g:.1,rvb:.5}, /* 系列赛胜出：低频鼓+立体声和弦+人群欢呼+彩带闪 */
+  lose:{n:[[130,.7,.25,'sine'],[392,.18,0,'sine',0,-.1],[311,.26,.13,'sine',0,.1],[247,.42,.27,'sine'],[185,.58,.42,'sine']],g:.085,lp:2300,rvb:.4}, /* 失利：四连降+深低频余韵 */
+  fanfare:{n:[[87,.4,0,'sine',0,0,42],[523,.13,.34,'sawtooth',7,-.18],[659,.13,.34,'sawtooth',7,0],[784,.13,.34,'sawtooth',7,.18],[698,.13,.5,'sawtooth',7,-.12],[880,.13,.5,'sawtooth',7,.12],[523,.85,.68,'sawtooth',8,-.22],[659,.85,.68,'sawtooth',8,-.08],[784,.85,.68,'sawtooth',8,.08],[1046,.85,.7,'sawtooth',8,.22],[1568,.5,.98,'triangle',8],[2093,.65,1.12,'sine',0,.2],[2637,.75,1.28,'sine',0,-.2]],nz:[[.035,0,850,.05,1],[.035,.055,950,.055,1],[.035,.11,1050,.06,1],[.035,.165,1150,.065,1],[.04,.22,1250,.07,1],[2.3,.28,1100,.052,.7,.5]],g:.085,rvb:.55}, /* 夺冠：军鼓滚奏+铜管号角+低频鼓+C大调和弦+满场欢呼+彩带雨 */
+  trophy:{n:[[784,.09,0,'triangle',9],[988,.09,.07,'triangle',9],[1175,.11,.14,'triangle',8],[1568,.26,.21,'sine',0,-.2],[1976,.3,.3,'sine',0,.15],[2349,.4,.4,'sine',0,0],[2794,.5,.52,'sine',0,-.15]],g:.085,rvb:.5}, /* 颁奖：七连闪+殿堂回声 */
+  curtain:{n:[[320,.45,0,'sine'],[240,.7,.2,'sine'],[180,.95,.45,'sine'],[120,1.2,.75,'sine']],g:.08,lp:2000,rvb:.4}, /* 落幕：四连降+深远余韵 */
   /* ── 生涯大事 ── */
-  draft:{n:[[392,.07,0,'triangle'],[494,.07,.06],[587,.07,.12],[784,.34,.18],[1046,.2,.34]],g:.09},  /* 选秀被选中 */
-  injury:{n:[[150,.13,0,'sine'],[98,.3,.09,'sine']],nz:[[.05,0,420,.045]],g:.09,lp:900}     /* 受伤闷响 */
+  draft:{n:[[262,.35,0,'sine',0,0,524],[524,.05,.34,'triangle'],[659,.05,.39],[784,.08,.44,'triangle',8],[1046,.22,.53,'triangle',8],[1318,.3,.66,'sine',0,.2],[1568,.4,.78,'sine',0,-.2]],g:.09,rvb:.5}, /* 选秀揭晓：上行滑音+上行琶音+双高音收尾 */
+  injury:{n:[[170,.11,0,'sine',0,0,75],[96,.3,.07,'sine'],[64,.45,.13,'sine']],nz:[[.05,0,430,.045]],g:.095,lp:850} /* 伤病：闷响三连，更低沉 */
 };
-let _ac=null,_master=null,_sfxOn=null,_nb=null;
+let _ac=null,_master=null,_sfxOn=null,_nb=null,_ir=null;
 function sfxEnabled(){
   if(_sfxOn==null){try{_sfxOn=(localStorage.getItem(SFX_KEY)!=='0');}catch(e){_sfxOn=true;}}
   return _sfxOn;
@@ -675,7 +679,7 @@ function audioCtx(){
     _ac=new C();
     _master=_ac.createGain();
     _master.gain.value=SFX_MASTER;      /* 总音量：各音效自己的 g 是相对值 */
-    _master.connect(_ac.destination);
+    try{const comp=_ac.createDynamicsCompressor();comp.threshold.value=-6;comp.knee.value=8;comp.ratio.value=4;comp.attack.value=.003;comp.release.value=.24;_master.connect(comp);comp.connect(_ac.destination);}catch(e){_master.connect(_ac.destination);}
   }catch(e){_ac=null;_master=null;}
   return _ac;
 }
@@ -690,28 +694,61 @@ function _noiseFor(ac){
   }catch(e){_nb=null;}
   return _nb;
 }
+function _irFor(ac){
+  if(_ir&&_ir.ac===ac)return _ir;
+  try{
+    const sr=ac.sampleRate||44100,len=Math.max(1,Math.floor(sr*1.1));
+    const b=ac.createBuffer(2,len,sr);
+    for(let c=0;c<2;c++){
+      const d=b.getChannelData(c);
+      for(let i=0;i<len;i++){const t=i/len;d[i]=(Math.random()*2-1)*Math.pow(1-t,2.8);}
+    }
+    _ir=b;_ir.ac=ac;
+  }catch(e){_ir=null;}
+  return _ir;
+}
 function playCue(ac,cue){
   const t0=ac.currentTime+.012;
   const atk=cue.a||CUE_ATTACK;
   let bus=_master||ac.destination;
   if(cue.lp){try{const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=cue.lp;f.connect(bus);bus=f;}catch(e){}}
+  let wet=null;
+  if(cue.rvb){try{
+    const ir=_irFor(ac);
+    if(ir){
+      const cv=ac.createConvolver();cv.buffer=ir;
+      const wlp=ac.createBiquadFilter();wlp.type='lowpass';wlp.frequency.value=4200;
+      const wg=ac.createGain();wg.gain.value=cue.rvb*.5;
+      cv.connect(wlp);wlp.connect(wg);wg.connect(_master||ac.destination);
+      wet=cv;
+    }
+  }catch(e){wet=null;}}
+  const tail=(node,pan)=>{try{
+    let end=node;
+    if(pan&&ac.createStereoPanner){const p=ac.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,pan));node.connect(p);end=p;}
+    end.connect(bus);
+    if(wet)end.connect(wet);
+  }catch(e){}};
   (cue.n||[]).forEach(n=>{
     const f0=n[0];
     if(!f0||f0<20)return;
     const dur=n[1]||.12,s=t0+(n[2]||0),wave=n[3]||cue.t||'sine';
     const det=(n.length>4&&n[4]!=null)?n[4]:(cue.dt||0);
-    const mk=(freq,gn)=>{try{
+    const pan=(n.length>5&&n[5]!=null)?n[5]:(cue.pan||0);
+    const glide=(n.length>6&&n[6]!=null)?n[6]:0;
+    const mk=(freq,gn,pn)=>{try{
       const o=ac.createOscillator(),g=ac.createGain();
       o.type=wave;o.frequency.setValueAtTime(freq,s);
+      if(glide&&glide>20)o.frequency.exponentialRampToValueAtTime(glide,s+dur*.6);
       g.gain.setValueAtTime(0,s);
       g.gain.linearRampToValueAtTime(gn,s+atk);
       g.gain.exponentialRampToValueAtTime(.0001,s+dur);
-      o.connect(g);g.connect(bus);
+      o.connect(g);tail(g,pn);
       o.start(s);o.stop(s+dur+.05);
       if(cue.vb){const lo=ac.createOscillator(),lg=ac.createGain();lo.frequency.value=cue.vb[0];lg.gain.value=cue.vb[1];lo.connect(lg);lg.connect(o.frequency);lo.start(s);lo.stop(s+dur+.05);}
     }catch(e){}};
-    mk(f0,cue.g||.08);
-    if(det)mk(f0*Math.pow(2,det/1200),(cue.g||.08)*.45);
+    mk(f0,cue.g||.08,pan);
+    if(det)mk(f0*Math.pow(2,det/1200),(cue.g||.08)*.45,-pan);
   });
   (cue.nz||[]).forEach(z=>{try{
     const buf=_noiseFor(ac);
@@ -723,7 +760,7 @@ function playCue(ac,cue){
     g.gain.setValueAtTime(0,s);
     g.gain.linearRampToValueAtTime(z[3]||.05,s+(z[5]!=null?z[5]:atk));
     g.gain.exponentialRampToValueAtTime(.0001,s+dur);
-    src.connect(flt);flt.connect(g);g.connect(bus);
+    src.connect(flt);flt.connect(g);tail(g,z[6]||(cue.pan||0));
     src.start(s);src.stop(s+dur+.06);
   }catch(e){}});
 }
