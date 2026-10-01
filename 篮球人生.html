@@ -471,6 +471,88 @@ select:disabled{color:var(--dim)}
 .po-score b{color:var(--gold);font-size:14px}
 .srs{font-style:normal;font-size:10px;color:var(--gold);margin-left:4px;font-weight:800}
 </style>
+<style id="v35skin">
+/* ══════════════════ v3.5 视觉精修层（v35skin · 纯样式 · 不改逻辑） ══════════════════ */
+@keyframes v35drift{0%{transform:translate3d(0,-1.4%,0) scale(1.03)}50%{transform:translate3d(1.2%,.5%,0) scale(1.06)}100%{transform:translate3d(-1%,1.3%,0) scale(1.04)}}
+@keyframes v35box{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes v35halo{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.42),0 18px 38px -18px rgba(249,115,22,.5)}50%{box-shadow:0 0 0 10px rgba(249,115,22,0),0 22px 46px -20px rgba(249,115,22,.2)}}
+/* ⓪ 文本渲染 */
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+/* ① 全页氛围：漂浮极光 + 暗角 */
+#app::before{content:"";position:fixed;inset:-6%;z-index:-1;pointer-events:none;
+ background:
+  radial-gradient(46% 34% at 16% 4%,rgba(249,115,22,.12),transparent 66%),
+  radial-gradient(40% 32% at 86% 2%,rgba(103,184,255,.09),transparent 64%),
+  radial-gradient(54% 46% at 74% 102%,rgba(167,139,250,.08),transparent 68%),
+  radial-gradient(120% 100% at 50% 44%,transparent 58%,rgba(0,0,0,.36) 100%);
+ animation:v35drift 44s ease-in-out infinite alternate}
+/* ② 卡片水晶化：顶部高光划线 + 层次阴影 */
+.card,.summ,.scene,.result{border-color:#28324a;
+ background-image:linear-gradient(90deg,rgba(255,255,255,.10),rgba(255,255,255,.02) 34%,rgba(255,255,255,0) 72%),var(--glass);
+ background-size:100% 1px,auto;background-repeat:no-repeat,no-repeat;background-position:0 0,0 0;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.055),inset 0 -18px 34px -30px rgba(0,0,0,.6),0 18px 44px -32px rgba(0,0,0,.9),0 34px 90px -64px rgba(249,115,22,.22)}
+/* ③ 主按钮：光泽流动 + 按压手感（避开 ghost 系） */
+.btn:not(.ghost):not(.ghostb):not(.small){position:relative;overflow:hidden;
+ background:linear-gradient(135deg,#ffa25c,#ff8a3d 26%,var(--accent) 55%,var(--accent2));
+ box-shadow:0 18px 42px -22px rgba(249,115,22,.6),0 8px 22px -14px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.34),inset 0 -12px 24px -16px rgba(122,42,0,.55)}
+.btn:not(.ghost):not(.ghostb):not(.small)::after{content:"";position:absolute;top:-30%;bottom:-30%;left:-40%;width:34%;
+ background:linear-gradient(100deg,transparent,rgba(255,255,255,.3) 45%,transparent);transform:skewX(-18deg) translateX(0);opacity:0;pointer-events:none;transition:transform .62s cubic-bezier(.2,.7,.3,1),opacity .2s}
+.btn:not(.ghost):not(.ghostb):not(.small):hover::after{transform:skewX(-18deg) translateX(600%);opacity:1}
+.btn:not(.ghost):not(.ghostb):not(.small):active{transform:translateY(2px) scale(.995);filter:brightness(.965)}
+/* ④ ghost 系按钮轻升级 */
+.btn.ghost,.btn.ghostb{transition:border-color .16s,color .16s,transform .12s,box-shadow .16s}
+.btn.ghost:hover,.btn.ghostb:hover{border-color:#41506f;color:var(--txt2)}
+.btn.ghost:active,.btn.ghostb:active{transform:translateY(1px)}
+/* ⑤ 选项：悬停泛光 + 序号徽章点亮 + 文字轻移 */
+.ch{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+.ch:hover{border-color:#46567c;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 34px -24px rgba(0,0,0,1),0 0 0 1px rgba(249,115,22,.13),0 14px 40px -24px rgba(249,115,22,.3)}
+.ch:hover .idx{background:rgba(249,115,22,.17);color:var(--accent-txt);box-shadow:inset 0 0 0 1px rgba(249,115,22,.25)}
+.ch:active{transform:translateY(0) scale(.994)}
+.ch .ctext{transition:transform .18s ease}
+.ch:hover .ctext{transform:translateX(2px)}
+/* ⑥ HUD：能力环光泽 + 徽章 */
+.ring{box-shadow:0 10px 26px -14px rgba(249,115,22,.85),0 0 24px -8px rgba(249,115,22,.38),0 0 0 1px rgba(255,255,255,.035)}
+.ring i{background:radial-gradient(130% 130% at 30% 18%,#161e30,#0a0e18 72%)}
+.ring i b{text-shadow:0 0 14px rgba(249,115,22,.45)}
+.chip{transition:border-color .16s,color .16s}
+.chip:hover{border-color:#39465f;color:var(--txt2)}
+/* ⑦ 底栏按钮 */
+.actions button{transition:border-color .16s,color .16s,transform .12s,box-shadow .16s}
+.actions button:hover{border-color:#41506f;color:var(--txt2);box-shadow:0 12px 28px -20px rgba(0,0,0,.9)}
+.tabbar button{transition:border-color .16s,color .16s}
+.tabbar button:hover{border-color:#41506f;color:var(--txt2)}
+.tabbar button.on{box-shadow:0 10px 26px -16px rgba(249,115,22,.75),inset 0 1px 0 rgba(255,255,255,.28)}
+/* ⑧ 表格行悬停 */
+.tbl .tr{transition:background .15s}
+.tbl .tr:not(.me):hover{background:rgba(255,255,255,.028)}
+/* ⑨ 进度条质感 */
+.bar{box-shadow:inset 0 1px 2px rgba(0,0,0,.55)}
+.bar i{box-shadow:0 0 10px -1px rgba(249,115,22,.5)}
+/* ⑩ 模态：更深的背景 + 玻璃浮起动画 */
+.ovl{background:radial-gradient(120% 100% at 50% 0%,rgba(8,11,18,.68),rgba(3,5,10,.87));-webkit-backdrop-filter:blur(7px) saturate(1.06);backdrop-filter:blur(7px) saturate(1.06)}
+.ovl .box{border-color:#2f3a52;border-radius:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 30px 90px -44px rgba(0,0,0,.98),0 44px 120px -80px rgba(249,115,22,.28)}
+.ovl.on .box{animation:v35box .3s cubic-bezier(.2,.85,.3,1.04) both}
+/* ⑪ 滚动条 / 选中 / 键盘焦点 */
+*{scrollbar-width:thin;scrollbar-color:#2c3648 transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2c3648;border-radius:10px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#46567c;border:3px solid transparent;background-clip:content-box}
+::selection{background:rgba(249,115,22,.32);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid rgba(249,115,22,.55);outline-offset:2px}
+/* ⑫ 细节微调 */
+.hero .ball{display:inline-block;border-radius:50%;animation:v35halo 3.4s ease-in-out infinite}
+.hero h1{filter:drop-shadow(0 10px 28px rgba(249,115,22,.3))}
+.etitle{text-shadow:0 2px 18px rgba(0,0,0,.5)}
+.art{border-color:#2b3550;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 18px 44px -30px rgba(0,0,0,.95)}
+.medal{box-shadow:0 8px 20px -14px rgba(251,191,36,.55),inset 0 1px 0 rgba(255,255,255,.1)}
+.gain{box-shadow:0 6px 18px -12px rgba(0,0,0,.75)}
+.achrow{transition:border-color .16s,background .16s}
+.achrow:hover{border-color:#33405c;background:rgba(255,255,255,.03)}
+.aiIn:focus{border-color:rgba(249,115,22,.5);box-shadow:0 0 0 3px rgba(249,115,22,.12)}
+/* ⑬ 减小动态偏好 */
+@media(prefers-reduced-motion:reduce){#app::before{animation:none!important;transform:none!important}.ovl.on .box{animation:none!important}.btn::after{transition:none!important}.hero .ball{animation:none!important}}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -7799,7 +7881,7 @@ function saveNow(){save();toast('已存档 💾');}
 
 /* ---- 10.1 主菜单 ---- */
 function renderMenu(){
-  const d=load(),has=d&&d.S;
+  const d=load(),has=d&&d.name;
   $('#app').innerHTML=`
   <div class="hero">
    <div class="ball">🏀</div>
@@ -7808,8 +7890,8 @@ function renderMenu(){
   </div>
   <div class="card slot">${has?`
     <div class="mini" style="margin:0 0 8px">📂 已检测到存档</div>
-    <div style="font-size:15px"><b>${esc(d.S.name)}</b> · ${d.S.age}岁 · ${esc((POS[d.S.pos]||{}).n||'未知位置')}</div>
-    <div class="mini">${esc(d.S.team||'待定')} · ${LEAGUE_NAMES[d.S.league]||'未知联赛'} ｜ OVR ${(d.S.a&&d.S.pos)?ovrOf(d.S):'—'} ｜ 身价 ${money(d.S.value||0)} ｜ ${d.S.mode==='fast'?'⚡ 快速模式':'📖 沉浸模式'}</div>
+    <div style="font-size:15px"><b>${esc(d.name)}</b> · ${d.age}岁 · ${esc((POS[d.pos]||{}).n||'未知位置')}</div>
+    <div class="mini">${esc(d.team||'待定')} · ${LEAGUE_NAMES[d.league]||'未知联赛'} ｜ OVR ${(d.a&&d.pos)?ovrOf(d):'—'} ｜ 身价 ${money(d.value||0)} ｜ ${d.mode==='fast'?'⚡ 快速模式':'📖 沉浸模式'}</div>
     <button class="btn ghost" onclick="continueGame()">📂 读取存档，继续生涯</button>
     <button class="minibtn" onclick="delSave()">🗑 清除存档</button>
    `:`<div class="mini" style="margin:0">暂无存档 · 点击下方开始一段新的生涯</div>`}
