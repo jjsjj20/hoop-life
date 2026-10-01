@@ -6754,7 +6754,10 @@ function npcUsage(p){
    * 只按能力给使用率的话，"球队第二人"拿不到 20+，全联盟 20+ 分人数会腰斩。 */
   const r=p.rrank||8;
   /* 一哥要吃得更多（现实里球队第一得分点占全队 26% 的产量，第二 15%、第三 12%） */
-  const role=r===1?.20:r===2?.07:r===3?.04:r===4?.01:r===5?-.005:r<=8?.03-(r-6)*.008:r<=10?.005:0;
+  /* 一哥吃得多的程度按能力缩放：若每队一哥都固定吃 26%，联盟会堆出 27 个场均 30+。
+   * 能力越强吃得越狠（f 0.30→0.78），弱队的一哥回到 20% 上下。 */
+  const f=clamp(.30+(o-58)*.010,.30,.78);
+  const role=r===1?.20*f:r===2?.07*f:r===3?.04*f:r===4?.01:r===5?-.005:r<=8?.03-(r-6)*.008:r<=10?.005:0;
   return clamp(base+role,.06,.42);
 }
 /* 各联赛的球队场均（得分/篮板/助攻/抢断/盖帽）：全队加起来就是这些数 */
@@ -6782,6 +6785,8 @@ function calibrateNpc(lg,myPpg){
   (S.world[lg]||[]).forEach(p=>{(byTm[p.t]=byTm[p.t]||[]).push(p);});
   Object.keys(byTm).forEach(tm=>{
     const rs=byTm[tm];
+    /* 队内能力排名：所有联赛都要赋值（否则非当前联赛全员被当成第 8 人，用法与替补时间失真） */
+    rs.slice().sort((a,b)=>(b.o||0)-(a.o||0)).forEach((p,i)=>{p.rrank=i+1;});
     const vt=(myTmKey&&tm===myTmKey)?vac:0;   /* 其余球队不扣：每队各自守恒（球员场均加起来 = 球队场均） */
     const P={p:base.p-vt,r:base.r-vt*.35,a:base.a-vt*.22,s:base.s,b:base.b};
     /* 权重 = 出场时间^minExp × 位置权重 × (能力/70)^oExp
@@ -6805,6 +6810,16 @@ function calibrateNpc(lg,myPpg){
         stl:Math.round(P.s*cols.s[i]/tot.s*10)/10,
         blk:Math.round(P.b*cols.b[i]/tot.b*10)/10});
     });
+    /* 得分份额幂压缩（t=0.88）：不压缩时每队一哥都吃 ~26% 产量，全联盟会堆出 27 个场均 30+（现实 6-8 个）。
+     * 压缩后榜首约 32 分、25+ 约 23 人，梯度贴近现实；总量守恒（球队场均不变）。 */
+    {
+      let sumE=0;const es=rs.map(x=>{const c=map.get(x);const e=c?c.exp:.3;sumE+=e;return e;});
+      if(sumE>0){
+        const pw=es.map(e=>Math.pow(Math.max(.0005,e/sumE),.88));
+        const ps=pw.reduce((a,b)=>a+b,0)||1;
+        rs.forEach((x,i)=>{const c=map.get(x);if(c)c.exp=Math.max(.3,sumE*pw[i]/ps);});
+      }
+    }
   });
   NPC_CAL={lg:lg,map:map};
   return map;
