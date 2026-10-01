@@ -6543,8 +6543,15 @@ function seasonEnd(){
   finishSeason();
 }
 function finishSeason(){
+  /* 幂等防护：读档重入 / 兜底路径不得二次结算同一赛季（旧版会重复记账、叠出两条同年记录）。 */
+  if(S._finDone===seasonLabel()){
+    /* 已结算过：直接把玩家送回赛季总结，而不是再算一遍 */
+    if(S._lastSeasonRes){UI={mode:'season',season:S._lastSeasonRes};save();renderSeason(S._lastSeasonRes);}
+    return;
+  }
   const champTeam=determineChampion(); /* 奖项页展示用：本赛季总冠军球队 */
   const res=computeSeason(S._playoffResult||null,S._wpc,S.po||null);
+  S._finDone=seasonLabel();S._lastSeasonRes=res;   /* 幂等锚点：本赛季正式结算完成 */
   /* 联盟数据收口：computeSeason 内部已经调过 simWorldStats（幂等），这里再确认一次，
    * 保证奖项页/赛季页读到的榜单就是本赛季这一份（也把冠军写进榜单） */
   const E=curBoard()||simWorldStats(res);
@@ -7101,7 +7108,7 @@ function computeNBAAwards(res){
   return uniq;
 }
 function nextYear(){
-  S.age++;S.stage='spring';S.stageDone=0;S.stageTotal=0;S.stageNeed=stageNeedFor();
+  S.age++;S.stage='spring';S.stageDone=0;S._finDone=null;S.stageTotal=0;S.stageNeed=stageNeedFor();
   S.form=clamp(Math.round((formNow()+60*2)/3),35,90);   /* 休赛期把状态拉回中位 */
   S.focus=null;                                          /* 新赛季重新排焦点战 */
   S._marchDone=false;S._noPlayoff=null;   /* 疯狂三月与季后赛标记按赛季重置 */
