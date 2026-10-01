@@ -811,6 +811,7 @@ document.addEventListener('click',function(e){
 let _toastT=null;
 function toast(msg){
   const t=$('#toast');
+  if(!t)return;
   if(_toastT)clearTimeout(_toastT); /* 连续提示时取消旧定时器，避免新提示被提前关闭 */
   t.textContent=msg;t.classList.add('on');
   _toastT=setTimeout(()=>{t.classList.remove('on');_toastT=null;},1500);
@@ -1091,7 +1092,20 @@ function saveJson(){
   if(saved)S.world=saved;
   return json;
 }
-function save(){capLog();const j=saveJson();if(!j)return;try{localStorage.setItem(CFG.SAVE_KEY,j);}catch(e){}}
+let _saveWarnN=0;
+function save(){
+  if(!S)return false;
+  capLog();
+  const j=saveJson();
+  if(!j)return false;
+  try{localStorage.setItem(CFG.SAVE_KEY,j);_saveWarnN=0;return true;}
+  catch(e){
+    _saveWarnN++;
+    try{console.warn('[存档] 写入失败：'+e);}catch(_){}
+    if(_saveWarnN===1||_saveWarnN%20===0){try{toast('⚠️ 存档没写进去：浏览器存储空间可能已满，请清理浏览器数据后重试');}catch(_){}}
+    return false;
+  }
+}
 function load(){
   try{
     const d=JSON.parse(localStorage.getItem(CFG.SAVE_KEY)||'null');
@@ -1101,7 +1115,7 @@ function load(){
     return d.S;
   }catch(e){return null;}
 }
-function eraseSave(){localStorage.removeItem(CFG.SAVE_KEY);}
+function eraseSave(){try{localStorage.removeItem(CFG.SAVE_KEY);return true;}catch(e){try{console.warn('[存档] 清除失败：'+e);}catch(_){}return false;}}
 /* 兼容修复：为旧存档补齐字段（幂等，可反复调用） */
 function ensureState(){
   S.flags=S.flags||{};S.used=S.used||{};S.log=S.log||[];S.honors=S.honors||[];
@@ -2116,7 +2130,8 @@ function paintBracket(){
     svg.appendChild(dot);
   });
 }
-window.addEventListener('resize',()=>{if(document.getElementById('bktSvg'))setTimeout(paintBracket,80);});
+let _rvT=null;
+window.addEventListener('resize',()=>{if(document.getElementById('bktSvg')){if(_rvT)clearTimeout(_rvT);_rvT=setTimeout(paintBracket,80);}});
 /* ═══════════ 04 效果系统（fx 注册表） ═══════════ */
 /* 每个选择的效果声明在 fx 对象里，applyFx 按注册顺序统一结算。
  * 结算顺序：属性成长 → 身价/地位/荣誉 → 归属(球队/联赛) → 球员世界 → 合同。
@@ -7969,7 +7984,7 @@ function showMoney(){
 function openOvl(html,width){const box=document.querySelector('#ovl .box');if(box){box.classList.remove('wide','mid');if(width==='wide')box.classList.add('wide');else if(width==='mid')box.classList.add('mid');}$('#ovlBody').innerHTML=html;$('#ovl').classList.add('on');$('#ovl').scrollTop=0; /* 每次打开从顶部开始 */
 }
 function closeOvl(){$('#ovl').classList.remove('on');}
-function saveNow(){save();toast('已存档 💾');}
+function saveNow(){toast(save()?'已存档 💾':'⚠️ 存档失败：浏览器存储空间不足');}
 
 /* ---- 10.1 主菜单 ---- */
 function renderMenu(){
@@ -8013,7 +8028,7 @@ function renderModeSelect(){
   </div>`;
 }
 function startWithMode(m){selMode=m;renderCreate();}
-function delSave(){if(confirm('确定清除存档？')){eraseSave();toast('存档已清除');S=null;UI=null;renderMenu();}}
+function delSave(){if(confirm('确定清除存档？')){if(eraseSave()===false){toast('⚠️ 清除失败：浏览器禁止了存储操作');return;}toast('存档已清除');S=null;UI=null;renderMenu();}}
 function continueGame(){
   try{
     const st=load();
