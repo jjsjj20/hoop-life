@@ -5914,6 +5914,9 @@ function simGame(game,plan){
   const swing=Math.round((box.pts-target)*1.05+(ast-astExp)*.9+(stl+blk-1)*1.4+R.float(-4,4));
   us=Math.max(58,us+swing);
   us=Math.max(us,box.pts+1);        /* 个人得分不可能超过全队（保住 box 自洽） */
+  /* 加时：篮球没有平局。罕见情况（比分相等）按实力势能决出加时胜者，分差 1-6 分。 */
+  let otUsed=false;
+  if(us===them){otUsed=true;const otGap=R.int(1,6);if(R.chance(clamp(pw,.15,.85)))us+=otGap;else them+=otGap;}
   const margin2=us-them,win2=margin2>0;
   const pm=clamp(Math.round(margin2*.6+(box.pts-target)*.25+R.float(-5,5)),-30,30);
   const clutch=(Math.abs(margin2)<=5)&&(plan==='score'||(SK.clutch||60)>=78);
@@ -5927,6 +5930,7 @@ function simGame(game,plan){
   const q=wq.map(w=>Math.round(box.pts*w/wsum));
   let bestQ=0;q.forEach((v,i)=>{if(v>q[bestQ])bestQ=i;});
   const narr=[];
+  if(otUsed)narr.push('双方鏖战至加时，胜负到最后 30 秒才分出');
   const QN=['第一节','第二节','第三节','第四节'];
   if(q[bestQ]>=Math.max(6,Math.round(box.pts*.35)))narr.push(`${QN[bestQ]}他手感发烫，单节砍下 ${q[bestQ]} 分`);
   if(box.three>=4)narr.push(`外线 ${box.tpa} 投 ${box.three} 中，对面被迫把防线拉出来`);
@@ -8753,7 +8757,18 @@ AI.test=function(){
  });
 };
 AI.clearCache=function(){try{localStorage.removeItem('hoop_ai_cache_v1');if(typeof toast==='function')toast('已清空 AI 缓存 🧹');}catch(e){}};
-(function(){try{const st=document.createElement('style');st.textContent=AI_CSS;document.head.appendChild(st);}catch(e){}AI.load();const _rg=renderGame;renderGame=function(){_rg();try{AI.mount();}catch(e){}};try{window.renderGame=renderGame;}catch(e){}})();
+(function(){
+ try{const st=document.createElement('style');st.textContent=AI_CSS;document.head.appendChild(st);}catch(e){}
+ AI.load();
+ /* 渲染入口不止 renderGame：choose() 直接调 renderResult、awardsNext() 直接调 renderSeason，
+  * 所以要包住每个渲染函数本身，保证任何渲染路径结束都会挂载 AI 槽位。 */
+ const _wrap=function(fn){if(typeof fn!=='function')return fn;return function(){fn.apply(this,arguments);try{AI.mount();}catch(e){}};};
+ try{renderResult=_wrap(renderResult);}catch(e){}
+ try{renderSeason=_wrap(renderSeason);}catch(e){}
+ try{renderAwards=_wrap(renderAwards);}catch(e){}
+ try{renderGame=_wrap(renderGame);}catch(e){}
+ try{window.renderGame=renderGame;}catch(e){}
+})();
 
 
 renderMenu();
