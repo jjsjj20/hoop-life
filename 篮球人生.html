@@ -1503,8 +1503,8 @@ function worldTick(){
       const a=list[ia],b=list[ib];
       if(!a||!b||a.t===b.t)continue;
       const ta=a.t;a.t=b.t;b.t=ta;
-      if(a.t===myTeamName())news.push(a.n+' 被交易至球队');
-      if(b.t===myTeamName())news.push(b.n+' 被交易至球队');
+      if(a.t===myTeamName())news.push(a.n+' 被交易至'+myTeamName());
+      if(b.t===myTeamName())news.push(b.n+' 被交易至'+myTeamName());
     }
   }
   fixRosterAll();   /* 退役留下的空位由新秀顶上（每队每年约 1 人），联盟不会越打越空 */
@@ -6665,7 +6665,7 @@ function computeSeason(pr,wpcIn,po){
   }
   if(o>=78&&S.age>=18&&S.age<=35&&!S.honors.some(h=>h.t.includes('中国男篮国手'))&&R.chance(.5))H.push('中国男篮国手');
   if(o>=85&&R.chance(.2))H.push(R.chance(.5)?'男篮世界杯八强':'亚洲杯冠军');
-  [...new Set(H)].forEach(h=>{S.honors.push({y,t:h});S.log.push({y,t:h});});
+  [...new Set(H)].forEach(h=>addHonor(h));
   S.career.seasons++;S.career.pts+=ppg;S.career.reb+=rpg;S.career.ast+=apg;
   S.career.stl=(S.career.stl||0)+spg;S.career.blk=(S.career.blk||0)+bpg;
   /* 生涯命中率三围：把本赛季的出手/命中累加（成就与档案里的"生涯总量"读的是同一份数据） */
@@ -6719,6 +6719,8 @@ const HONOR_CFG={
     allStar:'',champ:'NCAA冠军',fmvp:'',mip:'',titles:{},allStarN:0}
 };
 function honorCfg(){return HONOR_CFG[S.league]||HONOR_CFG['青训'];}
+/* 荣誉写入去重：同一赛季同一荣誉只记一次（NBA 结算链路上有两处写入点，避免重复） */
+function addHonor(t){const y=seasonLabel();if(!S.honors.some(h=>h.y===y&&h.t===t)){S.honors.push({y:y,t:t});S.log.push({y:y,t:t});}}
 /* 名字 → 稳定的技能画像：同一个 NPC 每年拿到的三分/终结倾向不会跳来跳去 */
 function strHash(s){let h=2166136261;const t=String(s||'');for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0);}
 function npcSkills(p){
@@ -6774,12 +6776,14 @@ let NPC_CAL={lg:null,map:null};
 /* 把球队的场均得分/篮板/助攻/抢断/盖帽按权重分摊到每个人身上（玩家占掉的那一份先扣掉） */
 function calibrateNpc(lg,myPpg){
   const base=TEAM_PACE[lg]||TEAM_PACE.nba;
-  const vac=clamp(myPpg||0,0,base.p*.5);      /* 玩家自己的产量也从球队总产量里出 */
-  const P={p:base.p-vac,r:base.r-vac*.35,a:base.a-vac*.22,s:base.s,b:base.b};
+  const vac=clamp(myPpg||0,0,base.p*.5);      /* 玩家产量只从他所在球队的预算里扣 */
+  const myTmKey=(typeof myTeamName==='function')?myTeamName():null;
   const map=new Map(),byTm={};
   (S.world[lg]||[]).forEach(p=>{(byTm[p.t]=byTm[p.t]||[]).push(p);});
   Object.keys(byTm).forEach(tm=>{
     const rs=byTm[tm];
+    const vt=(myTmKey&&tm===myTmKey)?vac:0;   /* 其余球队不扣：每队各自守恒（球员场均加起来 = 球队场均） */
+    const P={p:base.p-vt,r:base.r-vt*.35,a:base.a-vt*.22,s:base.s,b:base.b};
     /* 权重 = 出场时间^minExp × 位置权重 × (能力/70)^oExp
      * 三个幂次一起决定"产量集中度"：minExp 让替补断崖、oExp 让天赋项（抢断/盖帽）集中在少数人身上 */
     const W=(c,x)=>{
@@ -7078,7 +7082,7 @@ function computeNBAAwards(res){
     H.push('NBA进步最快球员');S.flags.gotMIP=true;
   }
   const uniq=[...new Set(H)];
-  uniq.forEach(t=>{S.honors.push({y:seasonLabel(),t});S.log.push({y:seasonLabel(),t});});
+  uniq.forEach(addHonor);
   return uniq;
 }
 function nextYear(){
@@ -7092,6 +7096,11 @@ function nextYear(){
     S.injury.from=0;S.injury.len=S.injury.until;   /* 计入新赛季：从第 0 场开始算缺阵 */
   }
   S.camp=null;                            /* 上一季的训练营加成到期（秋天会重新选） */
+  /* 首发身份随能力重评：打出来了就该进首发（否则巨星会被错发「最佳第六人」） */
+  if(S.starter!==true&&S.skills&&(S.league==='NBA'||S.league==='CBA'||S.league==='欧洲')){
+    const stTh=S.league==='NBA'?78:(S.league==='CBA'?68:66);
+    if(starterScore()>=stTh)S.starter=true;
+  }
   worldTick();
   /* 世界推进完立刻接上赛季数据（worldTick 后挂 simWorldStats）：
    * 人才成长/退役/交易发生之后，联盟榜单才反映的是"这一批人"的产出。
