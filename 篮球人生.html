@@ -6544,9 +6544,11 @@ function seasonEnd(){
 }
 function finishSeason(){
   /* 幂等防护：读档重入 / 兜底路径不得二次结算同一赛季（旧版会重复记账、叠出两条同年记录）。 */
-  if(S._finDone===seasonLabel()){
-    /* 已结算过：直接把玩家送回赛季总结，而不是再算一遍 */
+  const _settled=(S._finDone===seasonLabel())||((((S.history||[]).slice(-1)[0])||{}).y===seasonLabel());   /* 老存档兜底：最后一条生涯记录已是本赛季 → 必定结算过 */
+  if(_settled){
+    /* 已结算过：送回赛季总结（无缓存记录时直接推进到下一季），绝不二次记账 */
     if(S._lastSeasonRes){UI={mode:'season',season:S._lastSeasonRes};save();renderSeason(S._lastSeasonRes);}
+    else{nextYear();}
     return;
   }
   const champTeam=determineChampion(); /* 奖项页展示用：本赛季总冠军球队 */
