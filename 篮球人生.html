@@ -679,7 +679,7 @@ function audioCtx(){
     _ac=new C();
     _master=_ac.createGain();
     _master.gain.value=SFX_MASTER;      /* 总音量：各音效自己的 g 是相对值 */
-    try{const comp=_ac.createDynamicsCompressor();comp.threshold.value=-6;comp.knee.value=8;comp.ratio.value=4;comp.attack.value=.003;comp.release.value=.24;_master.connect(comp);comp.connect(_ac.destination);}catch(e){_master.connect(_ac.destination);}
+    try{const pre=_ac.createGain();pre.gain.value=1/3.4;const ws=_ac.createWaveShaper(),cv=new Float32Array(4096);for(let i=0;i<4096;i++){const t=(i/4095)*2-1;cv[i]=.95*Math.tanh(3.58*t);}ws.curve=cv;ws.oversample='2x';_master.connect(pre);pre.connect(ws);ws.connect(_ac.destination);}catch(e){_master.connect(_ac.destination);}
   }catch(e){_ac=null;_master=null;}
   return _ac;
 }
