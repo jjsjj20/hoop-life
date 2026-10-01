@@ -601,7 +601,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,ch=>({'&':'&amp;'
 function paras(t){return (t||'').split('\n\n').map(p=>'<p>'+esc(p).replace(/\n/g,'<br>')+'</p>').join('');}
 /* ═══════════ 音效：WebAudio 现场合成，不引任何音频文件 ═══════════
  * 设计：
- *   · 每条音效是一串「音符」[频率, 时长, 延迟]，用振荡器 + 指数衰减包络合成；
+ *   · 每条音效是一串「音符」[频率, 时长, 延迟, 波形, 微分音]，用振荡器 + 指数衰减包络合成；
  *   · 浏览器自动播放策略要求首次用户交互后才能出声 → 首次 pointerdown/click/keydown/touchstart 惰性初始化；
  *   · AudioContext 若是 suspended（自动播放策略、切标签页、系统休眠、手机静音拨片），
  *     先 resume() 再排音——resume 是异步的，所以音要等它落地再排，否则"第一次交互听不到声音"；
@@ -609,19 +609,40 @@ function paras(t){return (t||'').split('\n\n').map(p=>'<p>'+esc(p).replace(/\n/g
  *   · 任何环节不可用（无 AudioContext / 静音 / 播放失败）都静默降级，绝不阻断游戏；
  *   · 开关状态存在 localStorage；工具条有 🔊 开关，档案面板里有「音效自检」能看真实状态并试听。 */
 const SFX_KEY='hoop.sfx.v1',SFX_MASTER=2.4,CUE_ATTACK=.008;
+/* ── 音色库 v3.6：21 种音色（10 升级 + 11 新增）──────────────────────────
+ * 音符格式 [频率,时长,延迟,波形?,微分音?]，缺省波形取 cue.t；微分音单位音分（加一层微偏振荡器增厚）。
+ * nz 噪声层 [时长,延迟,带通中心Hz,音量,Q?,起音?]；vb 颤音 [速率Hz,深度Hz]；lp 低通 Hz（数字越小越闷）。
+ * 新增音色：msg 消息 / achieve 成就 / sign 签约 / swish 空心入网 / rim 打铁 / dribble 运球 / refwhistle 裁判哨
+ *           / buzzer 蜂鸣器 / fanfare 夺冠号角 / draft 选秀 / injury 伤病闷响。 */
 const SFX_LIB={
-  click:{n:[[680,.06,0]],t:'triangle',g:.075},                       /* 选项/按钮轻点 */
-  pick:{n:[[520,.07,0],[820,.12,.05]],t:'triangle',g:.09},           /* 选定 */
-  up:{n:[[620,.08,0],[900,.13,.06]],t:'sine',g:.085},                /* 数据上涨 */
-  down:{n:[[420,.10,0],[300,.15,.07]],t:'sine',g:.08},               /* 数据下滑 */
-  coin:{n:[[988,.07,0],[1319,.13,.05]],t:'square',g:.055},           /* 进账 */
-  win:{n:[[523,.14,0],[659,.14,.10],[784,.18,.20],[1046,.28,.32]],t:'triangle',g:.105},  /* 系列赛胜出 */
-  lose:{n:[[392,.22,0],[311,.30,.16],[247,.50,.34]],t:'sine',g:.09}, /* 系列赛失利 */
-  whistle:{n:[[1180,.10,0],[1180,.10,.12]],t:'square',g:.05},        /* 终场哨：赛季结束 */
-  trophy:{n:[[784,.11,0],[988,.11,.09],[1175,.15,.18],[1568,.38,.28]],t:'triangle',g:.10}, /* 颁奖 */
-  curtain:{n:[[300,.60,0],[226,.90,.28]],t:'sine',g:.085}            /* 落幕 */
+  /* ── 界面反馈 ── */
+  click:{n:[[660,.05,0,'triangle',10]],g:.07,lp:3600},                 /* 按钮轻点（更短更软） */
+  pick:{n:[[540,.06,0,'triangle',9],[860,.11,.045]],g:.09},            /* 选定 */
+  msg:{n:[[880,.08,0,'sine'],[1174,.16,.07,'sine',6]],g:.075},         /* 消息提示：AI 出稿 / 报纸出刊 */
+  achieve:{n:[[1046,.07,0,'triangle'],[1318,.07,.055],[1568,.11,.11],[2093,.24,.18]],g:.085},  /* 成就解锁 / 里程碑 */
+  /* ── 数值与财务 ── */
+  up:{n:[[660,.07,0,'sine'],[990,.12,.05],[1320,.1,.11]],g:.08},       /* 数据上涨（加一粒高音闪点） */
+  down:{n:[[400,.09,0,'sine'],[300,.16,.06]],g:.075,lp:2400},          /* 数据下滑（更闷更柔） */
+  coin:{n:[[988,.06,0,'square',7],[1319,.13,.045]],g:.055,lp:5200},    /* 进账 */
+  sign:{n:[[180,.07,0,'square'],[988,.06,.09,'square'],[1319,.12,.12,'square']],g:.06},  /* 签约：落笔 + 进账 */
+  /* ── 球场现场 ── */
+  swish:{nz:[[.16,0,2100,.05,1.4],[.12,.03,1200,.028,1]],n:[[1150,.05,0,'sine']],g:.05},    /* 空心入网 */
+  rim:{n:[[416,.08,0,'square',16],[622,.16,.012,'triangle']],nz:[[.03,0,2600,.028]],g:.055,lp:3600},  /* 打铁 */
+  dribble:{n:[[150,.08,0,'sine'],[92,.11,.055,'sine']],nz:[[.02,0,2600,.024]],g:.09},       /* 运球 */
+  refwhistle:{n:[[1820,.09,0,'square'],[1820,.09,.13,'square']],vb:[42,90],nz:[[.09,0,3400,.02,1.2],[.09,.13,3400,.02,1.2]],g:.045},  /* 裁判短哨（双短声） */
+  whistle:{n:[[1720,.12,0,'square'],[1720,.12,.16,'square']],vb:[40,80],nz:[[.12,0,3300,.028,1.2],[.12,.16,3300,.028,1.2]],g:.05},   /* 终场哨（高频震颤 + 气声） */
+  buzzer:{n:[[233,.65,0,'square',12],[116.5,.65,0,'square']],g:.05,lp:2600},                /* 终场蜂鸣器 */
+  /* ── 比赛结果 ── */
+  win:{n:[[523,.13,0,'triangle',9],[659,.13,.09],[784,.17,.18],[1046,.3,.3],[1318,.2,.46]],nz:[[.9,0,1000,.03,.8,.3]],g:.095},  /* 系列赛胜出 + 欢呼 */
+  lose:{n:[[392,.2,0,'sine'],[311,.28,.15],[247,.46,.32]],g:.085,lp:2000},                  /* 系列赛失利 */
+  fanfare:{n:[[392,.42,0,'triangle',4],[523,.12,0],[659,.12,.1],[784,.12,.2],[1046,.16,.3],[1568,.55,.42]],nz:[[1.6,.3,1100,.05,.8,.5]],g:.085},  /* 夺冠：号角 + 全场欢呼 */
+  trophy:{n:[[784,.1,0,'triangle',10],[988,.1,.085],[1175,.14,.17],[1568,.42,.26]],g:.095}, /* 颁奖 */
+  curtain:{n:[[300,.55,0,'sine'],[226,.9,.26]],g:.08,lp:1800},                              /* 落幕 */
+  /* ── 生涯大事 ── */
+  draft:{n:[[392,.07,0,'triangle'],[494,.07,.06],[587,.07,.12],[784,.34,.18],[1046,.2,.34]],g:.09},  /* 选秀被选中 */
+  injury:{n:[[150,.13,0,'sine'],[98,.3,.09,'sine']],nz:[[.05,0,420,.045]],g:.09,lp:900}     /* 受伤闷响 */
 };
-let _ac=null,_master=null,_sfxOn=null;
+let _ac=null,_master=null,_sfxOn=null,_nb=null;
 function sfxEnabled(){
   if(_sfxOn==null){try{_sfxOn=(localStorage.getItem(SFX_KEY)!=='0');}catch(e){_sfxOn=true;}}
   return _sfxOn;
@@ -659,18 +680,52 @@ function audioCtx(){
   return _ac;
 }
 /* 真的把音符排进时间轴；ac 必须是 running 状态才有意义 */
+function _noiseFor(ac){
+  if(_nb&&_nb.ac===ac)return _nb;
+  try{
+    const sr=ac.sampleRate||44100,len=Math.max(1,Math.floor(sr*1.2));
+    const b=ac.createBuffer(1,len,sr),d=b.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+    _nb=b;_nb.ac=ac;
+  }catch(e){_nb=null;}
+  return _nb;
+}
 function playCue(ac,cue){
   const t0=ac.currentTime+.012;
-  cue.n.forEach(n=>{
-    const o=ac.createOscillator(),g=ac.createGain();
-    o.type=cue.t||'sine';o.frequency.value=n[0];
-    const s=t0+(n[2]||0);
-    g.gain.setValueAtTime(0,s);
-    g.gain.linearRampToValueAtTime((cue.g||.08),s+CUE_ATTACK);
-    g.gain.exponentialRampToValueAtTime(.0001,s+n[1]);
-    o.connect(g);g.connect(_master||ac.destination);
-    o.start(s);o.stop(s+n[1]+.04);
+  const atk=cue.a||CUE_ATTACK;
+  let bus=_master||ac.destination;
+  if(cue.lp){try{const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=cue.lp;f.connect(bus);bus=f;}catch(e){}}
+  (cue.n||[]).forEach(n=>{
+    const f0=n[0];
+    if(!f0||f0<20)return;
+    const dur=n[1]||.12,s=t0+(n[2]||0),wave=n[3]||cue.t||'sine';
+    const det=(n.length>4&&n[4]!=null)?n[4]:(cue.dt||0);
+    const mk=(freq,gn)=>{try{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type=wave;o.frequency.setValueAtTime(freq,s);
+      g.gain.setValueAtTime(0,s);
+      g.gain.linearRampToValueAtTime(gn,s+atk);
+      g.gain.exponentialRampToValueAtTime(.0001,s+dur);
+      o.connect(g);g.connect(bus);
+      o.start(s);o.stop(s+dur+.05);
+      if(cue.vb){const lo=ac.createOscillator(),lg=ac.createGain();lo.frequency.value=cue.vb[0];lg.gain.value=cue.vb[1];lo.connect(lg);lg.connect(o.frequency);lo.start(s);lo.stop(s+dur+.05);}
+    }catch(e){}};
+    mk(f0,cue.g||.08);
+    if(det)mk(f0*Math.pow(2,det/1200),(cue.g||.08)*.45);
   });
+  (cue.nz||[]).forEach(z=>{try{
+    const buf=_noiseFor(ac);
+    if(!buf)return;
+    const dur=z[0]||.15,s=t0+(z[1]||0);
+    const src=ac.createBufferSource();src.buffer=buf;src.loop=true;
+    const flt=ac.createBiquadFilter();flt.type='bandpass';flt.frequency.value=z[2]||1200;flt.Q.value=(z[4]!=null?z[4]:1);
+    const g=ac.createGain();
+    g.gain.setValueAtTime(0,s);
+    g.gain.linearRampToValueAtTime(z[3]||.05,s+(z[5]!=null?z[5]:atk));
+    g.gain.exponentialRampToValueAtTime(.0001,s+dur);
+    src.connect(flt);flt.connect(g);g.connect(bus);
+    src.start(s);src.stop(s+dur+.06);
+  }catch(e){}});
 }
 function sfx(name){
   const cue=SFX_LIB[name];
@@ -687,8 +742,8 @@ function sfxTest(){
   if(!sfxEnabled()){toast('音效是关闭状态，先点「🔊 音效」或下面的按钮打开');return sfxState();}
   if(sfxState()==='unsupported'){toast('这个浏览器不支持 WebAudio，听不到音效');return 'unsupported';}
   const st=sfxState();
-  ['click','pick','up','coin','win','trophy'].forEach((n,i)=>setTimeout(()=>sfx(n),i*260));
-  toast('音效自检（'+st+'）：放 6 声，若听不到请检查系统/浏览器音量或换浏览器');
+  ['click','pick','msg','coin','swish','whistle','trophy','fanfare'].forEach((n,i)=>setTimeout(()=>sfx(n),i*240));
+  toast('音效自检（'+st+'）：放 8 声，若听不到请检查系统/浏览器音量或换浏览器');
   return st;
 }
 /* 首次交互解锁音频（浏览器策略要求），失败也不影响任何流程 */
@@ -5439,7 +5494,7 @@ function doDraft(kind,changes){
     /* 「登陆CBA」荣誉只在真正被选中时发放：以前挂在选项 fx 上，荣誉先于 rollDraft 结算，
      * 落选者的荣誉墙会永远挂着一条「登陆CBA」（假荣誉） */
     if(!S.honors.some(h=>h.t==='登陆CBA')){S.honors.push({y:seasonLabel(),t:'登陆CBA'});S.log.push({y:seasonLabel(),t:'登陆CBA'});}
-    changes.push('CBA选秀被 '+S.team+' 选中');S.log.push({y:seasonLabel(),t:'CBA选秀：'+S.team});
+    changes.push('CBA选秀被 '+S.team+' 选中');S.log.push({y:seasonLabel(),t:'CBA选秀：'+S.team});setTimeout(function(){try{sfx('draft');}catch(e){}},240);
   }else{
     const o=ovr();
     /* 进入NBA难度：综评不足65完全无望，此后概率随综评快速攀升 */
@@ -5450,7 +5505,7 @@ function doDraft(kind,changes){
       if(!S.played.includes(S.team))S.played.push(S.team);
       setContract(S.team,'NBA',4,'新秀合同');S.starter=starterScore()>=78;
       ensureWorld();
-      changes.push('被 '+S.team+' 选中，登陆NBA！');S.log.push({y:seasonLabel(),t:'NBA选秀：'+S.team});
+      changes.push('被 '+S.team+' 选中，登陆NBA！');S.log.push({y:seasonLabel(),t:'NBA选秀：'+S.team});setTimeout(function(){try{sfx('draft');}catch(e){}},240);
     }else{S.flags.undrafted=true;changes.push('遗憾落选…');S.log.push({y:seasonLabel(),t:'NBA选秀落选'});}
   }
 }
@@ -7263,7 +7318,7 @@ function renderOffers(offers){
   box.innerHTML=`${sceneArt({title:'执教 谈判 合同',scene:''})}<div class="etitle">🎓 执教生涯开始</div>
   <div class="scene"><p>脱下球衣的第二天，${esc(S.name)}的西装已经挂在衣柜里。经纪人的电话比想象中来得更快——三份主教练合同摆上桌面。执教评级：战术${S.coach.tac} · 激励${S.coach.mot} · 眼光${S.coach.eye}。</p></div><div id="chs"></div>`;
   const c=$('#chs');
-  offers.forEach((o,i)=>{const b=document.createElement('button');b.className='ch';b.innerHTML=`执教 ${esc(o[0])}（${o.league} · 实力${'★'.repeat(clamp(o[1]-4,1,5))}）`;b.onclick=()=>{sfx('pick');S.coach.team=o[0];S.coach.str=o[1];S.coach.league=o.league;toast('新官上任！');UI={mode:'coachEv',ev:coachEvent()};save();renderGame();};c.appendChild(b);});
+  offers.forEach((o,i)=>{const b=document.createElement('button');b.className='ch';b.innerHTML=`执教 ${esc(o[0])}（${o.league} · 实力${'★'.repeat(clamp(o[1]-4,1,5))}）`;b.onclick=()=>{sfx('pick');setTimeout(function(){try{sfx('sign');}catch(e){}},220);S.coach.team=o[0];S.coach.str=o[1];S.coach.league=o.league;toast('新官上任！');UI={mode:'coachEv',ev:coachEvent()};save();renderGame();};c.appendChild(b);});
 }
 const COACH_POOL=[
   {id:'c1',title:'训练营方案',scene:()=>`执教${S.coach.team}的第一个训练营。球员们对这位新主帅充满好奇。训练计划怎么定？`,choices:[
@@ -7565,7 +7620,7 @@ function achNotify(list){
   if(!box)return;
   box.innerHTML=`<b>🏆 成就解锁 ${list.length} 项</b><span>${list.map(a=>a.n).join(' · ')}</span>`;
   box.classList.add('on');
-  if(sfx)sfx('trophy');
+  if(sfx)sfx('achieve');
   if(achNotify._t)clearTimeout(achNotify._t);
   achNotify._t=setTimeout(()=>box.classList.remove('on'),4200);
 }
@@ -8507,10 +8562,14 @@ function renderGame(){
 function showEvent(ev){
   if(!ev||!ev.choices||!ev.choices.length){ev=safeEvent();}
   codexEv(ev);   /* 图鉴：每翻开一页剧情就登记一次（含特定事件与剧情线段落） */
-  /* 剧情节点自带音效：落幕用低音、夺冠用号角、伤病用闷响 */
+  /* 剧情节点自带音效：落幕低音 / 夺冠号角+欢呼 / 伤病闷响 / 里程碑闪音 / 训练营运球 / 焦点战开场哨 */
   if(ev.id==='pexit')sfx('curtain');
-  else if(ev.id==='pchamp')sfx('trophy');
-  else if(ev.id==='inj_sev')sfx('lose');
+  else if(ev.id==='pchamp'||ev.id==='march_champ')sfx('fanfare');
+  else if(ev.id==='march_exit')sfx('buzzer');
+  else if(String(ev.id||'').indexOf('inj')===0&&ev.id!=='inj_ret')sfx('injury');
+  else if(String(ev.id||'').indexOf('ms_')===0)sfx('achieve');
+  else if(String(ev.id||'').indexOf('camp_')===0)sfx('dribble');
+  else if(ev.game&&!ev.game.res&&!ev.seriesStage)sfx('refwhistle');
   const box=$('#stage');
   box.innerHTML=`${sceneArt(ev)}<div class="etitle">${esc(stageTitle(ev.title))}</div><div class="scene">${paras(ev.scene)}</div><div id="chs"></div>`;
   const c=$('#chs');
@@ -8550,7 +8609,7 @@ function renderResult(ev,i,changes){
     else if(ss.l>=4){if(!ev._sfxDone){ev._sfxDone=1;sfx('lose');}voiced=true;}
     else{sfx((ev.nodeWins||0)>=(ev.nodeLosses||0)?'up':'down');voiced=true;}
   }else if(ev.game&&ev.game.res){ /* 单场焦点战：赢了上行、输了下滑（别让输球跟涨数据一样响） */
-    sfx(ev.game.res.win?'up':'down');voiced=true;
+    sfx(ev.game.res.win?'swish':'rim');voiced=true;
   }else if(ev.round&&!ev.seriesStage&&S.playoff&&S.playoff.lastWin!==undefined){
     po=S.playoff.lastWin?'<div class="po-win">🏀 系列赛胜出！晋级下一轮</div>':'<div class="po-lose">🏀 系列赛失利，赛季结束</div>';
     sfx(S.playoff.lastWin?'win':'lose');   /* 系列赛结果：胜出/失利各有一声 */
@@ -8611,7 +8670,7 @@ function renderAwards(awards,res){
 function awardsNext(){const res=UI.season;UI={mode:'season',season:res};save();renderSeason(res);}
 function renderSeason(res){
   const box=$('#stage');
-  sfx(res.champ?'trophy':'whistle');   /* 赛季收官：夺冠是号角，其余是终场哨 */
+  sfx(res.champ?'fanfare':'whistle');   /* 赛季收官：夺冠是号角，其余是终场哨 */
   const hons=medalHTML(res.honors,'本赛季无个人荣誉');
   let poRows='';
   if(res.playoffStats){
@@ -8869,6 +8928,7 @@ AI.go=function(el){
   AI.cSet(k2,txt);
   const box=document.getElementById('aiBox');
   if(box)box.innerHTML=AI.boxHTML(kind,k2);
+  try{sfx('msg');}catch(e){}
   if(typeof toast==='function')toast('AI 点评已生成 ✨');
  }).catch(function(e){
   AI.busy=false;
@@ -8981,6 +9041,7 @@ AI.newsGo=function(el){
   AI.cSet(b.key,txt);
   const wrap=document.getElementById('npWrap');
   if(wrap)wrap.innerHTML=AI.newsMast()+AI.newsHTML(txt,b.key);
+  try{sfx('msg');}catch(e){}
   if(typeof toast==='function')toast('本期报纸已出刊 📰');
  }).catch(function(e){
   AI.busy=false;
