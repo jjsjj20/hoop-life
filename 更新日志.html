@@ -53,13 +53,14 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.5</b></span><span class="badge">文件 <b>1,716,927</b> 字符</span><span class="badge">更新 <b>12</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
-<nav class="toc"><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.6</b></span><span class="badge">文件 <b>1,717,841</b> 字符</span><span class="badge">更新 <b>13</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
+<nav class="toc"><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header>
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.6</b></td><td>稳定性优化：存档自动备份与一键恢复 · NCAA 修正 · 代码梳理</td><td><code>960edf82</code></td><td>+914</td></tr>
 <tr><td><b>v4.5</b></td><td>难度调整：NBA / CBA 全面加压（胜率 · 季后赛 · 奖项 · 个人产量）</td><td><code>b262c4c1</code></td><td>+833</td></tr>
 <tr><td><b>v4.4</b></td><td>球队队徽：68 支球队风格化队徽（豆包生成 · 图集切分）</td><td><code>34c999c2</code></td><td>+406,893</td></tr>
 <tr><td><b>v4.3</b></td><td>成就图标：48 个成就配 18 枚专属徽章（豆包生成 · 图集切分）</td><td><code>0505b722</code></td><td>+72,650</td></tr>
@@ -73,6 +74,22 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v46">🛟 v4.6 · 稳定性优化：存档安全网 + 细节修复 <span class="sha">960edf82</span></h2>
+<div class="card">
+<h3>更新内容</h3>
+<ul>
+<li><b>存档自动备份</b>：每次写入前，上一份存档自动保留到 <code>.autobak</code> 安全位（单名额滚动）；</li>
+<li><b>一键恢复</b>：主菜单在存档缺失/损坏时自动显示「♻ 恢复自动备份」按钮——误清除、写入异常均可一键找回；</li>
+<li><b>NCAA 防守强度修正</b>：NPC 数据折算时 NCAA 此前误用「青训」强度（5.0），现修正为 5.5（2 处）；</li>
+<li><b>代码梳理</b>：附加赛胜率三元表达式加括号消歧（<code>'cba'?.46</code> → <code>('cba')?.46</code>）。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>全文档脚本语法编译通过（前后双基线比对）；</li>
+<li>实机全流程测试：save() 写备份 ✓ → 清除后备份保留 ✓ → 菜单显示恢复入口 ✓ → 一键恢复后存档与清除前完全一致 ✓；</li>
+<li>玩家存档零改动（本次仅新增防护与修正，不影响任何数值）。</li>
+</ul>
+</div>
 <h2 id="v45">⚔️ v4.5 · NBA / CBA 难度加压（全面收紧） <span class="sha">b262c4c1</span></h2>
 <div class="card">
 <h3>调整内容（全部集中在 LG_HARD 配置，可一键调参）</h3>
