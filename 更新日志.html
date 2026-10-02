@@ -53,13 +53,14 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.2</b></span><span class="badge">文件 <b>1,236,574</b> 字符</span><span class="badge">更新 <b>9</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
-<nav class="toc"><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.3</b></span><span class="badge">文件 <b>1,309,224</b> 字符</span><span class="badge">更新 <b>10</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
+<nav class="toc"><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header>
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.3</b></td><td>成就图标：48 个成就配 18 枚专属徽章（豆包生成 · 图集切分）</td><td><code>0505b722</code></td><td>+72,650</td></tr>
 <tr><td><b>v4.2</b></td><td>主菜单主视觉：球员通道实拍大图（豆包生成）</td><td><code>1ccd5b27</code></td><td>+99,811</td></tr>
 <tr><td><b>v4.1</b></td><td>美术补齐：第二批 6 张场景横幅（更衣室/发布会/康复/谈判/雨夜/家）</td><td><code>49e0d589</code></td><td>+321,794</td></tr>
 <tr><td><b>v4.0</b></td><td>美术升级：4 张电影感场景横幅（豆包生成 · WebP 内嵌）</td><td><code>1fe26be4</code></td><td>+311,314</td></tr>
@@ -70,6 +71,23 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v43">🏅 v4.3 · 成就图标（48 个成就 × 18 枚徽章） <span class="sha">0505b722</span></h2>
+<div class="card">
+<h3>更新内容</h3>
+<ul>
+<li>豆包生成两套 3×3 徽章图集（金橙金属质感），切分为 <b>18 枚独立图标</b>（128×128 WebP，合计约 70KB）内嵌；</li>
+<li><b>48 个成就逐一映射</b>为合适图标：篮球 / 日历 / 盾牌 / 奖杯 / 王冠 / 星星 / 奖章 / 火焰 / 闪电 / 金币 / 折线图 / 口哨 / 球衣 / 旗帜 / 地球 / 火箭 / 书本 / 桂冠；</li>
+<li><b>状态区分</b>：未解锁显示灰度化图标（保留神秘感），已解锁显示全彩 + 金色描边光晕；</li>
+<li>图标位从 30px 扩大到 34px；emoji 兜底逻辑保留（万一图标缺失自动回退）。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>面板实机测试：<b>48/48 行全部挂载图标</b>（128×128 全部加载成功）；</li>
+<li>图标唯一性：18 种不同长度 + 18 种不同校验和（全部互不相同）；</li>
+<li>映射抽查：初登赛场→篮球、总冠军→奖杯、登陆NBA→地球；</li>
+<li>已解锁行正确显示全彩图标 + 金色光晕；控制台零错误；存档 0 改动。</li>
+</ul>
+</div>
 <h2 id="v42">🖼 v4.2 · 主菜单主视觉 <span class="sha">1ccd5b27</span></h2>
 <div class="card">
 <h3>更新内容</h3>
