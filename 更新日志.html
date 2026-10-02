@@ -53,13 +53,14 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v3.9.1</b></span><span class="badge">文件 <b>503,655</b> 字符</span><span class="badge">更新 <b>6</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
-<nav class="toc"><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.0</b></span><span class="badge">文件 <b>814,969</b> 字符</span><span class="badge">更新 <b>7</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
+<nav class="toc"><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header>
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.0</b></td><td>美术升级：4 张电影感场景横幅（豆包生成 · WebP 内嵌）</td><td><code>1fe26be4</code></td><td>+311,314</td></tr>
 <tr><td><b>v3.9.1</b></td><td>开发者选项密码保护</td><td><code>fac8fdc</code></td><td>+122</td></tr>
 <tr><td><b>v3.9</b></td><td>六项 bug 修复（TS% / 联盟战绩 / 青训 / 浮点 / 时间线 / 开发者入口）</td><td><code>f879654</code></td><td>+783</td></tr>
 <tr><td><b>v3.8</b></td><td>代码加固：存档失败不再静默（6 处修复）</td><td><code>93fe4fd</code></td><td>+494</td></tr>
@@ -67,6 +68,27 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v40">🎨 v4.0 · 美术升级（场景横幅真图版） <span class="sha">1fe26be4</span></h2>
+<div class="card">
+<h3>更新内容</h3>
+<ul>
+<li>由豆包 AI 生成 <b>4 张电影感场景插画</b>，裁剪为 4:1 横幅、转 WebP 82% 质量后 Base64 内嵌（合计约 <b>304KB</b>，依旧单文件零依赖）：
+<ul>
+<li>🏀 <b>球馆之夜</b>（arena）—— 从球员通道望向灯光明亮的球场，橙色顶光洒在木地板上；</li>
+<li>🏋️ <b>训练馆晨光</b>（gym）—— 空荡训练馆，高窗光束与微尘；</li>
+<li>🔥 <b>季后赛红焰</b>（playoff）—— 山呼海啸的红色看台，炽热压迫；</li>
+<li>🏆 <b>冠军金雨</b>（champion）—— 金色纸屑与高举奖杯的剪影。</li>
+</ul></li>
+<li><code>sceneArt</code> 升级：有实拍氛围图的事件页显示真图（覆盖 arena / gym / playoff / champion / court 五个情绪键）；</li>
+<li>其余情绪（更衣室 / 发布会 / 伤病 / 谈判 / 深夜 / 家）继续走程序化 SVG 兜底，可后续按批补充。</li>
+</ul>
+<h3>技术细节</h3>
+<ul>
+<li>图片全部走 Base64 内嵌 + WebP 压缩（约 30~110KB/张）；</li>
+<li>图片分支与 SVG 分支共存：<code>photo</code> 存在则用 &lt;img&gt;，否则回退旧 SVG；</li>
+<li>文字标签与渐变遮罩保持原样。</li>
+</ul>
+</div>
 <h2 id="v391">🔒 v3.9.1 · 开发者选项密码保护 <span class="vid">密码版</span> <span class="sha">fac8fdc</span></h2>
 <div class="card">
 <h3>更新内容</h3>
