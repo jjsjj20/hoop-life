@@ -6048,7 +6048,10 @@ function shootLine(inp){
 }
 function pctText(v,d){return (Math.round((v||0)*1000)/10).toFixed(1)+'%';}
 /* 各联赛的平均防守强度（对手越强，命中率越低）：折算赛季命中率时当对手水平用 */
-const LEAGUE_DEF={NBA:7,CBA:6.5,'欧洲':6.5,NCAA:5.5,'青训':5};
+const LEAGUE_DEF={NBA:7.5,CBA:7,'欧洲':6.5,NCAA:5.5,'青训':5};
+/* v4.5 难度：NBA / CBA 加压（wpc=胜率下调｜po=季后赛每场强度｜pb=季后赛基线倍率｜pi=附加赛胜率｜mvp=NPC 奖项加成｜mul=个人产量系数） */
+const LG_HARD={NBA:{wpc:.05,po:.28,pb:.78,pi:.38,mvp:1.04,mul:.96},CBA:{wpc:.025,po:.14,pb:.9,pi:.46,mvp:1.02,mul:.98}};
+function lgHard(lgIn){let k=lgIn||((typeof S!=='undefined'&&S)?S.league:'');k=({nba:'NBA',cba:'CBA'})[k]||k;const h=LG_HARD[k]||{};return {wpc:h.wpc||0,po:h.po||0,pb:h.pb==null?1:h.pb,pi:h.pi==null?.5:h.pi,mvp:h.mvp==null?1:h.mvp,mul:h.mul==null?1:h.mul};}
 function leagueDefStr(lg){
   const v=LEAGUE_DEF[lg];
   if(v!=null)return v;
@@ -6082,7 +6085,7 @@ function simGame(game,plan){
   const min=clamp(Math.round((S.starter?32:22)+tsNum()*2+(S.age>=34?-2:0)+(game.imp>=3?2:0)+R.int(-4,4)),8,42);
   /* 球队比分：双方实力（含阵容/手感/主客场）+ 战术取向 */
   const myStr=(S.teamStr||6)+(ovr()-70)*.08+(form-60)*.02+(plan==='def'?.25:0)+(plan==='score'?.15:0)
-    +(game.playoff?((game.playoff.pmod||0)*60*(game.home?1:.5)):0);   /* 季后赛：主场 pmod 全额、客场减半 */
+    +(game.playoff?((game.playoff.pmod||0)*60*(game.home?1:.5)):0)-(game.playoff?lgHard().po:0);   /* 季后赛：主场 pmod 全额、客场减半；v4.5：NBA/CBA 每场加压 */
   const edge=(myStr-(game.oppStr||6))*1.5+(game.home?2.6:-2.6);
   let us=Math.round(pace+edge/2+R.float(-7,7)),them=Math.round(pace-edge/2+R.float(-7,7));
   if(plan==='def'){them=Math.round(them-3.5);us=Math.round(us-1.5);}
@@ -6227,7 +6230,7 @@ function focusWinDelta(){
 /* 没经过 seasonEnd 时的兜底胜率（与 seasonEnd 同公式，但不掷随机数） */
 function teamWpcNow(){
   if(S._wpc!=null)return S._wpc;
-  return clamp(.5+(S.teamStr-6)*.08+(ovr()-70)*.006,.2,.85);
+  return clamp(.5-lgHard().wpc+(S.teamStr-6)*.08+(ovr()-70)*.006,.2,.85);
 }
 /* 本队战绩的唯一口径：赛季页 / 排名表 / 履历 / 归档读的都是这里。
  *   wins = games ×（胜率 − 缺阵折算）+ 焦点战净胜场
@@ -6419,7 +6422,7 @@ function computeStandings(lg){
     if(t[0]===myTeamName()){
       /* 玩家球队：波动收窄（实力决定命运），并按 OVR / 教练水平加成 */
       const adj=S.role==='coach'?(S.coach.tac+S.coach.mot)/2-65:ovr()-70;
-      wpc=clamp(.38+(st-6.5)*.055+adj*.005+R.float(-.06,.06),.06,.95);
+      wpc=clamp(.38-lgHard(lg).wpc+(st-6.5)*.055+adj*.005+R.float(-.06,.06),.06,.95);
     }
     const wins=Math.round(games*wpc);
     return {team:t[0],str:Math.round(st*10)/10,wins,losses:games-wins};
@@ -6719,7 +6722,7 @@ function seasonEnd(){
   S._tendRS=tendOf(S.tend); /* 打法倾向快照：常规赛数据用它（季后赛期间的选择单独计入季后赛） */
   const o=ovr();
   const youth=S.league==='青训'||S.league==='NCAA';
-  const wpc=clamp(.5+(S.teamStr-6)*.08+(o-70)*.006+R.float(-.12,.12),.2,.85);
+  const wpc=clamp(.5-lgHard().wpc+(S.teamStr-6)*.08+(o-70)*.006+R.float(-.12,.12),.2,.85); /* v4.5：NBA/CBA 胜率下调 */
   S._wpc=wpc;
   /* 疯狂三月：NCAA 常规赛结束后进入 8 强单场淘汰（对阵图复用那一套渲染），打完再结算赛季 */
   if(S.league==='NCAA'&&!S._marchDone){
@@ -6741,12 +6744,12 @@ function seasonEnd(){
     if(q){
       S._noPlayoff=false;
       let pbase=clamp(.28+wpc*.52+(q.seed<=4?.05:q.seed>=10?-.04:0),.3,.82);
-      if(myLeagueKey()==='nba')pbase=clamp(pbase*.82,.22,.72); /* NBA 竞争最激烈，夺冠之路最难 */
+      if(myLeagueKey()==='nba')pbase=clamp(pbase*.78,.20,.70);else if(myLeagueKey()==='cba')pbase=clamp(pbase*.9,.26,.76); /* v4.5：NBA .82→.78（封顶 .70）、CBA 新增 .90：夺冠之路全面收紧 */
       S.playoff={rounds:0,base:pbase,seedInfo:q};
       S.bracket=buildBracket(q,rows); /* 生成季后赛对阵（按种子） */
       S.stage='playoffs'; /* 季后赛独立于四季 */
       if(q.playin){
-        S.playoff.base=(myLeagueKey()==='nba')?.42:.5; /* 附加赛一场定胜负：基线五成，NBA 略低 */
+        S.playoff.base=(myLeagueKey()==='nba')?.38:(myLeagueKey()==='cba'?.46:.5); /* 附加赛一场定胜负：基线五成（v4.5：NBA .38 / CBA .46） */
         UI={mode:'event',ev:evPlayIn()};save();renderGame();return;
       }
       UI={mode:'event',ev:evPlayoffIntro()};save();renderGame();return;
@@ -6803,7 +6806,7 @@ function finishSeason(){
 function computeSeason(pr,wpcIn,po){
   const o=ovr(),pos=S.pos,y=seasonLabel();
   const youth=S.league==='青训'||S.league==='NCAA';
-  const mul=youth?.65:1;
+  const mul=(youth?.65:1)*lgHard().mul; /* v4.5：NBA ×.96 / CBA ×.98 个人产量微降 */
   const tw=tendWeight(S._tendRS||S.tend); /* 打法倾向：选择进数据（本季累计次数 → 场均数据权重） */
   /* 隐藏属性与队内地位进公式：稳定性→得分期望/波动、拼抢→篮板、地位→出手权。
    * 上限按位置给（控卫的助攻本就是招牌数据，13 的上限会把任何加成吃干净），
@@ -6814,7 +6817,7 @@ function computeSeason(pr,wpcIn,po){
   const ppg0=clamp(Math.round((o*.36-4+tw.ppg+stabAdd()+tsAdd()+R.float(-4,4)*stabMul())*mul),2,capP);
   const rpg0=clamp(Math.round((o*.08+((pos==='C'||pos==='PF')?o*.09:0)+hustleRpgAdd()+R.float(-2,2))*mul),1,17);
   const apg0=clamp(Math.round((o*.10+(pos==='PG'?o*.10:pos==='SG'?o*.03:0)+tw.apg+tsNum()*ATTR.tsApg+R.float(-2,2))*mul),0,capA);
-  const wpc=(wpcIn!=null)?wpcIn:clamp(.5+(S.teamStr-6)*.08+(o-70)*.006+R.float(-.12,.12),.2,.85);
+  const wpc=(wpcIn!=null)?wpcIn:clamp(.5-lgHard().wpc+(S.teamStr-6)*.08+(o-70)*.006+R.float(-.12,.12),.2,.85);
   /* 赛季长度按联赛取：NBA 82 / CBA 52 / 欧洲 34 / NCAA 30 / 青训 14（与 CAREER_GAMES、排名表、伤病时钟同源）。
    * 旧写法写死「NBA 82、青年 14、其余 34」，CBA 的战绩就变成 34 场的假数（排名表却按 52 场排），
    * 生涯累计（careerT）也按 34 场乘——两处都失真。 */
@@ -7112,7 +7115,7 @@ function simWorldStats(res){
   calibrateNpc(lg,(res&&res.stats)?res.stats.ppg:0);
   (S.world[lg]||[]).forEach(p=>{
     const line=npcSeasonLine(p,lg),wpc=teamWpc[p.t]||.5;
-    pool.push({n:p.n,t:p.t,p:p.p,o:p.o,a:p.a,rk:p.rk?1:0,v:line,mvp:npcMvpScore(line,wpc),def:npcDefScore(line,wpc),wpc:wpc});
+    pool.push({n:p.n,t:p.t,p:p.p,o:p.o,a:p.a,rk:p.rk?1:0,v:line,mvp:npcMvpScore(line,wpc)*lgHard().mvp,def:npcDefScore(line,wpc)*lgHard().mvp,wpc:wpc}); /* v4.5：NBA/CBA 奖项竞争加压 */
   });
   /* 玩家插进榜单：数据用本赛季结算出来的那一份（同一个数字，不另发一个） */
   let my=null;
