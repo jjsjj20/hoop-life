@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>篮球人生 · 更新文档</title>
+<style>
+:root{--bg:#0b0f16;--card:#141b28;--card2:#101724;--line:rgba(255,255,255,.08);--txt:#e8edf6;--dim:#93a0b4;--org:#ff9349;--gold:#fbbf24;--grn:#34d399}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--txt);font:15px/1.8 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;background:radial-gradient(1100px 480px at 50% -8%,rgba(255,147,73,.09),transparent 65%),var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:30px 18px 72px}
+header{text-align:center;padding:22px 0 6px}
+.ball{font-size:46px;display:inline-block;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+h1{margin:8px 0 6px;font-size:27px;letter-spacing:2px;background:linear-gradient(92deg,#ffb37a,#ffd479,#ffb37a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);font-size:13px;line-height:2}
+.sub a{color:var(--org);text-decoration:none;border-bottom:1px dotted rgba(255,147,73,.5)}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0 4px}
+.badge{font-size:12px;padding:4px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--dim)}
+.badge b{color:var(--gold);font-weight:700}
+.toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 2px}
+.toc a{font-size:12.5px;padding:5px 13px;border-radius:999px;border:1px solid rgba(255,147,73,.3);color:var(--org);text-decoration:none;background:rgba(255,147,73,.05)}
+.toc a:hover{background:rgba(255,147,73,.14)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:16px 0}
+h2{font-size:19px;margin:38px 0 10px;scroll-margin-top:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h2 .vid{font-size:12.5px;color:var(--org);border:1px solid rgba(255,147,73,.35);border-radius:999px;padding:2px 11px;font-weight:400}
+h2 .sha{font-size:12px;color:var(--dim);font-weight:400;font-family:Consolas,Menlo,monospace}
+h3{font-size:15px;margin:18px 0 8px;color:#ffd479}
+p{margin:8px 0}
+.dim{color:var(--dim);font-size:13px}
+code{font-family:Consolas,Menlo,monospace;font-size:12.5px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#ffd479}
+.tw{overflow-x:auto;margin:10px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.03)}
+tr:last-child td{border-bottom:none}
+td b{color:var(--gold)}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:5px 0}
+li::marker{color:var(--org)}
+.ok{color:var(--grn)}
+.chip{display:inline-block;font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);margin:3px 4px 0 0;color:var(--dim);background:var(--card2)}
+.foot{margin-top:46px;text-align:center;color:var(--dim);font-size:12.5px;line-height:2.1}
+.foot a{color:var(--org);text-decoration:none}
+hr{border:none;border-top:1px solid var(--line);margin:30px 0}
+@media(max-width:560px){h1{font-size:22px}.wrap{padding:22px 12px 60px}.card{padding:15px 14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<span class="ball">🏀</span>
+<h1>篮球人生 · 更新文档</h1>
+<div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
+<div class="badges"><span class="badge">当前版本 <b>v3.9.1</b></span><span class="badge">文件 <b>503,655</b> 字符</span><span class="badge">更新 <b>6</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
+<nav class="toc"><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+</header>
+<hr>
+<h2>📋 版本总览</h2>
+<div class="card"><div class="tw"><table>
+<tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v3.9.1</b></td><td>开发者选项密码保护</td><td><code>fac8fdc</code></td><td>+122</td></tr>
+<tr><td><b>v3.9</b></td><td>六项 bug 修复（TS% / 联盟战绩 / 青训 / 浮点 / 时间线 / 开发者入口）</td><td><code>f879654</code></td><td>+783</td></tr>
+<tr><td><b>v3.8</b></td><td>代码加固：存档失败不再静默（6 处修复）</td><td><code>93fe4fd</code></td><td>+494</td></tr>
+<tr><td><b>v3.7.1</b></td><td>音效稳定性修复：软削波限幅器替换压限器</td><td><code>727b6c3</code></td><td>+75</td></tr>
+<tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
+<tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
+</table></div></div>
+<h2 id="v391">🔒 v3.9.1 · 开发者选项密码保护 <span class="vid">密码版</span> <span class="sha">fac8fdc</span></h2>
+<div class="card">
+<h3>更新内容</h3>
+<ul>
+<li><b>双层防护</b>：① 入口隐藏——默认不显示「开发者选项」按钮，地址栏加 <code>?dev=1</code> 刷新后才出现；② 密码校验——点击开启时必须输入正确密码（密码由维护者另行保管，不写入本文档）；</li>
+<li>输错、留空、点取消 —— 一律拒绝开启；</li>
+<li>密码正确后，仍需确认平衡性警告方可开启；</li>
+<li>关闭开发者选项无需密码（方便随时关闭）。</li>
+</ul>
+<h3>验证记录</h3>
+<div class="tw"><table>
+<tr><th>测试</th><th>结果</th></tr>
+<tr><td>错误密码</td><td class="ok">✅ 拦截并提示「密码不对」</td></tr>
+<tr><td>密码框取消</td><td class="ok">✅ 拦截，无异常</td></tr>
+<tr><td>正确密码 + 拒绝警告</td><td class="ok">✅ 不开启</td></tr>
+<tr><td>正确密码 + 同意</td><td class="ok">✅ 正常开启</td></tr>
+<tr><td>再次点击关闭</td><td class="ok">✅ 免密关闭</td></tr>
+</table></div>
+</div>
+<h2 id="v39">🐛 v3.9 · 六项 bug 修复 <span class="sha">f879654</span></h2>
+<div class="card">
+<ol>
+<li><b>真实命中率 TS% 单位混用</b> —— 分子此前误用「场均之和」，分母却是总出手口径，导致显示 1.9%~5.9%（实际应 50%+）。分子改用 <code>careerT</code>（Σ场均×场次）口径，与成就系统「生涯总量」同一套算法；</li>
+<li><b>两套联盟战绩并存</b> —— <code>computeStandings</code>（.38 基线）与 <code>simWorldStats</code>（.5 基线）各算各的，赛季总结与排名面板互相打架、AI 报纸跟着错。现定 <code>computeStandings</code> 为唯一口径：一个赛季只摇一次并缓存，联盟榜单 / 赛季总结 / AI 报纸全部读同一份；</li>
+<li><b>青训战绩与文案脱节</b> —— 3胜11负也能显示「青年联赛前四」。改为按胜率分档：≥.70 冠军 / ≥.52 前四 / ≥.35 八强 / 否则小组出局；</li>
+<li><b>浮点数裸奔</b> —— 出手结构显示 <code>+29.400000000000006</code> 之类，四处全部 <code>toFixed(1)</code> 修复；</li>
+<li><b>选秀剧情时间线</b> —— 「2027年春天」与赛季标签「2026-27赛季」读感错位，改为「2026-27赛季的春天」，与界面口径完全一致（3 处）；</li>
+<li><b>开发者入口隐藏 + 弹层残留</b> —— 开发者选项入口藏到 <code>?dev=1</code> 之后；弹层关闭时清空 innerHTML（旧内容不再残留）。</li>
+</ol>
+<h3>验证记录</h3>
+<ul>
+<li>TS% 单元测试：面板显示 <b>61.3%</b> = 手算期望 <b>61.3%</b>（旧公式会显示 0.9%）；</li>
+<li>战绩同源测试：排名面板 = 联盟榜单（示例：「密尔沃基雄鹿 55-27」，逐字节一致）；</li>
+<li>模糊冒烟 60 次点击：零错误；存档与 10 份备份完好。</li>
+</ul>
+</div>
+<h2 id="v38">🧱 v3.8 · 代码加固（存档失败不再静默） <span class="sha">93fe4fd</span></h2>
+<div class="card">
+<h3>背景</h3>
+<p class="dim">一次全量代码审计：静态分析（46 万字符全文扫描）+ 700+ 次自动点击模糊测试（覆盖球员线 5 个赛季、教练模式、青年联赛、全部面板、10 份历史备份载入）。主逻辑零错误，共修复 6 处健壮性缺口。</p>
+<h3>修复清单</h3>
+<ol>
+<li><b>存档写入失败不再静默</b>（高危）—— 浏览器存储满时，进度会无声丢失。现在：<code>save()</code> 返回真实状态 + 控制台告警 + 界面提示「⚠️ 存档没写进去」；</li>
+<li><b>清除存档失败不再假装成功</b> —— 失败时返回真实结果；</li>
+<li><b>「💾 存档」按钮</b> —— 按真实结果显示成功 / 失败提示；</li>
+<li><b>「🗑 清除存档」</b> —— 失败时停止后续状态清理；</li>
+<li><b>对阵图 resize 防抖</b> —— 连续缩放不再堆积重绘（80ms 防抖）；</li>
+<li><b>toast 提示空值保护</b> —— 极端时序下不再报错。</li>
+</ol>
+<h3>验证记录</h3>
+<ul>
+<li>模拟存储故障：<code>save()</code> 返回 false（不崩溃）+ 控制台告警 + 界面提示，全部按预期工作；</li>
+<li>恢复存储后立即可正常存档；零残留测试数据。</li>
+</ul>
+</div>
+<h2 id="v371">🎚 v3.7.1 · 音效稳定性修复 <span class="sha">727b6c3</span></h2>
+<div class="card">
+<h3>背景</h3>
+<p class="dim">离线音频分析发现：浏览器自带压限器（DynamicsCompressor）在部分环境下行为不一致 —— 同一设置下，短音被削减约 46%，持续大场面反而意外抬升约 10dB，不可预测。</p>
+<h3>修复内容</h3>
+<ul>
+<li>替换为<b>数学上完全确定的「tanh 软削波限幅器」</b>：小信号近似线性通过（高保真，听感无损）；大信号柔和饱和（温暖模拟味），天然压制峰值；输出上限 0.95，任何叠加组合都不可能破音；</li>
+<li>21 种音色全部离线渲染验证：单音最强峰值 <b>0.55</b>（安全余量充足）；最坏叠加（胜出+成就+颁奖+网花同响）峰值 <b>0.78</b>，依然不破音；</li>
+<li>逐项数值与设计公式吻合到小数点后 3 位。</li>
+</ul>
+</div>
+<h2 id="v37">🔊 v3.7 · 音效增强「更爽版」 <span class="sha">a9ab2f0</span></h2>
+<div class="card">
+<p>围绕「更响、更立体、更有空间感、更厚」全面升级：</p>
+<div class="tw"><table>
+<tr><th>维度</th><th>升级</th></tr>
+<tr><td>📢 更响</td><td>总音量提升 21%（2.4 → 2.9），配有防破音保障</td></tr>
+<tr><td>🎧 更立体</td><td>新增立体声声场：音符左右分布，宽度感拉满</td></tr>
+<tr><td>🏛 更有空间</td><td>程序化混响（11 种音色），殿堂回声感</td></tr>
+<tr><td>🚀 更动态</td><td>新增滑音合成：上扬音 / 低音炮下扫</td></tr>
+<tr><td>🥁 更厚</td><td>21 种音色全部加料分层（多音叠加，不再单音）</td></tr>
+</table></div>
+<h3>名场面强化</h3>
+<ul>
+<li><b>夺冠时刻</b>：军鼓滚奏 → 铜管号角 → 低频炮 → C大调长和弦 → 2.3 秒满场人浪欢呼 + 彩带闪；</li>
+<li><b>系列赛胜出</b>：亚低音鼓 + 立体声琶音 + 人群欢呼；</li>
+<li><b>成就解锁</b>：五连升音 + 星空回声；<b>选秀揭晓</b>：上行滑音 + 琶音揭晓；</li>
+<li>空心入网 / 打铁 / 运球 / 终场哨 / 伤病等 21 种音色全部重调。</li>
+</ul>
+<h3>使用提示</h3>
+<ul><li>首次点击任意按钮后才能出声（浏览器自动播放策略）；</li><li>戴耳机能明显听出立体声与混响层次。</li></ul>
+</div>
+<h2 id="v36">🔊 v3.6 · 音效升级（基础版） <span class="sha">51b155f</span></h2>
+<div class="card">
+<ul>
+<li>音色从 10 种扩展到 <b>21 种</b>（10 升级 + 11 新增）；</li>
+<li>新增 <b>噪声 / 颤音 / 低通合成引擎</b>，为后续「更爽版」打下基础；</li>
+<li>覆盖全场景：点击、选择、消息、成就、升降、金币、签约、入网、打铁、运球、裁判哨、终场哨、胜出、失利、夺冠、颁奖、谢幕、选秀、伤病。</li>
+</ul>
+</div>
+<h2 id="appendix">🛠 附录 · 工程与验证说明</h2>
+<div class="card">
+<h3>每版发布的固定流程</h3>
+<ol>
+<li>唯一锚点字符串校验（防止误替换）；</li>
+<li>构建后语法解析检查（独立解析器验证）；</li>
+<li>双端部署验证（GitHub API @commit SHA + GitHub Pages 页面实测）；</li>
+<li>实机功能测试（含专项单测与模糊测试）；</li>
+<li>存档完整性核验（含 10 份历史备份）。</li>
+</ol>
+<h3>存档安全</h3>
+<ul>
+<li>主存档键：<code>hoop_life_save_v1</code>；历史备份 10 份（<code>bak_*</code>）；</li>
+<li>所有版本升级保持存档格式向后兼容，旧档自动迁移补字段。</li>
+</ul>
+<h3>音效技术备忘</h3>
+<ul>
+<li>纯 WebAudio 合成（零音频文件），适合单文件离线分发；</li>
+<li>主链路：<code>音量(2.9) → 预衰减(1/3.4) → tanh 软削波 → 输出</code>；</li>
+<li>21 音色：</li>
+</ul>
+<div><span class="chip">click</span><span class="chip">pick</span><span class="chip">msg</span><span class="chip">achieve</span><span class="chip">up</span><span class="chip">down</span><span class="chip">coin</span><span class="chip">sign</span><span class="chip">swish</span><span class="chip">rim</span><span class="chip">dribble</span><span class="chip">refwhistle</span><span class="chip">whistle</span><span class="chip">buzzer</span><span class="chip">win</span><span class="chip">lose</span><span class="chip">fanfare</span><span class="chip">trophy</span><span class="chip">curtain</span><span class="chip">draft</span><span class="chip">injury</span></div>
+</div>
+<div class="foot">本页可离线保存：浏览器中右键「另存为」或 Ctrl+S 即可 · 文档与仓库同步更新<br><a href="https://github.com/jjsjj20/hoop-life">github.com/jjsjj20/hoop-life</a> · 篮球人生 · 单文件网页游戏</div>
+</div>
+</body>
+</html>
