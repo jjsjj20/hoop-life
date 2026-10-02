@@ -53,13 +53,14 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.1</b></span><span class="badge">文件 <b>1,136,763</b> 字符</span><span class="badge">更新 <b>8</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
-<nav class="toc"><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.2</b></span><span class="badge">文件 <b>1,236,574</b> 字符</span><span class="badge">更新 <b>9</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
+<nav class="toc"><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header>
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.2</b></td><td>主菜单主视觉：球员通道实拍大图（豆包生成）</td><td><code>1ccd5b27</code></td><td>+99,811</td></tr>
 <tr><td><b>v4.1</b></td><td>美术补齐：第二批 6 张场景横幅（更衣室/发布会/康复/谈判/雨夜/家）</td><td><code>49e0d589</code></td><td>+321,794</td></tr>
 <tr><td><b>v4.0</b></td><td>美术升级：4 张电影感场景横幅（豆包生成 · WebP 内嵌）</td><td><code>1fe26be4</code></td><td>+311,314</td></tr>
 <tr><td><b>v3.9.1</b></td><td>开发者选项密码保护</td><td><code>fac8fdc</code></td><td>+122</td></tr>
@@ -69,6 +70,22 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v42">🖼 v4.2 · 主菜单主视觉 <span class="sha">1ccd5b27</span></h2>
+<div class="card">
+<h3>更新内容</h3>
+<ul>
+<li>豆包生成「球员剪影眺望球场」主视觉（2048×1152 → 聚焦裁剪 1600×578 → WebP 84% 内嵌约 97KB）；</li>
+<li>hero 区升级为图片容器：标题（呼吸球 + 渐变字）叠加在图片上，顶部暗色渐变保证可读性；</li>
+<li>移动端（≤430px）自动降低高度（200px）并调整字号；</li>
+<li>图片总数达到 <b>11 张</b>（10 场景横幅 + 1 主视觉），依旧单文件零依赖。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>实机截图确认：主视觉正确渲染（960×270 容器 · 1600×578 原图）；</li>
+<li>亮度/对比度滤镜生效，暗部细节可辨；</li>
+<li>控制台零错误；存档与 10 份备份完好。</li>
+</ul>
+</div>
 <h2 id="v41">🎨 v4.1 · 美术补齐（第二批 6 张场景横幅） <span class="sha">49e0d589</span></h2>
 <div class="card">
 <h3>更新内容</h3>
