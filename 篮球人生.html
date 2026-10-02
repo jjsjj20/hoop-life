@@ -268,7 +268,7 @@ select:disabled{color:var(--dim)}
 .tbl .tr:last-child{border-bottom:none}
 .tbl .tr:nth-child(even){background:rgba(255,255,255,.016)}
 .tbl .tr.me{background:linear-gradient(90deg,rgba(249,115,22,.17),rgba(249,115,22,.02));box-shadow:inset 3px 0 0 var(--accent2)}
-.tbl .tcrest{width:20px;height:20px;border-radius:5px;object-fit:cover;vertical-align:-4px;margin-right:6px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,.35)} .ch .tcrest{vertical-align:-5px} h3 .tcrest{width:23px;height:23px;vertical-align:-5px} .rk{flex:0 0 auto;width:26px;height:22px;border-radius:7px;background:#1b2231;color:var(--txt4);
+.tcrest{width:20px;height:20px;border-radius:5px;object-fit:cover;vertical-align:-4px;margin-right:6px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,.35)} .ch .tcrest{vertical-align:-5px} h3 .tcrest{width:23px;height:23px;vertical-align:-5px} .rk{flex:0 0 auto;width:26px;height:22px;border-radius:7px;background:#1b2231;color:var(--txt4);
   font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .tbl .rk.g1{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#241a02}
 .tbl .rk.g2{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#1a1f2b}
@@ -8764,7 +8764,7 @@ function renderSeason(res){
   <div class="mini">出处：期望分 ${Math.round((st.expPts||0)*10)/10} 分（能力×使用率×地位×倾向）→ 反推出手 ${Math.round(st.line.fga/Math.max(1,st.line.n)*10)/10} 次/场 → 两分/三分/罚球命中 → 场均 ${st.ppg} 分。
    命中率不是单独发的：三分占比与罚球率跟着位置、技能与生涯选择走。</div>
   <div class="mini">${esc(shotSourceText({pos:S.pos,skills:S.skills,oppStr:leagueDefStr(S.league)}))}</div>`:''}
-  <div class="row"><span>球队</span><b>${crestOf(S.team)}${esc(S.team)}</b></div>
+  <div class="row"><span>球队</span><b>${esc(S.team)}</b></div>
   <div class="row"><span>战绩</span><b>${esc(res.record)}</b></div>
   <div class="row"><span>结果</span><b>${esc(res.playoffs)}</b></div>
   ${res.champTeam?`<div class="row"><span>总冠军球队</span><b style="color:var(--gold)">${esc(res.champTeam)}</b></div>`:''}
