@@ -53,13 +53,14 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.9</b></span><span class="badge">文件 <b>526,529</b> 字符</span><span class="badge">更新 <b>16</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
-<nav class="toc"><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.9.1</b></span><span class="badge">文件 <b>527,806</b> 字符</span><span class="badge">更新 <b>17</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
+<nav class="toc"><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header>
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.9.1</b></td><td>修复「球场」氛围插画丢失 · 图片按显示尺寸重采样（队徽 −77%）· 首屏加载时序优化</td><td><code>4e5eea1</code></td><td>+1,277</td></tr>
 <tr><td><b>v4.9</b></td><td>资源外置化：106 张图片拆出内嵌 base64 · 键盘操作 · 存档导出导入</td><td><code>3ae32fe</code></td><td>−1,514,299</td></tr>
 <tr><td><b>v4.8</b></td><td>选秀现实化：行情系统 · 真实签位播报 · 顺位新秀合同 · 球队承诺</td><td><code>25ece217</code></td><td>+5,313</td></tr>
 <tr><td><b>v4.7</b></td><td>剧情场景插画：9 张新氛围图（选秀/国家队/疯狂三月/青葱/首秀/谢幕/教练席/抉择/新援）</td><td><code>b285012d</code></td><td>+317,674</td></tr>
@@ -77,6 +78,34 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v491">🩹 v4.9.1 · 修复「球场」插画丢失 + 首屏图片加载优化 <span class="sha">4e5eea1</span></h2>
+<div class="card">
+<h3>修复内容</h3>
+<ul>
+<li><b>「球场」氛围插画消失（v4.9 引入的回归）</b>：原代码里 <code>ART_IMG.court=ART_IMG.arena;</code> 是一条指向球馆图的<b>别名赋值</b>，位置正好夹在 <code>ART_IMG={...}</code> 和 <code>ART_IMG.draft=...</code> 之间；v4.9 的拆图脚本按「对象开头 → <code>ART_IMG.draft=</code>」整块替换，把这条别名一并删掉了，于是 court（球场）氛围取不到图、回退成 SVG 矢量图。现在只替换对象字面量本身，别名原样保留。</li>
+</ul>
+<h3>优化内容</h3>
+<ul>
+<li><b>图片按实际显示尺寸重采样</b>（这是「图片加载缓慢」的主因）：源图尺寸远超实际展示尺寸——队徽 144×144 实际只显示 20–23px（超标 7.2 倍）、成就图标 128×128 显示 34px（3.8 倍）、场景插画 1600×400 最宽只显示约 634px（2.5 倍）。统一按 2 倍屏留余量重采样：
+  <div class="tw"><table>
+  <tr><th>类别</th><th>改造前</th><th>改造后</th><th>降幅</th></tr>
+  <tr><td>队徽（68 张）</td><td>295.8 KB</td><td>68.2 KB</td><td><b>−77%</b></td></tr>
+  <tr><td>成就图标（18 张）</td><td>52.0 KB</td><td>24.1 KB</td><td>−54%</td></tr>
+  <tr><td>场景插画（20 张）</td><td>767.1 KB</td><td>676.4 KB</td><td>−12%</td></tr>
+  <tr><td><b>合计</b></td><td><b>1115.1 KB</b></td><td><b>787.1 KB</b></td><td><b>−29%</b></td></tr>
+  </table></div>
+  队徽收益最大——一场「球队图鉴」会同时拉 68 张，省下的正是最直观的等待。</li>
+<li><b>加载时序优化</b>：首屏主视觉原本要等 700KB 的 HTML 解析完、脚本执行完 <code>renderMenu()</code> 才被发现，白白慢一个来回 → 改为 <code>&lt;head&gt;</code> 里 <code>rel=preload</code> 提前并行下载；主视觉加 <code>fetchpriority=high</code>，装饰性的队徽 / 成就图标加 <code>fetchpriority=low</code> 不抢带宽；空闲时按低优先级<b>预热 19 张场景插画</b>（省流模式 / 2G / 3G 自动跳过），之后翻开任意事件都不再等图。</li>
+<li><b>构建脚本加固</b>：拆图脚本新增「符号保全检查」——拆完后逐一比对 <code>TEAM_CREST</code> / <code>ACH_ICONS</code> / <code>ART_IMG</code> 的键集合与关键标识是否与源文件完全一致，不一致直接中止；重采样脚本改为幂等（已达标就跳过，不重复重编码掉画质）。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>jsdom 实机冒烟测试 <b>32/32 项通过</b>；</li>
+<li><code>ART_MOOD</code> 20 项氛围<b>全部有图</b>（与原版 v4.8 逐项一致，无缺口）；</li>
+<li>106 个资源引用与磁盘文件一一对应，无缺失 / 无多余，文件头校验全部通过；</li>
+<li>脚本语法编译通过；构建管线可重复执行（二次运行产物哈希不变）。</li>
+</ul>
+</div>
 <h2 id="v49">⚡ v4.9 · 资源外置化 + 键盘操作 + 存档导出导入 <span class="sha">%s</span></h2>
 <div class="card">
 <h3>更新内容</h3>
