@@ -53,13 +53,14 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.8</b></span><span class="badge">文件 <b>2,040,828</b> 字符</span><span class="badge">更新 <b>15</b> 个版本</span><span class="badge">单文件 · 零依赖</span></div>
-<nav class="toc"><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.9</b></span><span class="badge">文件 <b>526,529</b> 字符</span><span class="badge">更新 <b>16</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
+<nav class="toc"><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header>
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.9</b></td><td>资源外置化：106 张图片拆出内嵌 base64 · 键盘操作 · 存档导出导入</td><td><code>3ae32fe</code></td><td>−1,514,299</td></tr>
 <tr><td><b>v4.8</b></td><td>选秀现实化：行情系统 · 真实签位播报 · 顺位新秀合同 · 球队承诺</td><td><code>25ece217</code></td><td>+5,313</td></tr>
 <tr><td><b>v4.7</b></td><td>剧情场景插画：9 张新氛围图（选秀/国家队/疯狂三月/青葱/首秀/谢幕/教练席/抉择/新援）</td><td><code>b285012d</code></td><td>+317,674</td></tr>
 <tr><td><b>v4.6</b></td><td>稳定性优化：存档自动备份与一键恢复 · NCAA 修正 · 代码梳理</td><td><code>960edf82</code></td><td>+914</td></tr>
@@ -76,6 +77,34 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v49">⚡ v4.9 · 资源外置化 + 键盘操作 + 存档导出导入 <span class="sha">%s</span></h2>
+<div class="card">
+<h3>更新内容</h3>
+<ul>
+<li><b>图片资源外置</b>：106 张内嵌 base64 WebP 全部拆到 <code>assets/</code>（队徽 68 · 成就图标 18 · 场景插画 19 · 主视觉 1），HTML 内改为相对路径引用；列表里的小图标补 <code>loading="lazy" decoding="async"</code>。首屏从 <b>2,195 KB 降到 790 KB（−64%%）</b>——HTML 解析不再被 1.5MB 内联数据阻塞，图片也能走 HTTP 缓存了；</li>
+<li><b>键盘操作</b>（作用域限定 <code>#stage</code>，只在游戏主区生效）：
+  <ul>
+  <li><code>1-9</code> 直接选中对应编号的选项；<code>↑↓</code> 在选项间移动高亮（高亮态与 <code>:hover</code> 同款），<code>Enter</code> 确认；</li>
+  <li>没有选项时 <code>空格 / Enter</code> 触发「继续 ▶」等主按钮（结算 / 赛季总结 / 下一年）；</li>
+  <li><code>Esc</code> 关闭弹出面板、取消当前高亮；</li>
+  <li>输入框聚焦时不抢键，弹窗打开时也不抢键；</li>
+  <li><b>选项页没有高亮时按空格不会替玩家拍板</b>——文字量这么大的抉择，误选代价太大；</li>
+  <li>提示文案只对「鼠标 + 精确指针」设备显示，触屏上不占地方；</li>
+  </ul>
+</li>
+<li><b>存档导出 / 导入</b>：<code>📤 导出存档</code> 下载 JSON（文件名带日期与球员名），<code>📥 导入存档</code> 支持选文件或直接粘贴文本；写入前自动留一份 <code>.autobak</code> 备份，来自更高版本的存档会先确认再读；自动下载被浏览器拦下时降级为「复制文本」，这条路不会断。入口在游戏顶栏与主菜单——主菜单<b>没有存档</b>时也显示导入入口，方便换设备续档。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>jsdom 实机冒烟测试 <b>32/32 项通过</b>：建档 → 出事件 → 键盘选 → 结算 → 空格继续 全链路走通；另有导出触发下载、导入写回 localStorage、非法文本拒绝写入、跨版本存档确认拦截等断言；</li>
+<li>语法编译通过；回归基线核对：选项 1,321 处、<code>esc()</code> 171 处<b>零改动</b>，函数只增不减；</li>
+<li>106 张 WebP 与 HTML 内的引用一一对应，无缺失、无多余，文件头校验全部通过。</li>
+</ul>
+<h3>注意</h3>
+<ul>
+<li><b>本版起不再是「单文件」</b>：<code>assets/</code> 目录必须随仓库一起部署（GitHub Pages 直接生效，无需额外配置）。</li>
+</ul>
+</div>
 <h2 id="v48">🏀 v4.8 · 选秀现实化（行情 · 签位 · 合同） <span class="sha">25ece217</span></h2>
 <div class="card">
 <h3>更新内容</h3>
