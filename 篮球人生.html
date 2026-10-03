@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- 首屏主视觉提前发起下载：它原本要等脚本跑完 renderMenu() 才被发现，白白慢一个来回 -->
+<link rel="preload" as="image" href="assets/art/hero.webp" fetchpriority="high">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>篮球人生 · 生涯模拟</title>
 <style>
@@ -1116,7 +1118,7 @@ const TEAM_CREST={
 密歇根大学:'assets/crest/068.webp'};
 const ACADEMY_CREST={'山东高速青年队':'山东高速','广东宏远青年队':'广东华南虎','北京首钢青年队':'北京首钢','辽宁三生青年队':'辽宁本钢','浙江稠州青年队':'浙江稠州金租','皇家马德里青训（西班牙）':'皇家马德里'};
 function crestData(n){const k=ACADEMY_CREST[n]||n;return TEAM_CREST[k]||"";}
-function crestOf(n){const c=crestData(n);return c?('<img class="tcrest" src="'+c+'" alt="" loading="lazy" decoding="async">'):"";}
+function crestOf(n){const c=crestData(n);return c?('<img class="tcrest" src="'+c+'" alt="" loading="lazy" decoding="async" fetchpriority="low">'):"";}
 const TEAMS={
   cba:[['辽宁本钢',9],['新疆伊力特',8],['广东华南虎',8],['浙江稠州金租',8],['浙江广厦',8],['上海久事',7],['深圳马可波罗',7],['山西汾酒',7],['青岛国信海天',7],['北京首钢',7],['山东高速',6],['北京控股',6],['广州龙狮',6],['南京同曦',6],['吉林东北虎',6],['天津先行者',5],['福建浔兴',5],['江苏肯帝亚',5],['四川金强',4],['宁波富邦',4]],
   nba:[['波士顿凯尔特人',9],['丹佛掘金',9],['俄克拉荷马雷霆',9],['洛杉矶湖人',8],['金州勇士',8],['密尔沃基雄鹿',8],['迈阿密热火',8],['纽约尼克斯',8],['费城76人',7],['达拉斯独行侠',8],['明尼苏达森林狼',8],['克利夫兰骑士',8],['印第安纳步行者',7],['奥兰多魔术',7],['洛杉矶快船',7],['菲尼克斯太阳',7],['萨克拉门托国王',6],['新奥尔良鹈鹕',6],['圣安东尼奥马刺',6],['休斯顿火箭',7],['孟菲斯灰熊',7],['犹他爵士',5],['芝加哥公牛',5],['亚特兰大老鹰',6],['夏洛特黄蜂',5],['华盛顿奇才',4],['底特律活塞',5],['多伦多猛龙',5],['布鲁克林篮网',5],['波特兰开拓者',4]],
@@ -7986,7 +7988,7 @@ function achRow(a){
       <i style="margin-top:3px">进度 ${Math.round(p[0])} / ${p[1]}</i>`;
   }
   return `<div class="achrow ${on?'on':'off'}">
-    <div class="achic" style="color:${on?ACH_TIER[a.tier]:'#64748b'}">${_ic?`<img src="${_ic}" alt="" loading="lazy" decoding="async">`:(on?'🏆':'🔒')}</div>
+    <div class="achic" style="color:${on?ACH_TIER[a.tier]:'#64748b'}">${_ic?`<img src="${_ic}" alt="" loading="lazy" decoding="async" fetchpriority="low">`:(on?'🏆':'🔒')}</div>
     <div class="achbody"><b>${esc(a.n)}</b><i>${esc(a.d)}</i>${pr}</div>
     <div class="achmeta">${on?(esc(rec&&rec.y||'已达成')):('<span style="color:'+ACH_TIER[a.tier]+'">'+({gold:'金',silver:'银',bronze:'铜'}[a.tier]||'')+'</span>')}<br>${ACH_PTS[a.tier]||5} 分</div>
   </div>`;
@@ -8031,7 +8033,7 @@ function showCodex(tab){
     h+=ts.length?`<div class="mini">按效力时间排序，点开可以看各队现在的阵容。</div>`:'<div class="mini">还没有效力记录。</div>';
     ts.sort((a,b)=>(S.codex.teams[b].seasons||0)-(S.codex.teams[a].seasons||0)).forEach(t=>{
       const r=S.codex.teams[t];
-      h+=`<div class="achrow on"><div class="achic">${crestData(t)?('<img src="'+crestData(t)+'" alt="" loading="lazy" decoding="async">'):'🛡'}</div><div class="achbody"><b>${esc(t)}</b>
+      h+=`<div class="achrow on"><div class="achic">${crestData(t)?('<img src="'+crestData(t)+'" alt="" loading="lazy" decoding="async" fetchpriority="low">'):'🛡'}</div><div class="achbody"><b>${esc(t)}</b>
         <i>${esc(r.lg||'')} · ${r.first} 起 · 共 ${r.seasons} 个赛季</i></div>
         <div class="achmeta"><span class="cxitem" data-team="${esc(t)}">看阵容</span></div></div>`;
     });
@@ -8306,7 +8308,7 @@ function renderMenu(){
   let ab=null;try{const tb=JSON.parse(localStorage.getItem(CFG.SAVE_KEY+'.autobak')||'null');ab=(tb&&tb.S)?tb.S:null;}catch(_){}
   $('#app').innerHTML=`
   <div class="hero">
-   <div class="heroArt"><img src="assets/art/hero.webp" alt="" decoding="async">
+   <div class="heroArt"><img src="assets/art/hero.webp" alt="" decoding="async" fetchpriority="high">
     <div class="heroTx">
      <div class="ball">🏀</div>
      <h1>篮球人生</h1>
@@ -8703,6 +8705,7 @@ injury:'assets/art/injury.webp',
 office:'assets/art/office.webp',
 night:'assets/art/night.webp',
 home:'assets/art/home.webp'};
+ART_IMG.court=ART_IMG.arena; /* 默认球场氛围复用球馆图 */
 ART_IMG.draft='assets/art/draft.webp';
 ART_IMG.nation='assets/art/nation.webp';
 ART_IMG.march='assets/art/march.webp';
@@ -9796,6 +9799,35 @@ AI.clearCache=function(){try{localStorage.removeItem('hoop_ai_cache_v1');if(type
 
 
 renderMenu();
+
+/* ═══════════ 11.6 场景插画预热 ═══════════
+ * 事件插图是按「本页氛围」现挑的（artMood → ART_IMG），所以只有翻开那一页才开始下载，
+ * 每次都要干等一个来回。这里在空闲时按低优先级把 19 张拉进浏览器缓存，
+ * 之后翻页基本就是秒出。省流模式 / 2G / 3G 下直接跳过，不替玩家花流量。
+ */
+function warmArtImages(){
+  try{
+    var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+    if(c&&(c.saveData||/(^|-)2g$|(^|-)3g$/.test(String(c.effectiveType||''))))return;
+    var keys=Object.keys(ART_IMG),i=0,seen={};
+    (function next(){
+      var url=null;
+      while(i<keys.length){                       /* ART_IMG.court 是 arena 的别名，去重 */
+        var u=ART_IMG[keys[i++]];
+        if(u&&!seen[u]){seen[u]=1;url=u;break;}
+      }
+      if(!url)return;
+      var im=new Image();
+      try{im.fetchPriority='low';}catch(_){}
+      im.onload=im.onerror=function(){setTimeout(next,220);};  /* 串行 + 间隔，别挤占交互请求 */
+      im.src=url;
+    })();
+  }catch(_){}
+}
+setTimeout(function(){
+  if(window.requestIdleCallback)requestIdleCallback(warmArtImages,{timeout:4000});
+  else warmArtImages();
+},2500);
 </script>
 </body>
 </html>
