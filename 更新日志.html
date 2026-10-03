@@ -53,13 +53,14 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.9.3</b></span><span class="badge">文件 <b>532,976</b> 字符</span><span class="badge">更新 <b>19</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
-<nav class="toc"><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.9.4</b></span><span class="badge">文件 <b>535,882</b> 字符</span><span class="badge">更新 <b>20</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
+<nav class="toc"><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header>
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.9.4</b></td><td>新增「球队签位」主题事件（4 条 + 1 条剧情线）· 修复季池抽取出错（292 条事件本是死代码）</td><td><code>b206432</code></td><td>+2,906</td></tr>
 <tr><td><b>v4.9.3</b></td><td>真实签位系统：签位改按上赛季战绩 · 14 队加权乐透（官方赔率）· 抽签结果可播报</td><td><code>9411176</code></td><td>+2,508</td></tr>
 <tr><td><b>v4.9.2</b></td><td>未捕获异常不再静默（日志 + 档案可见）· AI 密钥明文提示与一键清除</td><td><code>4918e06</code></td><td>+2,662</td></tr>
 <tr><td><b>v4.9.1</b></td><td>修复「球场」氛围插画丢失 · 图片按显示尺寸重采样（队徽 −77%）· 首屏加载时序优化</td><td><code>4e5eea1</code></td><td>+1,277</td></tr>
@@ -80,6 +81,44 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v494">📋 v4.9.4 · 「球队签位」主题事件 + 季池抽取出错修复 <span class="sha">b206432</span></h2>
+<div class="card">
+<h3>修复内容</h3>
+<ul>
+<li><b>职业球员线一年四季只抽春季池</b>（292 条事件是死代码）：<code>poolKey()</code> 曾统一按 <code>STAGE_KEY</code> 把赛季名首字母大写去拼 → <code>'Summer'</code>，而池子的注册名是<b>全小写</b>（<code>POOLS.summer</code>）——<code>POOLS[key]</code> 永远 <code>undefined</code>，于是静默回退到 <code>POOLS.spring</code>。后果：
+  <div class="tw"><table>
+  <tr><th>季节</th><th>池子</th><th>事件数</th><th>修复前</th></tr>
+  <tr><td>春</td><td><code>spring</code></td><td>92</td><td>✔ 实际在用</td></tr>
+  <tr><td>夏</td><td><code>summer</code></td><td>110</td><td>✗ 从未抽到</td></tr>
+  <tr><td>秋</td><td><code>autumn</code></td><td>95</td><td>✗ 从未抽到</td></tr>
+  <tr><td>冬</td><td><code>winter</code></td><td>101</td><td>✗ 从未抽到</td></tr>
+  </table></div>
+  青训侧因为注册名本来就是 camelCase（<code>youthSpring</code>），反而正好对上——所以这个 bug 一直藏在职业线里没被发现。现在青训走 <code>'youth'</code> + 首字母大写、职业线走全小写，两条路各自命中本季池。
+  <p class="dim">⚠️ 这一改会让 <b>292 条早已写好、却从未出现过的事件</b>重新进入牌堆，赛季内容的观感会有明显变化。属于「把死代码救活」。</p>
+</li>
+</ul>
+<h3>更新内容</h3>
+<p>新增 4 条「球队签位」主题事件 + 1 条剧情线后续。全部取自<b>球员视角真能撞上的签位处境</b>，并刻意避开已有的 <code>sud2</code>（夏 · 被摆上货架，写的是球员进交易讨论）：</p>
+<div class="tw"><table>
+<tr><th>id</th><th>季节</th><th>事件</th><th>张力</th></tr>
+<tr><td><code>pk1</code></td><td>夏</td><td>首轮签在交易里送走了</td><td>管理层用首轮签换即战力，更衣室两种声音</td></tr>
+<tr><td><code>pk2</code></td><td>夏</td><td>选秀夜，球队选中一名同位置新秀</td><td>新人来了抢你的位置</td></tr>
+<tr><td><code>pk2b</code></td><td>秋</td><td>新秀把你打爆了（<code>pk2</code> 的后续）</td><td>加练 / 改打无球 / 让位带第二阵容</td></tr>
+<tr><td><code>pk3</code></td><td>冬</td><td>管理层希望我「休息」</td><td>摆烂年让你轮休保签位</td></tr>
+<tr><td><code>pk4</code></td><td>秋</td><td>更衣室里在算明年的签位</td><td>大巴上开始讨论明年能抽到第几</td></tr>
+</table></div>
+<ul>
+<li>四条都挂 <code>isPro()</code>——青训走 youth 池本来就抽不到，但 <b>NCAA 走的是同一批池子</b>，不设门槛会让大学生撞上「球队用首轮签换了老将」；</li>
+<li><code>pk3</code> 另加 <code>ovr() &gt;= 68</code>——摆烂年让谁休息，得是球队真在乎的人；</li>
+<li>四条都手工认定为<b>戏剧事件</b>，并按标题关键词归入「交易 / 球队」题材，与同赛季题材去重配合。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>新增《签位主题事件》专项测试 <b>50/50 项通过</b>：注册位置、门槛放行与拦截（高能力职业球员全放行 / 低能力被 <code>pk3</code> 拦下 / NCAA 四条全拦）、<code>materialize</code> 后可读且带球队名、<b>全部 fx 键均已在注册表登记</b>（这游戏对未注册的 fx 键只 <code>console.warn</code> 不报错，写错一个键就等于「这个选项没有效果」）、剧情线 <code>pk2 → pk2b</code> 跳转、题材归类；</li>
+<li><b>四个职业季池相互独立</b>（修复前四个季节的长度会全部等于 92），且三条新事件在各自季节 600 次抽取中确实出现；</li>
+<li>原有测试全部通过：jsdom 冒烟 <b>32/32</b>、鲁棒性 <b>22/22</b>、真实签位系统 <b>26/26</b>。</li>
+</ul>
+</div>
 <h2 id="v493">🎲 v4.9.3 · 真实签位系统（战绩倒序 + 加权乐透） <span class="sha">9411176</span></h2>
 <div class="card">
 <h3>修复内容</h3>
