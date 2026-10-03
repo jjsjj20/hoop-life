@@ -247,8 +247,8 @@ td:first-child{white-space:nowrap}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.9.6</b></span><span class="badge">文件 <b>536,410</b> 字符</span><span class="badge">更新 <b>22</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
-<nav class="toc"><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.10.0</b></span><span class="badge">文件 <b>524,016</b> 字符</span><span class="badge">更新 <b>23</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
+<nav class="toc"><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.10.0</b></td><td>移除教练模式（整体下线）· 老教练存档自动退役迁移 · 删除教练席横幅</td><td><code>d992710</code></td><td>−12,394</td></tr>
 <tr><td><b>v4.9.6</b></td><td>节奏复核：戏剧事件配额防饿死（戏剧占比 28%→36%+）· 30 生涯模拟工具链 · 13 条新断言</td><td><code>fa23f5f</code></td><td>+250</td></tr>
 <tr><td><b>v4.9.5</b></td><td>代码审查：修复选秀数据漏构造（自查发现）· 死代码清理 · 新增 AST 静态审查脚本</td><td><code>1224aa2</code></td><td>+278</td></tr>
 <tr><td><b>v4.9.4</b></td><td>新增「球队签位」主题事件（4 条 + 1 条剧情线）· 修复季池抽取出错（292 条事件本是死代码）</td><td><code>b206432</code></td><td>+2,906</td></tr>
@@ -288,6 +289,32 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v4100">🗑️ v4.10.0 · 移除教练模式（整体下线 · 存档自动迁移） <span class="sha">d992710</span></h2>
+<div class="card">
+<h3>删除范围</h3>
+<ul>
+<li><b>入口与流程</b>：生涯终章「转战教练席」选项、<code>advance()</code> 的 coach 分发、<code>startCoach()</code>、执教合同三选一（<code>offers</code> 界面，仅教练使用）、<code>COACH_POOL</code> 五条执教事件、执教赛季结算全链（<code>coachEvent</code> / <code>showCoachEvent</code> / <code>coachChoose</code> / <code>coachAdvance</code> / <code>coachSeasonEnd</code> / <code>renderCoachRes</code> / <code>coachNext</code> / <code>coachQuit</code>）；</li>
+<li><b>界面</b>：UI 模式 <code>coachEv</code> / <code>coachRes</code> / <code>offers</code> 的渲染分发、HUD 执教徽章与状态条、档案执教面板、<code>renderTop</code> / <code>renderSide</code> / <code>renderGame</code> 页头、<code>chapterTitle</code>、<code>stageStrip</code>、<code>showMoney</code> / <code>showStandings</code> / <code>showRoster</code> / <code>showTeamsList</code> / <code>showTeamDetail</code> / <code>showBracket</code> 里的全部教练分支（<code>S.role==='coach'</code> 共 22 处）；</li>
+<li><b>数据字段</b>：<code>S.role</code> / <code>S.coach</code> / <code>S.usedCoach</code>；</li>
+<li><b>成就</b>：「换个身份 · 退役后转任主教练」；</li>
+<li><b>AI</b>：执教谢幕致辞变体（<code>AI.brief</code> 的 coach 分支、<code>AI.endBrief</code> 执教提示词、按钮文案）；</li>
+<li><b>美术</b>：教练席横幅 <code>assets/art/bench.webp</code>（资源 106 → 105 张）及其注册与场景规则；</li>
+<li><b>测试与工具</b>：<code>test_coach.js</code>（51 断言）删除；<code>audit.js</code> 教练 fx 白名单死逻辑、模拟器残留 offers 分支同步清理。</li>
+</ul>
+<h3>存档兼容</h3>
+<p>老教练存档读档时<b>就地「光荣退役」</b>：清除执教字段、<code>S.retired=true</code>、直接落到球员生涯终章页（球员生涯数据完好保留）。新增 4 条迁移断言把这条路径钉进 <code>test_migration.js</code>。</p>
+<h3>保留项（与教练模式无关的同名词）</h3>
+<ul>
+<li>球员事件文案里的「教练」叙事（教练组新成员、谈教练实习、助教等）；</li>
+<li>球员阵容的 <code>role='start'/'bench'</code> 字段（首发/替补，非教练）。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>10/10 项 · 344/344 断言</b>全部通过；</li>
+<li><code>tools/build_all.py</code> 重建（现 10 步）与仓库成品<b>逐字节一致</b>；</li>
+<li>全文扫描：<code>S.coach</code> / <code>startCoach</code> / <code>coachEv</code> / <code>ART_IMG.bench</code> 零残留（仅 <code>ensureState</code> 保留 3 行迁移清理，属刻意设计）。</li>
+</ul>
+</div>
 <h2 id="v496">⚖️ v4.9.6 · 节奏复核：戏剧事件配额防饿死（戏剧占比 28%→36%+） <span class="sha">fa23f5f</span></h2>
 <div class="card">
 <h3>复核方法（M1/P2 验收）</h3>
