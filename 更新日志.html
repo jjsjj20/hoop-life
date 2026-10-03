@@ -247,8 +247,8 @@ td:first-child{white-space:nowrap}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.10.0</b></span><span class="badge">文件 <b>524,016</b> 字符</span><span class="badge">更新 <b>23</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
-<nav class="toc"><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.11.0</b></span><span class="badge">文件 <b>536,152</b> 字符</span><span class="badge">更新 <b>24</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
+<nav class="toc"><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.11.0</b></td><td>签位成为可交易资产（保护条款 · 交易截止日 · 选秀夜按归属播报）· 生涯分享卡</td><td><code>c1d696d</code></td><td>+12,136</td></tr>
 <tr><td><b>v4.10.0</b></td><td>移除教练模式（整体下线）· 老教练存档自动退役迁移 · 删除教练席横幅</td><td><code>d992710</code></td><td>−12,394</td></tr>
 <tr><td><b>v4.9.6</b></td><td>节奏复核：戏剧事件配额防饿死（戏剧占比 28%→36%+）· 30 生涯模拟工具链 · 13 条新断言</td><td><code>fa23f5f</code></td><td>+250</td></tr>
 <tr><td><b>v4.9.5</b></td><td>代码审查：修复选秀数据漏构造（自查发现）· 死代码清理 · 新增 AST 静态审查脚本</td><td><code>1224aa2</code></td><td>+278</td></tr>
@@ -289,6 +290,33 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v4110">🎲 v4.11.0 · 签位成为可交易资产 + 生涯分享卡 <span class="sha">c1d696d</span></h2>
+<div class="card">
+<h3>P3.1 签位保护 + 球队间签位交易</h3>
+<p>在 v4.9.3 的真实签位系统（战绩倒序 + 加权乐透）之上，签位从「单向流程」变成「可交易资产」：</p>
+<ul>
+<li><b>球队资产板</b>：NBA / CBA 每队未来 3 年的首轮 + 次轮签全部入账，每枚签 <code>{年份, 轮次, 槽位原队, 现持有方, 保护条款}</code>；不变量：同（年，轮，原队）的签全联盟<b>恰好一枚</b>，任意交易序列都不破；</li>
+<li><b>交易截止日</b>：AI 球队间真实成交 1~2 笔签位交易（新闻可见）；玩家可间接参与——<b>建议球队送出未来首轮换即战力</b>（球队战力实打实增强），或触发的重建剧情：<b>球队用未来首轮把你交易走</b>（换队 + 我方收签）；</li>
+<li><b>选秀夜按实际归属播报</b>：「第 N 顺位：XX 队选择了……（该签原属 YY）」，本届前三播报同样按归属；被保护的签若落入保护区（战绩最差的前 N 位）→ <b>归还原队</b>，受让方获原队今年次轮签（或现金）作为补偿。</li>
+</ul>
+<h3>P3.2 生涯分享卡</h3>
+<p>退役终章页新增「生成分享卡」：输出一张<b>自包含的单文件 HTML</b>——不引字体、不引图片、不引脚本，手机电脑另存即可打开分享：姓名/位置/生涯跨度、最高 OVR、生涯场均五项、效力球队路径、逐季场均得分曲线（内联 SVG，悬停可看单季数据）、荣誉墙、生涯评语。</p>
+<h3>验收对照（开发计划 P3）</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>验收标准</th><th>结果</th></tr>
+<tr><td>①</td><td>球队资产表（未来 3 年首轮/次轮 + 保护条款）</td><td>✓ NBA/CBA 全覆盖</td></tr>
+<tr><td>②</td><td>交易截止日「签位交易」事件线</td><td>✓ AI 成交 + 玩家两条参与线</td></tr>
+<tr><td>③</td><td>玩家可间接参与（换即战力 / 换你）</td><td>✓</td></tr>
+<tr><td>④</td><td>选秀夜按实际归属念、被保护的签归还原队</td><td>✓</td></tr>
+<tr><td>⑤</td><td>模拟 200 次签位交易，断言保护生效、签位不重复、不归两队</td><td>✓ 200 交易 + 200 归属解析全过</td></tr>
+<tr><td>P3.2</td><td>分享卡可测试，数字与 <code>S</code> 一致</td><td>✓ 19 断言全过</td></tr>
+</table></div>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>12/12 项 · 378/378 断言</b>全部通过（新增 <code>pick_trades</code> 13 断言、<code>share_card</code> 19 断言）；</li>
+<li><code>tools/build_all.py</code> 重建（现 12 步）与仓库成品<b>逐字节一致</b>。</li>
+</ul>
+</div>
 <h2 id="v4100">🗑️ v4.10.0 · 移除教练模式（整体下线 · 存档自动迁移） <span class="sha">d992710</span></h2>
 <div class="card">
 <h3>删除范围</h3>
