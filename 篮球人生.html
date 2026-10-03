@@ -5464,7 +5464,7 @@ function evDraftDeclare(){
   const cn=['','','二','三','四','五'];
   const tryTxt=S.nbaTries<=1?'':`这已是${S.name}第${cn[S.nbaTries]||S.nbaTries}次站上这个窗口。`;
   const lname=LEAGUE_NAMES[S.league]||'联赛';
-  const o=ovr();S.draft={stock:draftStockInit(),order:nbaDraftOrder(),promise:null,pick:null,y:seasonLabel()};const pred='球探行情预测：'+draftRangeText(S.draft.stock)+'。';
+  const o=ovr();S.draft=newDraft();   /* 唯一工厂：行情 + 签位 + 抽签数据一次给全 */const pred='球探行情预测：'+draftRangeText(S.draft.stock)+'。';
   return {id:'draftDeclare',title:`夏 · NBA选秀申报（${S.age}岁）`,scene:`${S.age}岁的${S.name}已在${lname}站稳脚跟。经纪人这天清晨打来电话：NBA选秀申报窗口开启——19岁到23岁，每年都有一次机会。${tryTxt}${pred}
 
 对一个职业球员来说，这不是容易的决定：申报意味着离开熟悉的一切，等待命运宣判。`,choices:[
@@ -5801,8 +5801,15 @@ function draftOrderOf(lg){
     playoff:rest.map(x=>x.team)
   };
 }
-function nbaDraftOrder(){return draftOrderOf('nba').order;}
-function cbaDraftOrder(){return draftOrderOf('cba').order;}
+/* 一届选秀的唯一构造点。
+ * 之前 evDraftDeclare() 和 ensureDraft() 各写各的对象字面量，结果申报那条路漏了
+ * draw / lotto / slot，抽签播报永远出不来——而且不报错，只是内容悄悄少了。
+ * 现在只留这一个工厂，加字段不可能只补一半。 */
+function newDraft(){
+  const m=draftOrderOf('nba');
+  return {stock:draftStockInit(),order:m.order,draw:m.draw,lotto:m.lotto,slot:m.slot,
+          promise:null,pick:null,y:seasonLabel()};
+}
 /* 抽签结果文案（选秀夜 / 落选后回 CBA 时都会用到） */
 function lottoText(draw,slot){
   if(!draw||!draw.length)return '';
@@ -5811,9 +5818,10 @@ function lottoText(draw,slot){
     (Math.round(Number(x.p)*10)/10).toString().replace(/\.0$/,'')+'%）').join(' · ');
 }
 function ensureDraft(){
-  if(!S.draft)S.draft={stock:draftStockInit(),order:null,draw:null,lotto:null,promise:null,pick:null,y:null};
-  /* 签位按赛季重抽：旧实现一旦生成就永久复用，换一年还是同一张签位表 */
-  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length||S.draft.y!==seasonLabel()){
+  if(!S.draft)S.draft={stock:null,order:null,draw:null,lotto:null,slot:null,promise:null,pick:null,y:null};
+  /* 签位按赛季重抽：旧实现一旦生成就永久复用，换一年还是同一张签位表。
+   * 另外把 !S.draft.draw 也算进"不完整"——老存档 / 半途造出来的 draft 缺抽签数据时能自愈。 */
+  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length||S.draft.y!==seasonLabel()||!S.draft.draw){
     const m=draftOrderOf('nba');
     S.draft.order=m.order;S.draft.draw=m.draw;S.draft.lotto=m.lotto;S.draft.slot=m.slot;S.draft.y=seasonLabel();
   }
@@ -5857,7 +5865,7 @@ function doDraft(kind,changes){
     ensureWorld();
     if(!S.honors.some(h=>h.t==='登陆CBA')){S.honors.push({y:seasonLabel(),t:'登陆CBA'});S.log.push({y:seasonLabel(),t:'登陆CBA'});}
     changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(pick<=20?'（首轮）':'（次轮）'));
-    changes.push(lottoText(cm.draw,cm.slot));
+    const _lt=lottoText(cm.draw,cm.slot);if(_lt)changes.push(_lt);
     changes.push('新秀合同：€'+S.contract.wage+'万/年 · 3年');
     S.log.push({y:seasonLabel(),t:'CBA选秀：'+S.team+'（第'+pick+'顺位）'});
     setTimeout(function(){try{sfx('draft');}catch(e){}},240);
@@ -5896,7 +5904,7 @@ function doDraft(kind,changes){
   const cls=genDraftClass();
   changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(r1?'（首轮秀）':'（次轮秀）'));
   if(pick<=14)changes.push('🏅 乐透秀！全家的欢呼把房间淹没。');
-  if(d.draw&&d.draw.length&&pick!==1)changes.push('🎯 '+lottoText(d.draw,d.slot));
+  if(pick!==1){const _lt=lottoText(d.draw,d.slot);if(_lt)changes.push('🎯 '+_lt);}
   if(promTeam)changes.push('🤝 '+promTeam+' 兑现了试训时的承诺。');
   changes.push('新秀合同：€'+S.contract.wage+'万/年 · '+years+'年');
   changes.push('本届前三：'+d.order[0]+'选中 '+cls[0].n+'；'+d.order[1]+'选中 '+cls[1].n+'；'+d.order[2]+'选中 '+cls[2].n);
