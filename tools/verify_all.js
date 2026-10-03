@@ -7,6 +7,21 @@
  *   · 同进程更简单、更快，本地与 CI 行为完全一致。
  * 代价是某个测试卡住会拖住整轮——所以测试体抛错会被 testkit 转成一条失败断言，而不是崩掉汇总。
  */
+/* 预检：jsdom 加载失败时给一句人话，而不是十屏「加载/执行失败」。
+ * 真实踩过的报错：webidl.util.markAsUncloneable is not a function
+ *   → Node 过旧（markAsUncloneable 要 Node ≥ 22.10）或装到了 jsdom 30（它带 undici 8）。
+ * 所以这里把 jsdom 锁在 26.1.0（兼容 Node ≥ 18）。 */
+try {
+  require('jsdom');
+} catch (e) {
+  console.error('测试依赖 jsdom 加载失败：' + e.message);
+  console.error('');
+  console.error('两种常见原因：');
+  console.error('  1) 还没装依赖 → 在仓库根跑 npm install');
+  console.error('  2) Node 版本过旧 → jsdom 已锁 26.1.0（Node ≥ 18 即可）；若 package.json 里的 jsdom 被改成 30.x，请改回来');
+  process.exit(2);
+}
+
 process.env.TESTKIT_COLLECT = '1';
 
 const fs = require('fs');

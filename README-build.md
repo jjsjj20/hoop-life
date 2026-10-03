@@ -19,7 +19,19 @@ python3 tools/build_all.py
 |:---|:---|:---|
 | Python 3.10+ | 构建 | 无法构建 |
 | Pillow | 图片按显示尺寸重采样（第 ⑦ 步） | 自动跳过该步并警告，产物体积会大 40% |
-| Node 20 + npm | 跑测试（与构建无关） | 无法跑验证 |
+| Node ≥ 18（建议 20） | 跑测试（与构建无关） | 无法跑验证 |
+
+> **⚠️ Node 版本别乱升**：`jsdom` 已锁定 **26.1.0**（兼容 Node ≥ 18）。
+> 千万不要升到 jsdom 30——它带的 undici 8 需要 `node:worker_threads.markAsUncloneable`
+> （Node ≥ 22.10 才有），旧 Node 上 `require('jsdom')` 会直接抛
+> `webidl.util.markAsUncloneable is not a function`，10 个测试全部加载失败。
+> 依赖已用精确版本锁死（`package.json` 无 `^`，且 `package-lock.json` 已入库）。
+
+### 排错：`webidl.util.markAsUncloneable is not a function`
+
+这是 Node 过旧 + jsdom 版本过高导致的。两个解法，二选一：
+1. 保持 `package.json` 里锁定的 `jsdom@26.1.0`，删掉 `node_modules` 重新 `npm install`；
+2. 或者把本机 Node 升到 ≥ 22.10。
 
 ## 跑验证（改完代码必做）
 
