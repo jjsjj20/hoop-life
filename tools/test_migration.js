@@ -134,7 +134,19 @@ module.exports = run('老存档迁移', ({ win, doc, check }) => {
   check('ensureDraft 自愈补齐抽签数据', H.hasDraw && H.hasLotto && H.hasSlot, JSON.stringify(H));
   check('自愈后签位表长度正确', H.orderLen === 30, String(H.orderLen));
 
-  // ── 6. 迁移 + 存档往返：字段不再丢 ─────────────────────
+  // ── 6. v4.10：老教练存档就地「光荣退役」（教练模式已整体移除）──
+  const coach = JSON.parse(loadIt(
+    makeLegacy('', `s.role='coach';s.usedCoach=['c1','c2'];
+      s.coach={tac:70,mot:66,eye:72,chem:6,season:3,honors:[{y:'2026-27赛季',t:'辽宁本钢 冠军'}],wins:80,losses:60,evDone:1,picks:[],team:'辽宁本钢',str:7,league:'CBA'};`),
+    "JSON.stringify({ok:true,uiMode:UI&&UI.mode,retired:S.retired===true,coachGone:typeof S.coach,roleGone:typeof S.role,usedCoachGone:typeof S.usedCoach})"));
+  check('老教练存档迁移不抛异常', coach.ok === true, JSON.stringify(coach));
+  check('老教练档就地退役（S.retired=true）', coach.retired === true, String(coach.retired));
+  check('读档后落到生涯终章页（UI.mode=end）', coach.uiMode === 'end', String(coach.uiMode));
+  check('S.coach / S.role / S.usedCoach 字段被清除',
+    coach.coachGone === 'undefined' && coach.roleGone === 'undefined' && coach.usedCoachGone === 'undefined',
+    JSON.stringify(coach));
+
+  // ── 7. 迁移 + 存档往返：字段不再丢 ─────────────────────
   win.eval('ensureState();ensureWorld();');   /* 上一个用例把 S 换成了缺世界的半途存档，先补全 */
   const round = win.eval(`JSON.stringify((function(){
     save();const j=saveJson();const before=JSON.parse(j).S;

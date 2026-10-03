@@ -129,8 +129,6 @@ setTimeout(() => {
       else if(m==='result'){advance();}
       else if(m==='season'){nextYear();}
       else if(m==='awards'){awardsNext();}
-      else if(m==='offers'){const b=document.querySelector('#chs .ch');if(b)b.click();else{UI={mode:'event',ev:getEvent()};}}
-      else if(m==='offers2'){UI={mode:'event',ev:getEvent()};}
       else {UI={mode:'event',ev:getEvent()};}
     })();};
   `);

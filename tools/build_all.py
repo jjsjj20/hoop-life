@@ -30,7 +30,8 @@ STEPS = [
     ("patch_pick_events.py",    "⑥ 签位主题事件",            True),
     ("patch_audit_fixes.py",    "⑦ 选秀数据工厂收敛（自查修复）", True),
     ("patch_drama_quota.py",    "⑧ 戏剧配额防饿死（M1 调参）",  True),
-    ("optimize_images.py",      "⑦ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_remove_coach.py",   "⑨ 彻底移除教练模式",         True),
+    ("optimize_images.py",      "⑩ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 

@@ -158,12 +158,7 @@ module.exports = new Promise(resolve => setTimeout(() => {
   // 1) fx 键
   const fxSet = new Set(R.fx);
   const badFx = [...fxKeys].filter(k => !fxSet.has(k));
-  // 教练模式的选择不走 applyFx，而是 coachChoose() 里自己解读 tac/mot/eye/chem，
-  // 所以这几个键不在 FX 里是正常的——但仍要确认 coachChoose 真的处理了它们。
-  const coachHandled = badFx.filter(k => new RegExp("k\\s*===\\s*'" + k + "'").test(src));
-  const reallyBad = badFx.filter(k => !coachHandled.includes(k));
-  if (reallyBad.length) add('HIGH', '效果键', `有 ${reallyBad.length} 个 fx 键既不在 FX 注册表、也没人消费（选项等于没效果）: ${reallyBad.join(', ')}`);
-  else if (coachHandled.length) add('INFO', '效果键', `${coachHandled.length} 个键（${coachHandled.join(', ')}）不在 FX 里，但由 coachChoose() 自行消费 → 正常`);
+  if (badFx.length) add('HIGH', '效果键', `有 ${badFx.length} 个 fx 键既不在 FX 注册表、也没人消费（选项等于没效果）: ${badFx.join(', ')}`);
   else add('OK', '效果键', `全部 ${fxKeys.size} 个 fx 键都已在注册表登记`);
 
   // 2) next 目标
