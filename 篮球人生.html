@@ -1831,6 +1831,7 @@ function worldDeadline(){
     }
   });
   fixRosterAll();
+  aiPickTrades(news);   /* v4.11：签位也是资产——截止日 AI 球队间真实成交 */
   S.worldNews=(S.worldNews||[]).concat(news);
 }
 /* 玩家主动交易：送出最弱替补，换来新援 */
@@ -2271,12 +2272,36 @@ const FX=[
   /* ---- 以下键由 choose()/advance() 流程层消费，注册为空操作仅为声明 ---- */
   ['pmod',()=>{}],         /* 季后赛胜负修正：choose() 系列赛结算中读取 */
   ['finishSeason',()=>{}], /* 立即进入赛季结算：advance() 中处理 */
-  ['end',()=>{}],          /* 生涯终结（退役/转教练）：advance() 中处理 */
+  ['end',()=>{}],          /* 生涯终结（退役）：advance() 中处理 */
   ['continued',()=>{}],    /* 继续征战（41岁终章）：advance() 中处理 */
   ['next',()=>{}],         /* 链接下一剧情事件：advance() 中处理 */
   /* ---- 球员世界 ---- */
   ['addTeammate',(v,c)=>{ensureWorld();const lg=myLeagueKey();if(lg){S.world[lg].push({n:v,p:R.pick(Object.keys(POS)),o:R.int(55,78),a:R.int(19,26),t:myTeamName(),ts:S.teamStr,role:'bench'});fixRosterAll();}c.push('新援 '+v+' 入队');S.log.push({y:seasonLabel(),t:'新援 '+v+' 加盟'});}],
   ['makeTrade',(v,c)=>{const r=userTrade();if(r&&r.in){c.push('交易：得到 '+r.in+(r.out?('，送出 '+r.out):''));S.log.push({y:seasonLabel(),t:'截止日交易：得到 '+r.in+(r.out?('，送出 '+r.out):'')});}}],
+  /* v4.11 P3.1：签位交易（玩家间接参与） */
+  ['pickForHelp',(v,c)=>{ensurePickBoard();const lg=myLeagueKey();
+    if(lg!=='nba'&&lg!=='cba'){c.push('该联赛没有选秀签位，无从交易');return;}
+    const D=curDraftYear();const a=pickAssetOf(lg,D+1,1,myTeamName());
+    if(!a||a.owner!==myTeamName()){const r0=userTrade();c.push('球队手里没有可动的未来首轮签，改为直接补强'+(r0&&r0.in?('：得到 '+r0.in):''));return;}
+    const teams=TEAMS[lg].map(t=>t[0]).filter(t=>t!==myTeamName());
+    const to=R.pick(teams);a.prot=R.int(1,10);
+    execPickTrade(lg,myTeamName(),to,a);
+    ensureWorld();const nm=lg==='cba'?genCN():genWest();
+    S.world[lg].push({n:nm,p:R.pick(Object.keys(POS)),o:R.int(74,84),a:R.int(26,32),t:myTeamName(),ts:S.teamStr||6,role:'start'});fixRosterAll();
+    c.push('📦 '+myTeamName()+' 将 '+pickName(a)+'（前'+a.prot+'保护）送至 '+to+'，换来即战力 '+nm);
+    S.log.push({y:seasonLabel(),t:'签位交易：送出'+pickName(a)+'，得到 '+nm});}],
+  ['tradeYouForPicks',(v,c)=>{ensurePickBoard();const lg=myLeagueKey();
+    if(lg!=='nba'&&lg!=='cba'){c.push('该联赛没有选秀签位，无从交易');return;}
+    const D=curDraftYear();const oldTeam=S.team;
+    const pool=TEAMS[lg].slice(0,6).map(t=>t[0]).filter(t=>t!==oldTeam);
+    const to=R.pick(pool.length?pool:TEAMS[lg].map(t=>t[0]).filter(t=>t!==oldTeam));
+    const a=pickAssetOf(lg,D+1,1,to);
+    if(a&&a.owner===to){a.prot=null;execPickTrade(lg,to,oldTeam,a);}   /* 我队收下对方的未来首轮 */
+    S.team=to;const tt=TEAMS[lg].find(x=>x[0]===to);S.teamStr=tt?tt[1]:6;S.ts=3;
+    if(!S.played.includes(S.team))S.played.push(S.team);
+    setContract(S.team,S.league,2,'转会合同');
+    c.push('📦 交易达成：'+oldTeam+' 将你送至 '+to+'，换回'+(a?' '+pickName(a):'未来资产')+'。新球队的发布会上，总经理说：「我们盯了你很久。」');
+    S.log.push({y:seasonLabel(),t:'被交易至 '+to+'（换回签位资产）'});}],
   ['teammateLeave',(v,c)=>{const nm=teammateLeaves();if(nm)c.push(nm+' 离开球队');}],
   ['starter',(v,c)=>{S.starter=!!v;c.push(v?'晋升首发':'跌入替补');}],
   /* ---- 转会 / 选秀 ---- */
@@ -5337,6 +5362,8 @@ function evTradeDeadline(){
   ];
   if(R.chance(.5))chs.push({t:'有球队询价：提出交易申请',fx:{rollTrans:'strong',clutch:1},o:'他的经纪人放出了交易许可。几支球队递来了报价。'});
   else chs.push({t:'公开表态：我只想留队',fx:{ts:2,stability:1},o:'发布会上，他的回答让主场球迷彻底安心。'});
+  chs.push({t:'建议送出未来首轮签，换即战力',fx:{pickForHelp:1,ts:1},o:'管理层被说服了——用未来赌现在，要慎重，但值得。'});
+  if(R.chance(.35)&&ovr()>=68)chs.push({t:'重建队询价：球队想用你换未来签位',fx:{tradeYouForPicks:1},o:'总经理摊牌了：球队需要未来，而你是最好的筹码。'});
   return {id:'tdl',title:'夏 · 交易截止日',scene:`交易截止日到了。各队总经理彻夜谈判，流言满天飞，几笔交易与签约尘埃落定。\n\n${newsTxt}`,choices:chs};
 }
 
@@ -5835,6 +5862,72 @@ function rookieWageMult(pick){if(pick<=2)return 1.6;if(pick<=5)return 1.35;if(pi
 function teamAtPick(order,pick){return order[(clamp(pick,1,order.length*2)-1)%order.length];}
 function genDraftClass(){const c=[];for(let i=0;i<59;i++)c.push({n:R.chance(.72)?genWest():genCN(),p:R.pick(Object.keys(POS)),o:R.int(58,86)});return c;}
 
+/* ── 签位资产板（v4.11 P3.1）：每队未来 3 年首轮/次轮，可交易、带保护 ── */
+function curDraftYear(){return S.birthYear+S.age;}   /* 当前赛季对应的选秀年（6 月） */
+function ensurePickBoard(){
+  S.pickBoard=S.pickBoard||{};
+  const D=curDraftYear();
+  ['nba','cba'].forEach(lg=>{
+    const b=S.pickBoard[lg]=S.pickBoard[lg]||{assets:[]};
+    (TEAMS[lg]||[]).forEach(t=>{const orig=t[0];
+      for(let r=1;r<=2;r++)for(let k=0;k<3;k++){
+        const y=D+k;
+        if(!b.assets.some(a=>a.y===y&&a.r===r&&a.orig===orig))
+          b.assets.push({y,r,orig,owner:orig,prot:null});
+      }
+    });
+    b.assets=b.assets.filter(a=>a.y>=D);   /* 过期年份清理（随赛季自然滚动） */
+  });
+  return S.pickBoard;
+}
+function pickAssetOf(lg,y,r,orig){const b=S.pickBoard&&S.pickBoard[lg];return b?(b.assets.find(a=>a.y===y&&a.r===r&&a.orig===orig)||null):null;}
+function slotOwnedBy(lg,y,orig,r){const a=pickAssetOf(lg,y,r,orig);return (a&&a.owner)||orig;}
+/* 成交一笔签位交易：只能转手「自己拥有」的签——这是不变量的第一道闸 */
+function execPickTrade(lg,fromTeam,toTeam,a){
+  const t=pickAssetOf(lg,a.y,a.r,a.orig);
+  if(!t||t.owner!==fromTeam||fromTeam===toTeam)return null;
+  t.owner=toTeam;return t;
+}
+function pickName(a){return (a.y<=curDraftYear()?'今年':(a.y-curDraftYear())+'年后')+(a.r===1?'首轮签':'次轮签')+'（'+a.orig+'）';}
+/* AI 球队间的签位交易：截止日成交 1~2 笔，新闻可见 */
+function aiPickTrades(news){
+  try{
+    ensurePickBoard();
+    ['nba','cba'].forEach(lg=>{
+      const D=curDraftYear();
+      const n=R.chance(.6)?2:1;
+      for(let i=0;i<n;i++){
+        const b=S.pickBoard[lg];
+        const cands=b.assets.filter(a=>a.y>D&&a.owner===a.orig);
+        if(!cands.length)continue;
+        const a=R.pick(cands);
+        const teams=TEAMS[lg].map(t=>t[0]).filter(t=>t!==a.owner&&t!==a.orig);
+        if(!teams.length)continue;
+        const to=R.pick(teams);
+        if(a.r===1)a.prot=R.int(1,10);   /* 未来首轮带保护：烂队送签自保 */
+        const from=a.owner;
+        if(!execPickTrade(lg,from,to,a))continue;
+        news.push('🔁 签位交易：'+from+' 将 '+pickName(a)+(a.prot?('（前'+a.prot+'保护）'):'')+' 送至 '+to);
+      }
+    });
+  }catch(e){}
+}
+/* 选秀夜：按资产板解析首轮每个槽位的实际归属（含保护回退），一次结算整晚 */
+function draftOwnership(lg,order,year){
+  ensurePickBoard();
+  return order.map((orig,i)=>{
+    const a=pickAssetOf(lg,year,1,orig)||{orig,owner:orig,prot:null};
+    let owner=a.owner,reverted=false,comp='';
+    if(a.owner!==a.orig&&a.prot!=null&&i<a.prot){
+      const buyer=a.owner;
+      a.owner=a.orig;owner=a.orig;reverted=true;
+      const c=pickAssetOf(lg,year,2,orig);
+      if(c&&c.owner===a.orig){c.owner=buyer;comp='，获 '+orig+' 今年次轮签作补偿';}
+      else comp='，获现金补偿';
+    }
+    return {slot:i+1,orig,owner,reverted,comp,prot:a.prot,team:owner};
+  });
+}
 function doDraft(kind,changes){
   if(kind==='cba'){
     const o=ovr();
@@ -5859,7 +5952,10 @@ function doDraft(kind,changes){
       return;
     }
     const cm=draftOrderOf('cba');
-    const team=teamAtPick(cm.order,pick);
+    const cbaR1=pick<=20;
+    const slotTeam=teamAtPick(cm.order,pick);
+    const so=cbaR1?draftOwnership('cba',cm.order,curDraftYear())[pick-1]:null;
+    const team=so?so.team:slotOwnedBy('cba',curDraftYear(),slotTeam,2);
     const mt=(TEAMS.cba.find(x=>x[0]===team)||[,'6'])[1];
     S.team=team;S.teamStr=mt;S.league='CBA';S.ts=3;S.value=baseValue();
     if(!S.played.includes(S.team))S.played.push(S.team);
@@ -5868,6 +5964,7 @@ function doDraft(kind,changes){
     ensureWorld();
     if(!S.honors.some(h=>h.t==='登陆CBA')){S.honors.push({y:seasonLabel(),t:'登陆CBA'});S.log.push({y:seasonLabel(),t:'登陆CBA'});}
     changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(pick<=20?'（首轮）':'（次轮）'));
+    if(so&&so.orig!==so.owner)changes.push('📋 该签原属 '+so.orig+(so.reverted?('（前'+so.prot+'保护触发，归还原队'+so.comp+'）'):('，由 '+so.owner+' 交易持有')));
     const _lt=lottoText(cm.draw,cm.slot);if(_lt)changes.push(_lt);
     changes.push('新秀合同：€'+S.contract.wage+'万/年 · 3年');
     S.log.push({y:seasonLabel(),t:'CBA选秀：'+S.team+'（第'+pick+'顺位）'});
@@ -5893,9 +5990,12 @@ function doDraft(kind,changes){
     S.log.push({y:seasonLabel(),t:'NBA选秀落选'});
     return;
   }
-  const team=teamAtPick(d.order,pick);
-  const mt=(TEAMS.nba.find(x=>x[0]===team)||[,'5'])[1];
   const r1=pick<=30;
+  const own1=draftOwnership('nba',d.order,curDraftYear());   /* 首轮全槽位归属，整晚一次结算 */
+  const slotTeam=teamAtPick(d.order,pick);
+  const so=r1?own1[pick-1]:null;
+  const team=so?so.team:slotOwnedBy('nba',curDraftYear(),slotTeam,2);
+  const mt=(TEAMS.nba.find(x=>x[0]===team)||[,'5'])[1];
   S.team=team;S.teamStr=mt;S.league='NBA';S.ts=2;S.value=baseValue();
   if(!S.played.includes(S.team))S.played.push(S.team);
   const years=r1?4:3;
@@ -5906,11 +6006,12 @@ function doDraft(kind,changes){
   d.pick=pick;
   const cls=genDraftClass();
   changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(r1?'（首轮秀）':'（次轮秀）'));
+  if(so&&so.orig!==so.owner)changes.push('📋 该签原属 '+so.orig+(so.reverted?('（前'+so.prot+'保护触发，归还原队'+so.comp+'）'):('，由 '+so.owner+' 交易持有')));
   if(pick<=14)changes.push('🏅 乐透秀！全家的欢呼把房间淹没。');
   if(pick!==1){const _lt=lottoText(d.draw,d.slot);if(_lt)changes.push('🎯 '+_lt);}
   if(promTeam)changes.push('🤝 '+promTeam+' 兑现了试训时的承诺。');
   changes.push('新秀合同：€'+S.contract.wage+'万/年 · '+years+'年');
-  changes.push('本届前三：'+d.order[0]+'选中 '+cls[0].n+'；'+d.order[1]+'选中 '+cls[1].n+'；'+d.order[2]+'选中 '+cls[2].n);
+  changes.push('本届前三：'+own1.slice(0,3).map((o,ix)=>o.team+'选中 '+cls[ix].n+(o.orig!==o.owner?(o.reverted?'（'+o.orig+' 的签，保护触发归还）':'（'+o.orig+' 的签，交易获得）'):'')).join('；'));
   S.log.push({y:seasonLabel(),t:'NBA选秀：'+S.team+'（第'+pick+'顺位）'});
   setTimeout(function(){try{sfx('draft');}catch(e){}},240);
 }
@@ -7788,10 +7889,97 @@ function showEnd(){
     ${matesTop(3).length?`<div class="summ"><h3>🤝 更衣室</h3>${matesHTML()}</div>`:''}
     <p class="scene">许多年后，人们还会提起${esc(S.name)}的名字——${esc(homeTown())}的水泥球场边，总有孩子模仿着他的动作，投出人生的第一球。</p>`;
   html+=`<button class="btn ghost" onclick="showArchive()">📋 查看完整档案</button>
+  <button class="btn" onclick="shareCardDL()">🖼 生成分享卡</button>
   <button class="btn" onclick="renderMenu()">↩ 回到主菜单</button>`;
   $('#app').innerHTML=html;
 }
 function endNow(){if(confirm('确定提前结束当前生涯吗？（将进入生涯总结）')){S.retired=true;UI={mode:'end'};save();showEnd();}}
+/* ── 生涯分享卡（v4.11 P3.2）：自包含单文件，另存即可分享 ── */
+function shareCardHTML(){
+  const seas=(S.career&&S.career.seasons)||0;
+  const avg=n=>seas?Math.round(n/seas*10)/10:0;
+  const hs=(S.honors||[]).map(h=>h.t);
+  const teams=(S.played||[]).slice();
+  const rv=(()=>{try{return careerReview();}catch(e){return {title:'🏀 篮球生涯',lines:['篮球记住了他来过。']};}})();
+  const rows=(S.history||[]).filter(h=>typeof h.ppg==='number');
+  const cw=640,chh=180,cp=40;
+  const vals=rows.map(h=>h.ppg);
+  const mx=Math.max(10,...vals)*1.15;
+  const px=i=>rows.length>1?(cp+i*(cw-cp*2)/(rows.length-1)):cw/2;
+  const py=v=>chh-cp-(v/mx)*(chh-cp*2);
+  const line=vals.map((v,i)=>px(i).toFixed(1)+','+py(v).toFixed(1)).join(' ');
+  const area=vals.length?(cp+','+(chh-cp)+' '+line+' '+(rows.length>1?px(vals.length-1).toFixed(1):cw/2)+','+(chh-cp)):'';
+  const dots=vals.map((v,i)=>'<circle cx="'+px(i).toFixed(1)+'" cy="'+py(v).toFixed(1)+'" r="3.4" fill="#fbbf24"><title>'+esc(rows[i].y||'')+' · 场均 '+v+' 分</title></circle>').join('');
+  const chips=hs.length?hs.slice(0,16).map(t=>'<span class="hb">'+esc(t)+'</span>').join(''):'<span class="hb dim">荣誉墙虚位以待</span>';
+  const moreN=hs.length>16?'<span class="hb dim">…等 '+hs.length+' 项</span>':'';
+  const teamChips=teams.length?teams.map(t=>'<span class="tb">'+esc(t)+'</span>').join('<span class="arr">➔</span>'):'<span class="tb">'+esc(S.team||'—')+'</span>';
+  const curve=rows.length
+    ?'<svg viewBox="0 0 '+cw+' '+chh+'" preserveAspectRatio="none" role="img" aria-label="生涯场均得分曲线">'
+     +'<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24" stop-opacity=".28"/><stop offset="1" stop-color="#fbbf24" stop-opacity="0"/></linearGradient></defs>'
+     +'<line x1="'+cp+'" y1="'+(py(0)+1).toFixed(1)+'" x2="'+(cw-cp)+'" y2="'+(py(0)+1).toFixed(1)+'" stroke="#28324a" stroke-width="1"/>'
+     +'<line x1="'+cp+'" y1="'+py(mx/1.15).toFixed(1)+'" x2="'+(cw-cp)+'" y2="'+py(mx/1.15).toFixed(1)+'" stroke="#1c2438" stroke-width="1" stroke-dasharray="4 5"/>'
+     +'<text x="'+(cw-cp)+'" y="'+(py(mx/1.15)-6).toFixed(1)+'" text-anchor="end" fill="#5b6784" font-size="11">'+(Math.round(mx/1.15*10)/10)+' 分</text>'
+     +(area?'<polygon points="'+area+'" fill="url(#g)"/>':'')
+     +(line?'<polyline points="'+line+'" fill="none" stroke="#fbbf24" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>':'')
+     +dots+'</svg>'
+    :'<div class="mini">没有逐季数据可画——生涯太短，或存档来自没有曲线记录的老版本。</div>';
+  return '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+    +'<title>'+esc(S.name)+' · 篮球人生分享卡</title>\n'
+    +'<style>\n'
+    +'body{margin:0;padding:24px 12px;background:#070b16;font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#e8edf7;}\n'
+    +'.card{max-width:680px;margin:0 auto;background:linear-gradient(160deg,#101830,#0a0f1f 60%);border:1px solid #232c44;border-radius:18px;padding:26px 26px 18px;box-shadow:0 18px 50px rgba(0,0,0,.5)}\n'
+    +'.head{display:flex;gap:18px;align-items:center;border-bottom:1px solid #232c44;padding-bottom:16px}\n'
+    +'.ovr{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#2a3a63,#141d33);border:2px solid #fbbf24;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}\n'
+    +'.ovr b{font-size:26px;color:#fbbf24;line-height:1}.ovr span{font-size:10px;color:#8fa0c4;letter-spacing:2px;margin-top:3px}\n'
+    +'h1{margin:0;font-size:26px;letter-spacing:1px}.sub{color:#8fa0c4;font-size:13px;margin-top:5px}\n'
+    +'.era{color:#fbbf24;font-size:12px;margin-top:3px}\n'
+    +'.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0}\n'
+    +'.stat{background:#0c1326;border:1px solid #1e2740;border-radius:10px;padding:10px 4px;text-align:center}\n'
+    +'.stat b{display:block;font-size:20px;color:#fff}.stat span{font-size:11px;color:#8fa0c4}\n'
+    +'.sec{font-size:12px;color:#8fa0c4;letter-spacing:2px;margin:16px 0 8px}\n'
+    +'.teams{display:flex;flex-wrap:wrap;gap:6px;align-items:center}\n'
+    +'.tb{background:#12203c;border:1px solid #24406e;color:#cfe0ff;font-size:12px;padding:4px 9px;border-radius:999px}\n'
+    +'.arr{color:#4a5a80;font-size:12px}\n'
+    +'.hl{display:flex;flex-wrap:wrap;gap:6px}\n'
+    +'.hb{background:#241d08;border:1px solid #4d3d10;color:#fbbf24;font-size:12px;padding:4px 9px;border-radius:999px}\n'
+    +'.hb.dim{background:#111a2c;color:#5b6784;border-color:#232c44}\n'
+    +'.quote{margin-top:16px;background:#0c1326;border-left:3px solid #f97316;border-radius:0 10px 10px 0;padding:12px 14px}\n'
+    +'.quote b{color:#fb923c}.quote p{margin:6px 0 0;color:#c9d4ec;font-size:14px;line-height:1.7}\n'
+    +'.mini{color:#5b6784;font-size:12px}\n'
+    +'.foot{margin-top:18px;padding-top:12px;border-top:1px solid #1e2740;color:#4a5a80;font-size:11px;text-align:center;letter-spacing:1px}\n'
+    +'</style>\n</head>\n<body>\n'
+    +'<div class="card">\n'
+    +'<div class="head"><div class="ovr"><b>'+clamp(Math.round(S.peakO||ovr()),0,99)+'</b><span>最高OVR</span></div>'
+    +'<div><h1>'+esc(S.name)+'</h1>'
+    +'<div class="sub">'+esc(POS[S.pos].n)+' · '+(seas||'0')+' 个赛季 · '+(hs.length)+' 项荣誉</div>'
+    +'<div class="era">篮球生涯 '+(S.birthYear+15)+'–'+(S.birthYear+S.age)+' · '+esc(S.league||'')+'</div></div></div>\n'
+    +'<div class="grid">'
+    +'<div class="stat"><b>'+avg(S.career.pts)+'</b><span>场均得分</span></div>'
+    +'<div class="stat"><b>'+avg(S.career.reb)+'</b><span>场均篮板</span></div>'
+    +'<div class="stat"><b>'+avg(S.career.ast)+'</b><span>场均助攻</span></div>'
+    +'<div class="stat"><b>'+avg(S.career.stl||0)+'</b><span>场均抢断</span></div>'
+    +'<div class="stat"><b>'+avg(S.career.blk||0)+'</b><span>场均盖帽</span></div>'
+    +'</div>\n'
+    +'<div class="sec">效力球队</div><div class="teams">'+teamChips+'</div>\n'
+    +'<div class="sec">生涯场均得分曲线</div>'+curve+'\n'
+    +'<div class="sec">荣誉墙</div><div class="hl">'+chips+moreN+'</div>\n'
+    +'<div class="quote"><b>'+esc(rv.title)+'</b><p>'+esc(rv.lines[0]||'')+'</p></div>\n'
+    +'<div class="foot">篮球人生 · 生涯模拟 · 单文件分享卡</div>\n'
+    +'</div>\n</body>\n</html>';
+}
+function shareCardDL(){
+  try{
+    const html=shareCardHTML();
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='篮球人生分享卡-'+S.name+'.html';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){try{URL.revokeObjectURL(a.href);}catch(e){}},1500);
+    toast('📸 分享卡已生成——单文件 HTML，手机电脑都能直接打开');
+    S.log=S.log||[];S.log.push({y:seasonLabel(),t:'生成了生涯分享卡'});
+  }catch(e){try{toast('生成失败：'+(e&&e.message||e));}catch(_){}}
+}
 /* ═══════════ 10.5 成就与图鉴 ═══════════
  * 成就条件全部从生涯状态里真算出来（荣誉列表 / 逐季数据 / 现金与资产 / 球员世界 / 图鉴），
  * 而不是记在计数器上的「假奖杯」。检查时机：赛季结算、生涯终章、打开面板、读档（老存档静默补算）。 */
