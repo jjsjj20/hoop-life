@@ -8128,6 +8128,10 @@ function showArchive(){
      <button class="btn ghost" onclick="sfxTest()">🔔 试听一段</button>
      <button class="btn ghost" onclick="toggleSfx();showArchive()">${sfxEnabled()?'🔇 关掉音效':'🔊 打开音效'}</button>
    </div></div>`;
+  if(CRASH_LOG.length){
+    h+=`<label>🧾 运行日志</label><div class="mini">本次运行捕获到 <b style="color:#ffd479">${CRASH_LOG.length}</b> 条异常（已自动恢复到安全进度，不影响存档）。遇到问题时把这一节截图反馈即可：</div>
+     <div style="margin-top:6px">${CRASH_LOG.slice().reverse().map(r=>`<div class="tl"><span>${new Date(r.t).toLocaleTimeString()}</span><b>${esc(r.src)}：${esc(r.msg)}${(r.n||1)>1?(' ×'+r.n):''}</b></div>`).join('')}</div>`;
+  }
   openOvl(h);
 }
 /* 🧭 打法倾向说明：选择如何折算成场均数据 */
@@ -9140,13 +9144,49 @@ function renderSeason(res){
 }
 /* ═══════════ 11 容错恢复与启动 ═══════════ */
 let recovering=false;
+/* 崩溃自恢复：兜住未捕获异常，把玩家拉回一个安全事件页，而不是白屏。
+ * 但「不白屏」不等于「当没发生」——早先这里完全静默，真实 bug 永远暴露不出来：
+ * 玩家看到的是"剧情突然跳到别处"，开发者这边什么都没有。现在：
+ *   · 控制台打一条带位置和堆栈的 [崩溃] 日志（本地调试 / 远程排查都能查）
+ *   · 内存里留最近 20 条（不进存档、不撑大 localStorage），档案面板可见——
+ *     手机上没有控制台，玩家也能截图反馈
+ *   · 同一条错误反复出现只累加次数、不刷屏；玩家侧提示 30 秒最多一次
+ */
+const CRASH_LOG=[];
+const CRASH_MAX=20;
+let _crashToastAt=0;
+function crashNote(src,msg,detail){
+  const now=Date.now();
+  const rec={t:now,src:String(src||'异常'),msg:String(msg==null?'未知错误':msg).slice(0,300),detail:detail?String(detail).slice(0,800):''};
+  const last=CRASH_LOG[CRASH_LOG.length-1];
+  if(last&&last.src===rec.src&&last.msg===rec.msg){last.n=(last.n||1)+1;last.t=now;}
+  else{CRASH_LOG.push(rec);if(CRASH_LOG.length>CRASH_MAX)CRASH_LOG.shift();}
+  try{console.error('[崩溃] '+rec.src+' · '+rec.msg+(rec.detail?('\n'+rec.detail):''));}catch(_){}
+  if(now-_crashToastAt>30000){
+    _crashToastAt=now;
+    try{toast('⚠️ 刚遇到一点异常，已自动回到安全进度（详情见「档案 → 运行日志」）');}catch(_){}
+  }
+}
 function recover(){
   if(recovering||!S)return;
   recovering=true;
-  try{UI={mode:'event',ev:safeEvent()};save();renderGame();}catch(e){}
+  try{UI={mode:'event',ev:safeEvent()};save();renderGame();}
+  catch(e){crashNote('恢复流程自身出错',(e&&e.message)||e,(e&&e.stack)||'');}
   recovering=false;
 }
-window.addEventListener('error',()=>recover());
+window.addEventListener('error',function(e){
+  /* 图片、脚本等资源加载失败也会冒泡到 window，它们没有 message，
+   * 不该被当成代码崩溃记一笔（否则网络抖动就刷满日志）。 */
+  if(e&&e.target&&e.target!==window&&e.target.tagName)return;
+  const at=((e&&e.filename)||'')+((e&&e.lineno)?(':'+e.lineno+':'+((e&&e.colno)||0)):'');
+  crashNote('脚本异常',(e&&e.message)||e,(at+(e&&e.error&&e.error.stack?('\n'+e.error.stack):'')));
+  recover();
+});
+window.addEventListener('unhandledrejection',function(e){
+  /* AI 点评 / 实时事件流全程是 Promise，被拒绝时会静默消失，这里必须收住 */
+  const r=e&&e.reason;
+  crashNote('未处理的 Promise',(r&&r.message)||r,(r&&r.stack)||'');
+});
 
 /* ═══════════ 11.5 键盘操作 ═══════════
  * 桌面玩家第一反应是敲键盘，不是找鼠标。这里把常用动作接到按键上：
@@ -9747,11 +9787,12 @@ AI.openPanel=function(){
  +'<p class="mini">AI 负责写「焦点战战报 / 颁奖夜点评 / 里程碑纪念词 / 退役演讲与名人堂致辞 / 世界体育报」的文案；「实时事件流」还会现场创作全新小事件（小幅数值 · 白名单校验 · 频率可调）。文案由你配置的 OpenAI 兼容接口生成，密钥只保存在本机浏览器。</p>'
  +'<label class="aiL">接口地址（Base URL）</label><input id="aiUrl" class="aiIn" value="'+esc(c.url||'')+'" placeholder="https://api.openai.com/v1">'
  +'<label class="aiL">API Key</label><input id="aiKey" class="aiIn" type="password" value="'+esc(c.key||'')+'" placeholder="sk-...（仅存本机）">'
+ +'<p class="mini" style="color:#ffd479;margin:6px 0 0">⚠️ 密钥以<b>明文</b>存在这台设备的浏览器里（不进存档、不进仓库，换设备需重填）。<b>共用 / 公共电脑上请不要填写</b>；不再使用就点下面的「🗑 清除密钥」。</p>'
  +'<label class="aiL">模型名</label><input id="aiModel" class="aiIn" value="'+esc(c.model||'')+'" placeholder="gpt-4o-mini / deepseek-chat / qwen-plus …">'
  +'<label class="aiL">实时事件流（AI 现场创作新事件）</label><select id="aiEvMode" class="aiIn"><option value="off">关闭</option><option value="low">偶尔 · 约每 5 个事件 1 次</option><option value="mid">定期 · 约每 3 个事件 1 次</option><option value="max">优先 · 尽量多</option></select>'
  +'<p class="mini">事件流生成的小事件与常规事件同级参与剧情节奏，效果小幅双向（有得有失）；退役 / 转会 / 伤病等重大节点仍由游戏引擎决定。</p>'
  +'<label class="aiL"><input type="checkbox" id="aiOn" '+(c.on?'checked':'')+'> 启用 AI 点评</label>'
- +'<div class="aiRow"><button class="btn" onclick="AI.saveFromPanel()">💾 保存</button><button class="btn" onclick="AI.test()">🔌 测试连接</button><button class="btn" onclick="AI.clearCache()">🧹 清空缓存</button></div>'
+ +'<div class="aiRow"><button class="btn" onclick="AI.saveFromPanel()">💾 保存</button><button class="btn" onclick="AI.test()">🔌 测试连接</button><button class="btn" onclick="AI.clearCache()">🧹 清空缓存</button><button class="btn ghost" onclick="AI.clearKey()">🗑 清除密钥</button></div>'
  +'<div id="aiTestOut" class="aiNote"></div>'
  +'<p class="mini">兼容 OpenAI / DeepSeek / 通义千问 / Kimi / 本地 Ollama 等 OpenAI 兼容接口。若提示网络错误，多为该接口不允许浏览器直连（CORS）或地址填错。</p>';
  openOvl(html,'mid');try{const se=document.getElementById('aiEvMode');if(se)se.value=String((AI.cfg&&AI.cfg.evMode)||'mid');}catch(e){}
@@ -9782,6 +9823,18 @@ AI.test=function(){
  });
 };
 AI.clearCache=function(){try{localStorage.removeItem('hoop_ai_cache_v1');if(typeof toast==='function')toast('已清空 AI 缓存 🧹');}catch(e){}};
+/* 清除本机保存的密钥：不加密（没有口令的加密只是障眼法），
+ * 真正有用的是「说清楚它存在哪」+「随时能一键抹掉」。 */
+AI.clearKey=function(){
+ if(!confirm('清除这台设备上保存的 API 密钥，并关闭 AI 点评？\n（只影响本机设置，存档不受影响）'))return;
+ AI.cfg.key='';
+ AI.cfg.on=false;
+ AI.saveCfg();
+ const k=document.getElementById('aiKey');if(k)k.value='';
+ const on=document.getElementById('aiOn');if(on)on.checked=false;
+ const o=document.getElementById('aiTestOut');if(o)o.textContent='🔒 已清除密钥，AI 点评已关闭';
+ if(typeof toast==='function')toast('已清除本机保存的 API 密钥 🔒');
+};
 (function(){
  try{const st=document.createElement('style');st.textContent=AI_CSS;document.head.appendChild(st);}catch(e){}
  AI.load();
