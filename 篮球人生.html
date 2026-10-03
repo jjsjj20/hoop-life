@@ -1137,7 +1137,7 @@ function ensureState(){
   S.played=S.played||[];S.career=S.career||{seasons:0,pts:0,reb:0,ast:0};
   S.career.stl=S.career.stl||0;S.career.blk=S.career.blk||0; /* 防守数据表：老存档补齐 */
   S.history=S.history||[];   /* 逐季数据（生涯曲线用）：老存档从当前赛季开始记录 */
-  S.nbaTries=S.nbaTries||0;S.nbaSeasons=S.nbaSeasons||0;S.trial=S.trial||null;S.a=S.a||{};S.h=S.h||{};
+  S.nbaTries=S.nbaTries||0;S.nbaSeasons=S.nbaSeasons||0;S.trial=S.trial||null;S.draft=S.draft||null;S.a=S.a||{};S.h=S.h||{};
   S.worldNews=S.worldNews||[];
   S.mode=S.mode||'immersive';S.stageTotal=S.stageTotal||0;S.standings=S.standings||null;S.bracket=S.bracket||null;
   S.tend=tendOf(S.tend);S.tendAll=tendOf(S.tendAll); /* 打法倾向：老存档补齐（缺失按 0 计） */
@@ -2193,6 +2193,8 @@ const FX=[
   ['starter',(v,c)=>{S.starter=!!v;c.push(v?'晋升首发':'跌入替补');}],
   /* ---- 转会 / 选秀 ---- */
   ['rollDraft',(v,c)=>{doDraft(v,c);}],
+  ['draftStock',(v,c)=>{if(!S.draft)return;const b=S.draft.stock;S.draft.stock=clamp(S.draft.stock-v,1,75);if(v)c.push((v>0?'📈 选秀行情上涨':'📉 选秀行情下滑')+'：预计顺位 '+Math.round(b)+' → '+Math.round(S.draft.stock)+'（'+draftRangeText(S.draft.stock)+'）');}],
+  ['draftPromise',(v,c)=>{if(S.draft)S.draft.promise={team:v};c.push('🤝 '+v+' 的选秀承诺：只要你还在，我们就选你。');}],
   ['rollEuro',(v,c)=>{if(ovr()<58){c.push('欧洲球队婉拒了报价（综评不足）');return;} /* 进入欧洲门槛：综评58+ */ const t=R.pick(TEAMS.euro);S.team=t[0];S.teamStr=t[1];S.league='欧洲';if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'欧洲',2,'转会合同');S.starter=starterScore()>=66;c.push('加盟 '+S.team);S.log.push({y:seasonLabel(),t:'加盟 '+S.team});}],
   ['freeCBA',(v,c)=>{const t=R.pick(TEAMS.cba.slice(8));S.team=t[0];S.teamStr=t[1];S.league='CBA';S.ts=3;S.value=baseValue();if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'CBA',2,'自由签约');S.starter=starterScore()>=65;c.push('签约 '+S.team);S.log.push({y:seasonLabel(),t:'自由签约 '+S.team});}],
   ['rollTrans',(v,c)=>{
@@ -5261,11 +5263,10 @@ function evNCAAgradLate(){return {id:'ncaaLate',title:'补办毕业',scene:`${S.
   {t:'参加CBA选秀',fx:{setPath:'cba',stability:1},next:'draftCBA',o:'迟到的选秀，也是选秀。'},
   {t:'加盟欧洲联赛',fx:{setPath:'euro',play:1},next:'pickEuro',o:'欧洲的大门还开着。'},
   {t:'以自由球员签约CBA',fx:{freeCBA:1},o:'一份体面的CBA合同，兜住了这段转折。'}]};}
-function evDraftCBA(){const o=ovr();const pred=o>=78?'多家球队明确表态会在高顺位选择他。':o>=70?'球探报告认为他有乐透实力。':'球探报告认为他需要更长成长周期。';
-  return {id:'draftCBA',title:'夏 · CBA选秀大会',scene:`选秀大会现场，灯光璀璨。${S.name}坐在台下，西装革履，手心全是汗。${pred}台上，主持人一次次念出名字。
-
-大厅里此起彼伏的掌声与叹息。${S.name}闭上眼睛，听见自己的心跳。`,choices:[
+function evDraftCBA(){const o=ovr();const est=o>=84?'状元热门（前3）':o>=79?'乐透区（前10）':o>=74?'首轮中段（6-18）':o>=68?'首轮末至次轮（14-30）':o>=62?'次轮（24-40）':'落选边缘';const pred='球探预测：'+est+'。';
+  return {id:'draftCBA',title:'夏 · CBA选秀大会',scene:'选秀大会现场，灯光璀璨。'+S.name+'坐在台下，西装革履，手心全是汗。'+pred+'台上，主持人一次次念出名字。\n大厅里此起彼伏的掌声与叹息。'+S.name+'闭上眼睛，听见自己的心跳。',choices:[
   {t:'深呼吸，等待命运',fx:{rollDraft:'cba'},o:'命运揭晓的那一刻，他握紧了拳头。职业篮球的大门，就此推开。'}]};}
+
 function evPickCollege(){const offers=R.pickN(TEAMS.ncaa,3);
   return {id:'pickCollege',title:'夏 · NCAA招募季',scene:`美国大学招募季，${S.name}的视频被多所NCAA强校看到。几份奖学金offer摆在桌上：${offers.map(o=>o[0]+'（'+'★'.repeat(o[1]-5)+'）').join('、')}。
 
@@ -5301,27 +5302,48 @@ function evDraftDeclare(){
   const cn=['','','二','三','四','五'];
   const tryTxt=S.nbaTries<=1?'':`这已是${S.name}第${cn[S.nbaTries]||S.nbaTries}次站上这个窗口。`;
   const lname=LEAGUE_NAMES[S.league]||'联赛';
-  const o=ovr();const pred=o>=76?'多家球探认为他有首轮潜质。':o>=70?'球探报告认为他有望被选中。':'球探报告谨慎乐观，但值得一试。';
+  const o=ovr();S.draft={stock:draftStockInit(),order:nbaDraftOrder(),promise:null,pick:null,y:seasonLabel()};const pred='球探行情预测：'+draftRangeText(S.draft.stock)+'。';
   return {id:'draftDeclare',title:`夏 · NBA选秀申报（${S.age}岁）`,scene:`${S.age}岁的${S.name}已在${lname}站稳脚跟。经纪人这天清晨打来电话：NBA选秀申报窗口开启——19岁到23岁，每年都有一次机会。${tryTxt}${pred}
 
 对一个职业球员来说，这不是容易的决定：申报意味着离开熟悉的一切，等待命运宣判。`,choices:[
-  {t:'申报NBA选秀，去试试',fx:{clutch:1},next:'draftCombine',o:'他签下申报书。接下来等待他的，是联合试训、球队试训，以及选秀夜。'},
+  {t:'申报NBA选秀，去试试',fx:{clutch:1},next:'draftCombine',o:'他签下申报书。选前行情：'+draftRangeText()+'。接下来等待他的，是联合试训、球队试训，以及选秀夜。'},
   {t:'不申报，留在当前舞台',fx:{stability:1,ts:1},o:'他婉拒了。这里的故事还没讲完，脚下的舞台同样值得全力投入。'},
   {t:'请球探评估，暂不申报',fx:{play:1,valuePct:.03},o:'评估报告写满三页。虽未成行，他的身价与知名度都涨了一截。'}]};}
-function evDraftCombine(){return {id:'draftCombine',title:'夏 · 选秀联合试训',scene:`联合试训，全美球探云集。体测设备、摄像机、计时器，空气中都是数据与竞争的味道。
+function evDraftCombine(){
+  const d=ensureDraft();
+  const m1=R.int(2,6),m2=R.int(1,4);
+  const riskOK=R.chance(.68);
+  const m3=riskOK?R.int(3,10):-R.int(1,5);
+  return {id:'draftCombine',title:'夏 · 选秀联合试训',scene:'联合试训，全美球探云集。体测设备、摄像机、计时器，空气中都是数据与竞争的味道。\n同一批新秀里，有人紧张到同手同脚，有人在角落里喃喃自语。'+S.name+'系紧鞋带，活动脚踝。\n选前行情：'+draftRangeText(d.stock)+'。',choices:[
+  {t:'体测全力冲刺',fx:{ath:1,clutch:1,draftStock:m1},next:'draftTeam',o:'他的折返跑和弹跳数据排在试训前列。几个球探交换了眼神，行情小幅看涨。'},
+  {t:'5v5对抗赛掌控攻防',fx:{outside:1,play:1,draftStock:m2},next:'draftTeam',o:'对抗赛里他攻防一体。赛后，多支球队要求单独试训，行情稳中有升。'},
+  {t:'挑战高风险项目冲榜',fx:{ath:1,draftStock:m3},next:'draftTeam',o:riskOK?'他挑战了一项从未公开测试过的技术动作——全场哗然，行情应声上涨。':'高强度测试让他的动作变形，一次失误被反复回放。行情受了点影响。'}]};
+}
 
-同一批新秀里，有人紧张到同手同脚，有人在角落里喃喃自语。${S.name}系紧鞋带，活动脚踝。`,choices:[
-  {t:'体测全力冲刺',fx:{ath:1,clutch:1},next:'draftTeam',o:'他的折返跑和弹跳数据排在试训前列。几个球探交换了眼神。'},
-  {t:'5v5对抗赛掌控攻防',fx:{outside:1,play:1},next:'draftTeam',o:'对抗赛里他攻防一体。赛后，多支球队要求单独试训。'},
-  {t:'与球探积极沟通',fx:{play:1,stability:1},next:'draftTeam',o:'他的谈吐和成熟度给球探们留下深刻印象。篮球之外，也是加分项。'}]};}
-function evDraftTeam(){return {id:'draftTeam',title:'夏 · 球队单独试训',scene:`几支球队发来单独试训邀请。训练馆里只有他、几个陪练和对方教练组。每一个动作都被反复审视。
+function evDraftTeam(){
+  const d=ensureDraft();
+  const t1=teamAtPick(d.order,Math.round(d.stock)+R.int(-3,4));
+  const t2=teamAtPick(d.order,Math.round(d.stock)+R.int(6,16));
+  const promOK=d.stock<=48&&R.chance(.22);
+  const promTeam=teamAtPick(d.order,clamp(Math.round(d.stock)+R.int(2,10),1,30));
+  const chs=[
+    {t:'展示防守与拼劲',fx:{def:2,draftStock:R.int(1,4)},next:'draftNight',o:t1+'的教练组记下：这是一个能立刻进入轮换的防守者。'},
+    {t:'展示投射火力',fx:{outside:2,draftStock:R.int(1,4)},next:'draftNight',o:'三分线外连珠炮。'+t2+'的投篮教练眼睛亮了。'},
+    {t:'展示全能身手',fx:{play:1,stability:1,draftStock:R.int(0,3)},next:'draftNight',o:'他展示了传球、篮板、掩护。球探报告上写下：万金油，即战力。'}
+  ];
+  if(promOK)chs.push({t:'赴 '+promTeam+' 闭门试训',fx:{draftStock:R.int(1,3),draftPromise:promTeam},next:'draftNight',o:'试训结束，'+promTeam+'的总经理把他送到门口：保持状态，选秀夜等我们的电话。这句话的意思，他听懂了。'});
+  return {id:'draftTeam',title:'夏 · 球队单独试训',scene:'几支球队发来单独试训邀请：'+t1+'、'+t2+'……训练馆里只有他、几个陪练和对方教练组，每一个动作都被反复审视。\n这是最后的展示窗口。',choices:chs};
+}
 
-这是最后的展示窗口。`,choices:[
-  {t:'展示防守与拼劲',fx:{def:2},next:'draftNight',o:'他防得陪练怀疑人生。教练组记下：这是一个能立刻进入轮换的防守者。'},
-  {t:'展示投射火力',fx:{outside:2},next:'draftNight',o:'三分线外连珠炮。投篮教练的眼睛亮了。'},
-  {t:'展示全能身手',fx:{play:1,stability:1},next:'draftNight',o:'他展示了传球、篮板、掩护。球探报告上写下：万金油，即战力。'}]};}
-function evDraftNight(){return {id:'draftNight',title:'夏 · 选秀夜',scene:`选秀夜，${S.name}和家人坐在酒店房间里，电视直播画面里，绿房子灯火通明。每一个名字被念出，房间里的空气就凝固一分。`,choices:[
-  {t:'等待命运的宣判',fx:{rollDraft:'nba'},o:'无论结果如何，能走到这一步，已经超越了许多人。'}]};}
+function evDraftNight(){
+  const d=ensureDraft();
+  const green=d.stock<=26;
+  const mock=Math.round(clamp(d.stock,2,60));
+  const prom=(d.promise&&d.promise.team)?('经纪人的手机又亮了：'+d.promise.team+' 的号码——他们昨晚刚来过电话。'):'';
+  return {id:'draftNight',title:'夏 · 选秀夜',scene:'选秀夜。'+(green?'小绿屋的沙发上，他和家人挨着坐成一排。':'酒店房间里，他和家人围坐在电视前。')+'电视直播里灯火通明，每一个名字被念出，空气就凝固一分。最新模拟选秀把'+S.name+'排在约第 '+mock+' 顺位。'+(green?'联盟邀请他进入小绿屋——今晚的镜头会一直对准这里。':'')+prom,choices:[
+  {t:'等待命运的宣判',fx:{rollDraft:'nba'},o:'无论结果如何，能走到这一步，已经超越了许多人。'}]};
+}
+
 function evFallback(){
   const t10=R.pick(TEAMS.nba);
   const tg=R.pick(TEAMS.nba.filter(x=>x[0]!==t10[0]));
@@ -5535,41 +5557,128 @@ function evPlayoffExit(){
 
 
 /* ═══════════ 07 流程引擎 ═══════════ */
+/* ═══════════ v4.8 现实化选秀系统：行情 · 签位 · 顺位合同 ═══════════
+ * 贴近现实：①申报后生成选秀行情（模拟选秀顺位），随试训选择实时涨跌；
+ * ②选秀夜按 30 队签位（乐透随机前 6 签）播报真实顺位——乐透秀/首轮/次轮；
+ * ③新秀合同金额随顺位浮动（首轮 4 年 / 次轮 3 年）；④球队可给出选秀承诺；
+ * ⑤落选判定与行情挂钩；⑥选秀班底 59 人，播报本届前三。 */
+function draftRangeText(v){
+  v=(v==null&&S.draft)?S.draft.stock:v;
+  if(v==null)v=40;
+  v=Math.round(v);
+  const zone=v<=5?'状元热门':v<=10?'乐透前段':v<=16?'乐透区':v<=24?'首轮中段':v<=30?'首轮末段':v<=40?'次轮前段':v<=52?'次轮中段':v<=60?'次轮末段':'落选边缘';
+  const lo=clamp(v-6,1,60),hi=clamp(v+8,1,70);
+  return zone+' · '+(hi>=62?(lo+'-60+（可能落选）'):('约 '+lo+'-'+hi+' 位'));
+}
+function draftStockInit(){
+  const o=ovr(),age=S.age;let base;
+  if(o>=86)base=R.float(3,9);
+  else if(o>=82)base=R.float(7,16);
+  else if(o>=78)base=R.float(13,24);
+  else if(o>=74)base=R.float(20,33);
+  else if(o>=70)base=R.float(28,44);
+  else if(o>=67)base=R.float(38,54);
+  else if(o>=64)base=R.float(48,62);
+  else base=R.float(56,72);
+  base+=age>=23?8:age>=22?5:age>=21?2:0;
+  if(age<=19)base-=2;
+  return clamp(Math.round(base),1,72);
+}
+function nbaDraftOrder(){
+  const arr=TEAMS.nba.map(t=>[t[0],t[1]*10+R.int(0,9)]);
+  arr.sort((a,b)=>a[1]-b[1]);
+  const lotto=arr.slice(0,6);
+  for(let i=lotto.length-1;i>0;i--){const j=R.int(0,i);const tmp=lotto[i];lotto[i]=lotto[j];lotto[j]=tmp;}
+  return lotto.concat(arr.slice(6)).map(x=>x[0]);
+}
+function cbaDraftOrder(){
+  return TEAMS.cba.map(t=>[t[0],t[1]*10+R.int(0,9)]).sort((a,b)=>a[1]-b[1]).map(x=>x[0]);
+}
+function ensureDraft(){
+  if(!S.draft)S.draft={stock:draftStockInit(),order:nbaDraftOrder(),promise:null,pick:null,y:seasonLabel()};
+  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length)S.draft.order=nbaDraftOrder();
+  if(typeof S.draft.stock!=='number'||!Number.isFinite(S.draft.stock))S.draft.stock=draftStockInit();
+  return S.draft;
+}
+function rookieWageMult(pick){if(pick<=2)return 1.6;if(pick<=5)return 1.35;if(pick<=10)return 1.15;if(pick<=16)return 1;if(pick<=24)return .85;if(pick<=30)return .72;if(pick<=40)return .5;return .4;}
+function teamAtPick(order,pick){return order[(clamp(pick,1,order.length*2)-1)%order.length];}
+function genDraftClass(){const c=[];for(let i=0;i<59;i++)c.push({n:R.chance(.72)?genWest():genCN(),p:R.pick(Object.keys(POS)),o:R.int(58,86)});return c;}
+
 function doDraft(kind,changes){
   if(kind==='cba'){
-    const o=ovr();let pool=null;
-    /* 进入CBA难度分级：82+可被强队选中，72+中游，60+弱队；不足60大概率落选 */
-    if(o>=82)pool=TEAMS.cba.slice(0,3);
-    else if(o>=72)pool=TEAMS.cba.slice(0,10);
-    else if(o>=60)pool=TEAMS.cba.slice(10);
-    if(o<60&&R.chance(.55)){
+    const o=ovr();
+    /* 落选判定：综评不足 + 概率；或顺位跌出 40 签 */
+    if(o<62&&R.chance(.55)){
       S.flags.cbaUnd=true;
       changes.push('CBA选秀遗憾落选…');
       S.log.push({y:seasonLabel(),t:'CBA选秀落选'});
       return;
     }
-    const t=R.pick(pool&&pool.length?pool:TEAMS.cba);
-    S.team=t[0];S.teamStr=t[1];S.league='CBA';S.ts=3;S.value=baseValue();
+    let pick;
+    if(o>=84)pick=Math.round(R.float(1,3));
+    else if(o>=79)pick=Math.round(R.float(2,10));
+    else if(o>=74)pick=Math.round(R.float(6,18));
+    else if(o>=68)pick=Math.round(R.float(14,30));
+    else if(o>=62)pick=Math.round(R.float(24,40));
+    else pick=Math.round(R.float(32,44));
+    if(pick>40){
+      S.flags.cbaUnd=true;
+      changes.push('各队相继选择弃权……他的名字最终没有被念到。');
+      S.log.push({y:seasonLabel(),t:'CBA选秀落选'});
+      return;
+    }
+    const team=teamAtPick(cbaDraftOrder(),pick);
+    const mt=(TEAMS.cba.find(x=>x[0]===team)||[,'6'])[1];
+    S.team=team;S.teamStr=mt;S.league='CBA';S.ts=3;S.value=baseValue();
     if(!S.played.includes(S.team))S.played.push(S.team);
-    setContract(S.team,'CBA',3,'新秀合同');S.starter=starterScore()>=70;
+    setContract(S.team,'CBA',3,'新秀合同',Math.round(wageFor('CBA')*(pick<=3?1.25:pick<=10?1.1:pick<=20?1:.8)));
+    S.starter=starterScore()>=70;
     ensureWorld();
-    /* 「登陆CBA」荣誉只在真正被选中时发放：以前挂在选项 fx 上，荣誉先于 rollDraft 结算，
-     * 落选者的荣誉墙会永远挂着一条「登陆CBA」（假荣誉） */
     if(!S.honors.some(h=>h.t==='登陆CBA')){S.honors.push({y:seasonLabel(),t:'登陆CBA'});S.log.push({y:seasonLabel(),t:'登陆CBA'});}
-    changes.push('CBA选秀被 '+S.team+' 选中');S.log.push({y:seasonLabel(),t:'CBA选秀：'+S.team});setTimeout(function(){try{sfx('draft');}catch(e){}},240);
-  }else{
-    const o=ovr();
-    /* 进入NBA难度：综评不足65完全无望，此后概率随综评快速攀升 */
-    const p=o<65?0:clamp(.10+(o-68)*.05,.10,.92);
-    if(R.chance(p)){
-      let pool=o>=76?TEAMS.nba.slice(0,6):TEAMS.nba;
-      const t=R.pick(pool);S.team=t[0];S.teamStr=t[1];S.league='NBA';S.ts=2;S.value=baseValue();
-      if(!S.played.includes(S.team))S.played.push(S.team);
-      setContract(S.team,'NBA',4,'新秀合同');S.starter=starterScore()>=78;
-      ensureWorld();
-      changes.push('被 '+S.team+' 选中，登陆NBA！');S.log.push({y:seasonLabel(),t:'NBA选秀：'+S.team});setTimeout(function(){try{sfx('draft');}catch(e){}},240);
-    }else{S.flags.undrafted=true;changes.push('遗憾落选…');S.log.push({y:seasonLabel(),t:'NBA选秀落选'});}
+    changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(pick<=20?'（首轮）':'（次轮）'));
+    changes.push('新秀合同：€'+S.contract.wage+'万/年 · 3年');
+    S.log.push({y:seasonLabel(),t:'CBA选秀：'+S.team+'（第'+pick+'顺位）'});
+    setTimeout(function(){try{sfx('draft');}catch(e){}},240);
+    return;
   }
+  const d=ensureDraft();
+  if(d.pick!=null&&S.league==='NBA'){changes.push('🎙️ 选秀已经落幕——他已是NBA球员。');return;}
+  const o=ovr();
+  /* 实际顺位 = 行情 + 选秀夜波动；球队承诺优先兑现 */
+  let pick=Math.round(d.stock+R.float(-5,8));
+  let promTeam=null;
+  if(d.promise&&d.promise.team){
+    const idx=d.order.indexOf(d.promise.team);
+    if(idx>=0){const slot=idx+1;if(Math.abs(slot-pick)<=12&&R.chance(.72)){pick=slot;promTeam=d.promise.team;}}
+  }
+  /* 天赋保护：高综评不会出现离谱的顺位下滑 */
+  const cap=o>=88?10:o>=84?24:o>=80?42:o>=74?58:70;
+  pick=clamp(pick,1,cap);
+  if(pick>60){
+    S.flags.undrafted=true;
+    changes.push('第二轮结束，他的名字依然没有被念到……');
+    S.log.push({y:seasonLabel(),t:'NBA选秀落选'});
+    return;
+  }
+  const team=teamAtPick(d.order,pick);
+  const mt=(TEAMS.nba.find(x=>x[0]===team)||[,'5'])[1];
+  const r1=pick<=30;
+  S.team=team;S.teamStr=mt;S.league='NBA';S.ts=2;S.value=baseValue();
+  if(!S.played.includes(S.team))S.played.push(S.team);
+  const years=r1?4:3;
+  setContract(team,'NBA',years,'新秀合同',Math.round(wageFor('NBA')*rookieWageMult(pick)));
+  S.starter=starterScore()>=78;
+  ensureWorld();
+  S.flags.undrafted=false;
+  d.pick=pick;
+  const cls=genDraftClass();
+  changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(r1?'（首轮秀）':'（次轮秀）'));
+  if(pick<=14)changes.push('🏅 乐透秀！全家的欢呼把房间淹没。');
+  if(promTeam)changes.push('🤝 '+promTeam+' 兑现了试训时的承诺。');
+  changes.push('新秀合同：€'+S.contract.wage+'万/年 · '+years+'年');
+  changes.push('本届前三：'+d.order[0]+'选中 '+cls[0].n+'；'+d.order[1]+'选中 '+cls[1].n+'；'+d.order[2]+'选中 '+cls[2].n);
+  S.log.push({y:seasonLabel(),t:'NBA选秀：'+S.team+'（第'+pick+'顺位）'});
+  setTimeout(function(){try{sfx('draft');}catch(e){}},240);
 }
 function choose(i){
   if(!UI||UI.mode!=='event')return; /* 防重复结算：双击/延迟回调只结算一次 */
