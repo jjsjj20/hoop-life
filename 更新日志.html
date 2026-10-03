@@ -4,47 +4,241 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>篮球人生 · 更新文档</title>
-<style>
-:root{--bg:#0b0f16;--card:#141b28;--card2:#101724;--line:rgba(255,255,255,.08);--txt:#e8edf6;--dim:#93a0b4;--org:#ff9349;--gold:#fbbf24;--grn:#34d399}
+<style>:root{
+  --bg:#070a11;--bg2:#0b1019;--card:#141b29;--card2:#101623;--raise:#1a2233;
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
+  --txt:#e9eef7;--txt2:#bcc6d7;--dim:#8d97aa;--dim2:#68738a;
+  --org:#ff9349;--gold:#fbbf24;--grn:#34d399;--cyan:#67b8ff;--vio:#a78bfa;
+  --k-art:var(--vio);--k-play:var(--org);--k-eng:var(--cyan);--k-fix:var(--grn);--k-other:#8d97aa;
+  --r:14px;--bar:96px;
+}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;color:var(--txt);font:15px/1.8 "PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;background:radial-gradient(1100px 480px at 50% -8%,rgba(255,147,73,.09),transparent 65%),var(--bg)}
-.wrap{max-width:880px;margin:0 auto;padding:30px 18px 72px}
-header{text-align:center;padding:22px 0 6px}
-.ball{font-size:46px;display:inline-block;animation:bob 2.6s ease-in-out infinite}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;color:var(--txt);background:var(--bg);
+  font:15px/1.85 "PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-feature-settings:"tnum" 1;letter-spacing:.008em;
+  background-image:
+    radial-gradient(1100px 460px at 50% -190px,rgba(249,115,22,.13),transparent 62%),
+    radial-gradient(780px 420px at 6% 4%,rgba(103,184,255,.07),transparent 60%),
+    radial-gradient(700px 420px at 96% 22%,rgba(167,139,250,.06),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:rgba(249,115,22,.3)}
+.wrap{max-width:940px;margin:0 auto;padding:34px 20px 96px}
+
+/* ── 顶部进度条 ─────────────────────────────── */
+.pbar{position:fixed;top:0;left:0;right:0;height:2px;z-index:60;background:transparent;pointer-events:none}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--org),var(--gold));
+  transition:width .12s linear}
+
+/* ── 头部 ──────────────────────────────────── */
+header{text-align:center;padding:14px 0 4px}
+.ball{font-size:40px;display:inline-block;animation:bob 2.8s ease-in-out infinite;line-height:1}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-h1{margin:8px 0 6px;font-size:27px;letter-spacing:2px;background:linear-gradient(92deg,#ffb37a,#ffd479,#ffb37a);-webkit-background-clip:text;background-clip:text;color:transparent}
+@media(prefers-reduced-motion:reduce){.ball{animation:none}}
+h1{margin:10px 0 8px;font-size:clamp(24px,4.6vw,30px);letter-spacing:3px;font-weight:800;
+  background:linear-gradient(96deg,#ffc089,#ffe0a3,#ffb37a);-webkit-background-clip:text;background-clip:text;
+  color:transparent;text-wrap:balance}
 .sub{color:var(--dim);font-size:13px;line-height:2}
-.sub a{color:var(--org);text-decoration:none;border-bottom:1px dotted rgba(255,147,73,.5)}
-.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0 4px}
-.badge{font-size:12px;padding:4px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--dim)}
+.sub a{color:var(--org);text-decoration:none;border-bottom:1px dotted rgba(255,147,73,.5);
+  overflow-wrap:anywhere}
+.sub a:hover{border-bottom-style:solid}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0 2px}
+.badge{font-size:12px;padding:5px 13px;border-radius:999px;border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0));color:var(--dim);
+  white-space:nowrap}
 .badge b{color:var(--gold);font-weight:700}
-.toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:18px 0 2px}
-.toc a{font-size:12.5px;padding:5px 13px;border-radius:999px;border:1px solid rgba(255,147,73,.3);color:var(--org);text-decoration:none;background:rgba(255,147,73,.05)}
-.toc a:hover{background:rgba(255,147,73,.14)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:16px 0}
-h2{font-size:19px;margin:38px 0 10px;scroll-margin-top:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-h2 .vid{font-size:12.5px;color:var(--org);border:1px solid rgba(255,147,73,.35);border-radius:999px;padding:2px 11px;font-weight:400}
-h2 .sha{font-size:12px;color:var(--dim);font-weight:400;font-family:Consolas,Menlo,monospace}
-h3{font-size:15px;margin:18px 0 8px;color:#ffd479}
-p{margin:8px 0}
+
+/* ── 工具条（吸顶）─────────────────────────── */
+.toolbar{position:sticky;top:2px;z-index:50;margin:18px -6px 6px;padding:8px 6px;
+  background:linear-gradient(180deg,rgba(7,10,17,.97),rgba(7,10,17,.86));
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.tb-row{display:flex;align-items:center;gap:10px;min-height:30px}
+.tb-row+.tb-row{margin-top:7px}
+.tb-label{flex:0 0 auto;font-size:11.5px;color:var(--dim2);letter-spacing:.06em}
+.tb-scroll{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch}
+.tb-scroll::-webkit-scrollbar{display:none}
+.tb-kinds{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tb-kinds::-webkit-scrollbar{display:none}
+.kbtn{flex:0 0 auto;font-size:12px;padding:4px 11px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line);background:var(--card2);color:var(--dim);
+  transition:border-color .15s,color .15s,background .15s}
+.kbtn:hover{color:var(--txt2);border-color:var(--line2)}
+.kbtn[aria-pressed="true"]{color:var(--txt);border-color:currentColor}
+.kbtn.on-art[aria-pressed="true"]{color:var(--k-art);background:color-mix(in srgb,var(--k-art) 14%,transparent)}
+.kbtn.on-play[aria-pressed="true"]{color:var(--k-play);background:color-mix(in srgb,var(--k-play) 14%,transparent)}
+.kbtn.on-eng[aria-pressed="true"]{color:var(--k-eng);background:color-mix(in srgb,var(--k-eng) 14%,transparent)}
+.kbtn.on-fix[aria-pressed="true"]{color:var(--k-fix);background:color-mix(in srgb,var(--k-fix) 14%,transparent)}
+.kbtn.on-other[aria-pressed="true"]{color:var(--k-other);background:rgba(255,255,255,.07)}
+.tb-btn{flex:0 0 auto;font-size:12px;padding:4px 12px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line);background:var(--card2);color:var(--dim);white-space:nowrap;
+  transition:border-color .15s,color .15s}
+.tb-btn:hover{color:var(--txt2);border-color:var(--line2)}
+.tb-btn[aria-pressed="true"]{color:var(--gold);border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.10)}
+
+/* 目录芯片（在 header 里，由脚本搬进工具条） */
+.toc{display:flex;gap:6px;margin:0;padding:0 2px;list-style:none}
+.toc a{flex:0 0 auto;font-size:12px;padding:4px 11px;border-radius:999px;text-decoration:none;
+  border:1px solid var(--line);color:var(--dim);background:var(--card2);white-space:nowrap;
+  transition:border-color .15s,color .15s,background .15s}
+.toc a:hover{color:var(--txt2);border-color:var(--line2)}
+.toc a.act{color:var(--org);border-color:rgba(255,147,73,.5);background:rgba(255,147,73,.12)}
+.toc a.k-art.act{color:var(--k-art);border-color:color-mix(in srgb,var(--k-art) 55%,transparent);background:color-mix(in srgb,var(--k-art) 13%,transparent)}
+.toc a.k-play.act{color:var(--k-play);border-color:color-mix(in srgb,var(--k-play) 55%,transparent);background:color-mix(in srgb,var(--k-play) 13%,transparent)}
+.toc a.k-eng.act{color:var(--k-eng);border-color:color-mix(in srgb,var(--k-eng) 55%,transparent);background:color-mix(in srgb,var(--k-eng) 13%,transparent)}
+.toc a.k-fix.act{color:var(--k-fix);border-color:color-mix(in srgb,var(--k-fix) 55%,transparent);background:color-mix(in srgb,var(--k-fix) 13%,transparent)}
+
+/* ── 区块与卡片 ─────────────────────────────── */
+h2{font-size:16px;margin:40px 0 12px;scroll-margin-top:calc(var(--bar) + 14px);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;line-height:1.5}
+h2 .vpill{flex:0 0 auto;font-size:12.5px;font-weight:700;letter-spacing:.02em;
+  padding:3px 10px;border-radius:8px;border:1px solid currentColor;color:var(--k-eng);
+  background:color-mix(in srgb,currentColor 12%,transparent)}
+h2 .vt{font-weight:600;color:var(--txt);font-size:15.5px;text-wrap:pretty}
+h2 .sha{margin-left:auto;font-size:11.5px;color:var(--dim2);font-weight:400;
+  font-family:ui-monospace,Consolas,Menlo,monospace;padding:2px 8px;border-radius:6px;
+  background:rgba(255,255,255,.04);border:1px solid var(--line)}
+h2[data-kind="art"] .vpill{color:var(--k-art)}
+h2[data-kind="play"] .vpill{color:var(--k-play)}
+h2[data-kind="fix"] .vpill{color:var(--k-fix)}
+h2[data-kind="other"] .vpill{color:var(--k-other)}
+h2.vhead{cursor:pointer;user-select:none}
+h2.vhead .tgl{margin-left:2px;font-size:11px;color:var(--dim2);transition:transform .18s}
+h2.vhead.col .tgl{transform:rotate(-90deg)}
+
+.card{position:relative;background:linear-gradient(180deg,var(--card),var(--card2));
+  border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin:0 0 18px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 22px 44px -34px rgba(0,0,0,1);
+  overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--k-eng);opacity:.75}
+.card[data-kind="art"]::before{background:var(--k-art)}
+.card[data-kind="play"]::before{background:var(--k-play)}
+.card[data-kind="fix"]::before{background:var(--k-fix)}
+.card[data-kind="other"]::before{background:var(--k-other)}
+.card[data-muted="1"]{opacity:.6;filter:saturate(.6)}
+.ver.hide,.card.hide{display:none}
+.ver.col>.card{display:none}
+
+h3{font-size:13px;font-weight:700;letter-spacing:.09em;color:var(--gold);
+  margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+h3:first-child{margin-top:2px}
+h3::before{content:"";width:3px;height:13px;border-radius:2px;background:currentColor;opacity:.85}
+p{margin:9px 0;color:var(--txt2)}
 .dim{color:var(--dim);font-size:13px}
-code{font-family:Consolas,Menlo,monospace;font-size:12.5px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#ffd479}
-.tw{overflow-x:auto;margin:10px 0}
-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
-th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line)}
-th{color:var(--dim);font-weight:600;font-size:12.5px;background:rgba(255,255,255,.03)}
+a{color:var(--org)}
+strong,b{color:#fff}
+h2 .vt b,li b{color:#fff}
+hr{border:none;border-top:1px solid var(--line);margin:34px 0}
+
+ul,ol{margin:9px 0;padding-left:20px}
+li{margin:7px 0;color:var(--txt2)}
+li::marker{color:var(--org);font-size:.9em}
+li ul,li ol{margin:6px 0}
+li b{color:#fff}
+
+code{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12.5px;
+  background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:6px;
+  padding:1.5px 6px;color:#ffd98f;overflow-wrap:anywhere}
+pre{overflow-x:auto;background:rgba(0,0,0,.32);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;margin:10px 0;-webkit-overflow-scrolling:touch}
+pre code{background:none;border:0;padding:0;color:var(--txt2);font-size:12.5px;line-height:1.7}
+
+/* ── 表格 ───────────────────────────────────── */
+.tw{margin:12px 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim2);font-weight:600;font-size:12px;letter-spacing:.05em;
+  background:rgba(255,255,255,.028);white-space:nowrap}
+tbody tr:hover td,.tw table tr:hover td{background:rgba(255,255,255,.022)}
 tr:last-child td{border-bottom:none}
 td b{color:var(--gold)}
-ul,ol{margin:8px 0;padding-left:22px}
-li{margin:5px 0}
-li::marker{color:var(--org)}
+td:first-child{white-space:nowrap}
+
+/* 总览表专属 */
+.ovtable td:nth-child(1){width:74px}
+.ovtable td:nth-child(3){width:66px}
+.ovtable td:nth-child(4){width:132px;white-space:nowrap}
+.ovtable .vno{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:#fff}
+.ovtable .dot{width:7px;height:7px;border-radius:50%;background:var(--k-other);flex:0 0 auto;
+  box-shadow:0 0 0 3px color-mix(in srgb,currentColor 16%,transparent)}
+.ovtable .dot.k-art{background:var(--k-art)}
+.ovtable .dot.k-play{background:var(--k-play)}
+.ovtable .dot.k-eng{background:var(--k-eng)}
+.ovtable .dot.k-fix{background:var(--k-fix)}
+.ovtable .delta{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;
+  font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12.5px;color:var(--dim)}
+.ovtable .delta .mg{flex:0 0 auto;height:5px;border-radius:3px;background:var(--dim2);opacity:.5;min-width:2px}
+.ovtable .delta .mg.pos{background:var(--cyan)}
+.ovtable .delta .mg.neg{background:var(--org)}
+.ovtable tr.act td{background:rgba(255,147,73,.07)}
+.ovtable tr.hide{display:none}
+.ovtable code{background:none;border:0;padding:0;color:var(--dim2);font-size:12.5px}
+
+/* ── 杂项 ──────────────────────────────────── */
+.chip{display:inline-block;font-size:11.5px;padding:2.5px 10px;border-radius:999px;
+  border:1px solid var(--line);margin:3px 4px 0 0;color:var(--dim);background:var(--card2)}
 .ok{color:var(--grn)}
-.chip{display:inline-block;font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);margin:3px 4px 0 0;color:var(--dim);background:var(--card2)}
-.foot{margin-top:46px;text-align:center;color:var(--dim);font-size:12.5px;line-height:2.1}
+.foot{margin-top:52px;padding-top:22px;border-top:1px solid var(--line);text-align:center;
+  color:var(--dim2);font-size:12.5px;line-height:2.1}
 .foot a{color:var(--org);text-decoration:none}
-hr{border:none;border-top:1px solid var(--line);margin:30px 0}
-@media(max-width:560px){h1{font-size:22px}.wrap{padding:22px 12px 60px}.card{padding:15px 14px}}
+.kbd{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12px;padding:1px 6px;
+  border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;background:var(--raise);
+  color:var(--txt2)}
+
+#toTop{position:fixed;right:18px;bottom:20px;z-index:55;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line2);background:rgba(20,27,41,.92);color:var(--txt2);cursor:pointer;
+  font-size:17px;line-height:1;display:none;backdrop-filter:blur(6px);
+  transition:border-color .15s,color .15s,transform .15s}
+#toTop:hover{border-color:var(--org);color:var(--org);transform:translateY(-2px)}
+#toTop.show{display:block}
+
+/* ── 窄屏 ──────────────────────────────────── */
+@media(max-width:680px){
+  :root{--bar:112px}
+  .wrap{padding:24px 14px 80px}
+  .card{padding:16px 15px;border-radius:12px}
+  .card::before{width:2px}
+  h1{letter-spacing:2px}
+  h2{font-size:15px;margin:32px 0 10px}
+  h2 .vt{font-size:14.5px}
+  h2 .sha{margin-left:0;flex:0 0 auto}
+  .toolbar{margin-left:-2px;margin-right:-2px}
+  /* 总览表 → 卡片流 */
+  .ovtable{min-width:0}
+  .ovtable thead{display:none}
+  .ovtable tbody,.ovtable tr,.ovtable td{display:block;width:auto}
+  .ovtable tr{padding:12px 0;border-bottom:1px solid var(--line)}
+  .ovtable tr:last-child{border-bottom:none}
+  .ovtable td{border:0;padding:2px 0;width:auto!important;white-space:normal}
+  .ovtable td[data-label]::before{content:attr(data-label);display:inline-block;min-width:64px;
+    color:var(--dim2);font-size:11.5px}
+  .ovtable td[data-label="主题"]{display:flex;gap:0;color:var(--txt2);margin-top:2px}
+  .ovtable td[data-label="主题"]::before{flex:0 0 64px}
+  .ovtable td[data-label="提交"],.ovtable td[data-label="字符增量"]{display:inline-flex;gap:6px;
+    margin-right:16px}
+  .ovtable td[data-label="提交"]::before,.ovtable td[data-label="字符增量"]::before{min-width:auto}
+  .toc a{font-size:11.5px;padding:3px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important;animation:none!important}
+}
+@media print{
+  body{background:#fff;color:#111;background-image:none}
+  .toolbar,.pbar,#toTop,.toc,.badges{display:none!important}
+  .wrap{max-width:none;padding:0}
+  h1,.sub a{color:#111;-webkit-text-fill-color:#111}
+  .card{border:1px solid #ccc;background:#fff;box-shadow:none;break-inside:avoid}
+  .card::before{display:none}
+  h2 .vpill{color:#111;border-color:#999;background:#f2f2f2}
+  h3{color:#8a5a00}
+  p,li,td{color:#222}
+  code{color:#8a5a00;background:#f6f6f6;border-color:#ddd}
+  a{color:#0a58ca}
+}
 </style>
 </head>
 <body>
@@ -55,7 +249,18 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
 <div class="badges"><span class="badge">当前版本 <b>v4.9.5</b></span><span class="badge">文件 <b>536,160</b> 字符</span><span class="badge">更新 <b>21</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
 <nav class="toc"><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
-</header>
+</header><!-- CHANGELOG-UI-START -->
+<div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
+<div class="toolbar" id="toolbar">
+  <div class="tb-row"><span class="tb-label">跳到版本</span><div class="tb-scroll" id="tbJump"></div></div>
+  <div class="tb-row">
+    <span class="tb-label">只看</span>
+    <div class="tb-kinds" id="tbKinds"></div>
+    <button class="tb-btn" id="tbCollapse" type="button">只看最近 5 版</button>
+  </div>
+</div>
+<!-- CHANGELOG-UI-END -->
+
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
@@ -588,5 +793,205 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 </div>
 <div class="foot">本页可离线保存：浏览器中右键「另存为」或 Ctrl+S 即可 · 文档与仓库同步更新<br><a href="https://github.com/jjsjj20/hoop-life">github.com/jjsjj20/hoop-life</a> · 篮球人生 · 单文件网页游戏</div>
 </div>
+<!-- CHANGELOG-JS-START -->
+<button id="toTop" type="button" title="回到顶部" aria-label="回到顶部">↑</button>
+<script>
+/* 更新日志页面的渐进增强。
+ * 刻意不在源标记里动手：内容段的 <h2 id>/卡片/总览表都保持原样，
+ * 发版时插入新条目的补丁脚本靠固定字符串做锚点，动标记就会让它失效。
+ * 这里全部在运行时补：搬目录、分类着色、给表格加 data-label、折叠旧版本。 */
+(function(){
+  var KIND=[
+    ['fix',  /修复|修掉|修正|稳定|加固|止血|回退|救活|丢失|静默/i],
+    ['art',  /美术|插画|图标|队徽|视觉|横幅|主视觉|配色|图片/],
+    ['eng',  /资源|键盘|存档|异常|代码|审查|性能|加载|体积|重构|脚本|外置|音效|备份|编译/],
+    ['play', /现实化|难度|选秀|签位|乐透|行情|合同|数值|比赛|季后赛|联赛|成就|属性|事件/]
+  ];
+  var KNAME={art:'美术',play:'玩法',eng:'工程',fix:'修复',other:'其他'};
+
+  /* 按「主题里最先出现的那个关键词」归类——比固定优先级更贴合叙述重点 */
+  function classify(text){
+    var best=null;
+    for(var i=0;i<KIND.length;i++){
+      var m=text.match(KIND[i][1]);
+      if(m&&(best===null||m.index<best.i))best={k:KIND[i][0],i:m.index};
+    }
+    return best?best.k:'other';
+  }
+
+  var wrap=document.querySelector('.wrap');
+  var heads=[].slice.call(document.querySelectorAll('h2[id]'));
+  if(!wrap||!heads.length)return;
+
+  /* ── 1. 把 h2 拆成「版本徽章 + 主题」，并按类型着色 ── */
+  var vers=[];
+  heads.forEach(function(h){
+    var raw=h.textContent.replace(/\s+/g,' ').trim();
+    var sha=h.querySelector('.sha');
+    var shaTxt=sha?sha.textContent.trim():'';
+    var i=raw.indexOf('v4');
+    if(i<0)i=raw.indexOf('v3');
+    if(i<0)return;
+    var pill=raw.slice(0,i).trim()+' '+raw.slice(i).split('·')[0].trim();  /* 例：📋 v4.9.4 */
+    var theme=raw.split('·').slice(1).join('·').replace(shaTxt,'').trim();
+    var no=raw.slice(i).match(/v[\d.]+/)[0];
+    var kind=classify(raw);
+    h.innerHTML='';
+    h.className='vhead';
+    h.setAttribute('data-kind',kind);
+    var p=document.createElement('span');p.className='vpill';p.textContent=pill.replace(/\s+/g,' ').trim();
+    var t=document.createElement('span');t.className='vt';t.textContent=theme||'';
+    var g=document.createElement('span');g.className='tgl';g.textContent='▼';
+    h.appendChild(p);h.appendChild(t);
+    if(shaTxt){var s=document.createElement('span');s.className='sha';s.textContent=shaTxt;h.appendChild(s);}
+    h.appendChild(g);
+    /* 卡片：类型色 + 折叠联动 */
+    var sec=document.createElement('section');
+    sec.className='ver';sec.id='sec-'+h.id;sec.setAttribute('data-kind',kind);
+    h.parentNode.insertBefore(sec,h);sec.appendChild(h);
+    var nxt=sec.nextSibling;
+    while(nxt&&!(nxt.nodeType===1&&(nxt.tagName==='H2'))){
+      var mv=nxt.nextSibling;sec.appendChild(nxt);nxt=mv;
+    }
+    [].forEach.call(sec.querySelectorAll('.card'),function(c){c.setAttribute('data-kind',kind);});
+    vers.push({id:h.id,no:no,kind:kind,theme:theme,sec:sec,h:h});
+    h.addEventListener('click',function(){
+      var col=sec.classList.toggle('col');h.classList.toggle('col',col);
+    });
+  });
+  if(!vers.length)return;
+
+  /* ── 2. 总览表：加类型圆点、字符增量量级条、移动端 data-label ── */
+  /* 源标记里的总览表没有 class（不去动它），运行时按「版本总览标题后面那张表」认出来 */
+  var ov=null;
+  var ovHead=[].slice.call(document.querySelectorAll('h2')).filter(function(x){
+    return !x.id && /版本总览/.test(x.textContent);})[0];
+  if(ovHead){
+    var scan=ovHead.nextElementSibling;
+    while(scan&&scan.tagName!=='TABLE'){
+      if(scan.tagName==='H2'){scan=null;break;}
+      if(scan.querySelector&&scan.querySelector('table')){ov=scan.querySelector('table');break;}
+      scan=scan.nextElementSibling;
+    }
+    if(!ov&&scan&&scan.tagName==='TABLE')ov=scan;
+  }
+  if(ov){
+    ov.classList.add('ovtable');
+    var ths=[].slice.call(ov.querySelectorAll('th')).map(function(t){return t.textContent.trim();});
+    [].forEach.call(ov.querySelectorAll('tr'),function(tr){
+      var tds=[].slice.call(tr.querySelectorAll('td'));
+      if(!tds.length)return;
+      tds.forEach(function(td,i){if(ths[i])td.setAttribute('data-label',ths[i]);});
+      var v=vers.filter(function(x){return tds[0]&&tds[0].textContent.trim()===x.no;})[0];
+      if(v&&!tds[0].querySelector('.dot')){
+        var d=document.createElement('span');d.className='dot k-'+v.kind;
+        tds[0].innerHTML='';var sp=document.createElement('span');sp.className='vno';
+        sp.appendChild(d);sp.appendChild(document.createTextNode(v.no));tds[0].appendChild(sp);
+      }
+      var dt=tds[3]&&tds[3].textContent.trim();
+      if(v&&dt&&/^[−+-]/.test(dt)&&!tds[3].querySelector('.mg')){
+        var num=parseInt(dt.replace(/[^0-9]/g,''),10)||0;
+        var w=Math.max(2,Math.min(46,Math.round(Math.log10(num+1)/7*46)));
+        var bar=document.createElement('span');
+        bar.className='mg '+(/^[−-]/.test(dt)?'neg':'pos');
+        bar.style.width=w+'px';
+        var txt=tds[3].innerHTML;
+        tds[3].innerHTML='';tds[3].appendChild(bar);
+        var s2=document.createElement('span');
+        s2.innerHTML=txt;tds[3].appendChild(s2);
+      }
+    });
+  }
+
+  /* ── 3. 工具条：把目录芯片搬进来 + 类型筛选 + 折叠 + 进度 + 回顶 ── */
+  var bar=document.getElementById('toolbar');
+  var jump=document.getElementById('tbJump');
+  var toc=document.querySelector('.toc');
+  if(toc&&jump){jump.appendChild(toc);}
+  var chips=[].slice.call(document.querySelectorAll('.toc a'));
+  chips.forEach(function(a){
+    var id=a.getAttribute('href').replace('#','');
+    var v=vers.filter(function(x){return x.id===id;})[0];
+    if(v)a.classList.add('k-'+v.kind);
+  });
+
+  var kindsBox=document.getElementById('tbKinds');
+  var kindFilter='all';
+  if(kindsBox){
+    var defs=[['all','全部'],['art','美术'],['play','玩法'],['eng','工程'],['fix','修复'],['other','其他']];
+    defs.forEach(function(d){
+      var n= d[0]==='all' ? vers.length
+            : vers.filter(function(x){return x.kind===d[0];}).length;
+      if(d[0]!=='all'&&!n)return;
+      var b=document.createElement('button');
+      b.type='button';b.className='kbtn on-'+d[0];
+      b.setAttribute('aria-pressed',d[0]==='all'?'true':'false');
+      b.textContent=d[1]+' '+n;
+      b.addEventListener('click',function(){
+        kindFilter=d[0];
+        [].forEach.call(kindsBox.children,function(x){
+          x.setAttribute('aria-pressed',x===b?'true':'false');
+        });
+        applyFilter();
+      });
+      kindsBox.appendChild(b);
+    });
+  }
+  function applyFilter(){
+    vers.forEach(function(v){
+      var show=(kindFilter==='all'||v.kind===kindFilter);
+      v.sec.classList.toggle('hide',!show);
+    });
+    if(ov){
+      [].forEach.call(ov.querySelectorAll('tr'),function(tr){
+        var td=tr.querySelector('td');if(!td)return;
+        var no=(td.textContent||'').trim();
+        var v=vers.filter(function(x){return x.no===no;})[0];
+        tr.classList.toggle('hide',!!(v&&kindFilter!=='all'&&v.kind!==kindFilter));
+      });
+    }
+    window.__applyFilter=applyFilter;
+  }
+
+  /* 折叠：默认全展开（老读者能一路翻），一键收起最近的以外 */
+  var colBtn=document.getElementById('tbCollapse');
+  var collapsed=false;
+  if(colBtn){
+    colBtn.addEventListener('click',function(){
+      collapsed=!collapsed;
+      colBtn.setAttribute('aria-pressed',collapsed?'true':'false');
+      colBtn.textContent=collapsed?'展开全部':'只看最近 5 版';
+      vers.forEach(function(v,i){
+        var col=collapsed&&i>=5;
+        v.sec.classList.toggle('col',col);v.h.classList.toggle('col',col);
+      });
+    });
+  }
+
+  /* 进度条 + 回顶 */
+  var pb=document.getElementById('pbar'), topBtn=document.getElementById('toTop');
+  function onScroll(){
+    var max=document.documentElement.scrollHeight-window.innerHeight;
+    if(pb)pb.style.width=(max>0?(window.scrollY/max*100):0)+'%';
+    if(topBtn)topBtn.classList.toggle('show',window.scrollY>600);
+    /* 目录高亮：找最后一个已经划过顶部的版本 */
+    var y=window.scrollY+parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bar'))+30;
+    var cur=null;
+    vers.forEach(function(v){if(v.h.offsetTop<=y)cur=v;});
+    chips.forEach(function(a){
+      var on=!!(cur&&a.getAttribute('href')==='#'+cur.id);
+      a.classList.toggle('act',on);
+      if(on&&jump&&jump.scrollWidth>jump.clientWidth){
+        var want=a.offsetLeft-jump.clientWidth/2+a.offsetWidth/2;
+        jump.scrollLeft=Math.max(0,want);
+      }
+    });
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',onScroll);
+  if(topBtn)topBtn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  onScroll();
+})();
+</script><!-- CHANGELOG-JS-END -->
 </body>
 </html>
