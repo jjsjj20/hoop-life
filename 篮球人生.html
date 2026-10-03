@@ -5430,7 +5430,9 @@ function evDraftNight(){
   const green=d.stock<=26;
   const mock=Math.round(clamp(d.stock,2,60));
   const prom=(d.promise&&d.promise.team)?('经纪人的手机又亮了：'+d.promise.team+' 的号码——他们昨晚刚来过电话。'):'';
-  return {id:'draftNight',title:'夏 · 选秀夜',scene:'选秀夜。'+(green?'小绿屋的沙发上，他和家人挨着坐成一排。':'酒店房间里，他和家人围坐在电视前。')+'电视直播里灯火通明，每一个名字被念出，空气就凝固一分。最新模拟选秀把'+S.name+'排在约第 '+mock+' 顺位。'+(green?'联盟邀请他进入小绿屋——今晚的镜头会一直对准这里。':'')+prom,choices:[
+  /* v4.9.3：乐透抽签结果先亮一次——签位顺序不再是黑箱 */
+  const lotto=lottoText(d.draw,d.slot);
+  return {id:'draftNight',title:'夏 · 选秀夜',scene:'选秀夜。'+(lotto?(lotto+'。\n\n'):'')+(green?'小绿屋的沙发上，他和家人挨着坐成一排。':'酒店房间里，他和家人围坐在电视前。')+'电视直播里灯火通明，每一个名字被念出，空气就凝固一分。最新模拟选秀把'+S.name+'排在约第 '+mock+' 顺位。'+(green?'联盟邀请他进入小绿屋——今晚的镜头会一直对准这里。':'')+prom,choices:[
   {t:'等待命运的宣判',fx:{rollDraft:'nba'},o:'无论结果如何，能走到这一步，已经超越了许多人。'}]};
 }
 
@@ -5674,19 +5676,75 @@ function draftStockInit(){
   if(age<=19)base-=2;
   return clamp(Math.round(base),1,72);
 }
-function nbaDraftOrder(){
-  const arr=TEAMS.nba.map(t=>[t[0],t[1]*10+R.int(0,9)]);
-  arr.sort((a,b)=>a[1]-b[1]);
-  const lotto=arr.slice(0,6);
-  for(let i=lotto.length-1;i>0;i--){const j=R.int(0,i);const tmp=lotto[i];lotto[i]=lotto[j];lotto[j]=tmp;}
-  return lotto.concat(arr.slice(6)).map(x=>x[0]);
+/* ---- v4.9.3 真实签位：战绩倒序 + 加权乐透 ----
+ * 签位只认「上赛季常规赛战绩」，不认球队底子强不强——底子好但上赛季伤兵满营打崩了，
+ * 就该拿到高顺位。乐透区按现实规则加权抽签，而不是等概率乱序。 */
+const NBA_LOTTO_ODDS=[14.0,14.0,14.0,12.5,10.5,9.0,7.5,6.0,4.5,3.0,2.0,1.5,1.0,0.5];
+const CBA_LOTTO_ODDS=[22,19,17,14,11,8,6,3];
+const LOTTO_RULES={
+  nba:{teams:'nba',nLot:14,nDraw:4,odds:NBA_LOTTO_ODDS,slot:['状元签','榜眼签','探花签','第四顺位']},
+  cba:{teams:'cba',nLot:8,nDraw:3,odds:CBA_LOTTO_ODDS,slot:['状元签','榜眼签','探花签']}
+};
+/* 上赛季常规赛战绩，战绩最差的排最前。
+ * 同战绩用随机数拆开先后（现实里是抛硬币决定选秀顺序）。 */
+function standingsWorstFirst(lg){
+  let rows=null;
+  try{rows=computeStandings(lg);}catch(e){rows=null;}
+  if(!rows||!rows.length){
+    /* 兜底：拿不到战绩就退回按球队实力排，绝不因此崩掉选秀 */
+    return (TEAMS[lg]||[]).map(t=>({team:t[0],str:t[1],wins:0}))
+      .sort((a,b)=>a.str-b.str);
+  }
+  return rows.map(r=>({team:r.team,str:r.str,wins:r.wins||0,_t:R.float(0,1)}))
+    .sort((x,y)=>x.wins-y.wins||x._t-y._t);
 }
-function cbaDraftOrder(){
-  return TEAMS.cba.map(t=>[t[0],t[1]*10+R.int(0,9)]).sort((a,b)=>a[1]-b[1]).map(x=>x[0]);
+/* 按概率逐签无放回抽样 —— 等价于现场「抽中不放回、抽到重复队就重抽」的小球抽签 */
+function lotteryDraw(order,odds,n){
+  const pool=order.map((t,i)=>({team:t,w:Math.max(0,Number(odds[i])||0)}));
+  const win=[];
+  for(let k=0;k<n&&pool.length;k++){
+    let tot=0;for(let i=0;i<pool.length;i++)tot+=pool[i].w;
+    if(tot<=0)break;
+    let r=R.float(0,tot),hit=pool.length-1;
+    for(let i=0;i<pool.length;i++){r-=pool[i].w;if(r<=0){hit=i;break;}}
+    win.push(pool[hit].team);
+    pool.splice(hit,1);
+  }
+  return {win,left:pool.map(x=>x.team)};
+}
+/* 生成一届完整签位表：乐透抽中的前 N 签 + 剩余乐透队（战绩倒序）+ 季后赛队（战绩倒序） */
+function draftOrderOf(lg){
+  const cfg=LOTTO_RULES[lg]||LOTTO_RULES.nba;
+  const st=standingsWorstFirst(cfg.teams);
+  const lotto=st.slice(0,cfg.nLot),rest=st.slice(cfg.nLot);
+  const lottoTeams=lotto.map(x=>x.team);
+  const oddsOf={};lottoTeams.forEach((t,i)=>{oddsOf[t]=cfg.odds[i]||0;});
+  const r=lotteryDraw(lottoTeams,cfg.odds,cfg.nDraw);
+  return {
+    lg:lg,order:r.win.concat(r.left).concat(rest.map(x=>x.team)),
+    /* draw 只用于展示：抽中的顺位 + 该队抽签前的状元签概率 */
+    draw:r.win.map(t=>({team:t,p:oddsOf[t]||0})),
+    lotto:lottoTeams,
+    slot:cfg.slot,
+    playoff:rest.map(x=>x.team)
+  };
+}
+function nbaDraftOrder(){return draftOrderOf('nba').order;}
+function cbaDraftOrder(){return draftOrderOf('cba').order;}
+/* 抽签结果文案（选秀夜 / 落选后回 CBA 时都会用到） */
+function lottoText(draw,slot){
+  if(!draw||!draw.length)return '';
+  const nm=slot||['状元签','榜眼签','探花签','第四顺位'];
+  return '本届乐透抽签：'+draw.map((x,i)=>(nm[i]||('第'+(i+1)+'签'))+' '+x.team+'（'+
+    (Math.round(Number(x.p)*10)/10).toString().replace(/\.0$/,'')+'%）').join(' · ');
 }
 function ensureDraft(){
-  if(!S.draft)S.draft={stock:draftStockInit(),order:nbaDraftOrder(),promise:null,pick:null,y:seasonLabel()};
-  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length)S.draft.order=nbaDraftOrder();
+  if(!S.draft)S.draft={stock:draftStockInit(),order:null,draw:null,lotto:null,promise:null,pick:null,y:null};
+  /* 签位按赛季重抽：旧实现一旦生成就永久复用，换一年还是同一张签位表 */
+  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length||S.draft.y!==seasonLabel()){
+    const m=draftOrderOf('nba');
+    S.draft.order=m.order;S.draft.draw=m.draw;S.draft.lotto=m.lotto;S.draft.slot=m.slot;S.draft.y=seasonLabel();
+  }
   if(typeof S.draft.stock!=='number'||!Number.isFinite(S.draft.stock))S.draft.stock=draftStockInit();
   return S.draft;
 }
@@ -5717,7 +5775,8 @@ function doDraft(kind,changes){
       S.log.push({y:seasonLabel(),t:'CBA选秀落选'});
       return;
     }
-    const team=teamAtPick(cbaDraftOrder(),pick);
+    const cm=draftOrderOf('cba');
+    const team=teamAtPick(cm.order,pick);
     const mt=(TEAMS.cba.find(x=>x[0]===team)||[,'6'])[1];
     S.team=team;S.teamStr=mt;S.league='CBA';S.ts=3;S.value=baseValue();
     if(!S.played.includes(S.team))S.played.push(S.team);
@@ -5726,6 +5785,7 @@ function doDraft(kind,changes){
     ensureWorld();
     if(!S.honors.some(h=>h.t==='登陆CBA')){S.honors.push({y:seasonLabel(),t:'登陆CBA'});S.log.push({y:seasonLabel(),t:'登陆CBA'});}
     changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(pick<=20?'（首轮）':'（次轮）'));
+    changes.push(lottoText(cm.draw,cm.slot));
     changes.push('新秀合同：€'+S.contract.wage+'万/年 · 3年');
     S.log.push({y:seasonLabel(),t:'CBA选秀：'+S.team+'（第'+pick+'顺位）'});
     setTimeout(function(){try{sfx('draft');}catch(e){}},240);
@@ -5764,6 +5824,7 @@ function doDraft(kind,changes){
   const cls=genDraftClass();
   changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(r1?'（首轮秀）':'（次轮秀）'));
   if(pick<=14)changes.push('🏅 乐透秀！全家的欢呼把房间淹没。');
+  if(d.draw&&d.draw.length&&pick!==1)changes.push('🎯 '+lottoText(d.draw,d.slot));
   if(promTeam)changes.push('🤝 '+promTeam+' 兑现了试训时的承诺。');
   changes.push('新秀合同：€'+S.contract.wage+'万/年 · '+years+'年');
   changes.push('本届前三：'+d.order[0]+'选中 '+cls[0].n+'；'+d.order[1]+'选中 '+cls[1].n+'；'+d.order[2]+'选中 '+cls[2].n);
