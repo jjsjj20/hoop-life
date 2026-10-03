@@ -247,8 +247,8 @@ td:first-child{white-space:nowrap}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.9.5</b></span><span class="badge">文件 <b>536,160</b> 字符</span><span class="badge">更新 <b>21</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
-<nav class="toc"><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.9.6</b></span><span class="badge">文件 <b>536,410</b> 字符</span><span class="badge">更新 <b>22</b> 个版本</span><span class="badge">资源外置 · 106 张 WebP</span></div>
+<nav class="toc"><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.9.6</b></td><td>节奏复核：戏剧事件配额防饿死（戏剧占比 28%→36%+）· 30 生涯模拟工具链 · 13 条新断言</td><td><code>fa23f5f</code></td><td>+250</td></tr>
 <tr><td><b>v4.9.5</b></td><td>代码审查：修复选秀数据漏构造（自查发现）· 死代码清理 · 新增 AST 静态审查脚本</td><td><code>1224aa2</code></td><td>+278</td></tr>
 <tr><td><b>v4.9.4</b></td><td>新增「球队签位」主题事件（4 条 + 1 条剧情线）· 修复季池抽取出错（292 条事件本是死代码）</td><td><code>b206432</code></td><td>+2,906</td></tr>
 <tr><td><b>v4.9.3</b></td><td>真实签位系统：签位改按上赛季战绩 · 14 队加权乐透（官方赔率）· 抽签结果可播报</td><td><code>9411176</code></td><td>+2,508</td></tr>
@@ -287,6 +288,39 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v496">⚖️ v4.9.6 · 节奏复核：戏剧事件配额防饿死（戏剧占比 28%→36%+） <span class="sha">fa23f5f</span></h2>
+<div class="card">
+<h3>复核方法（M1/P2 验收）</h3>
+<ul>
+<li>新增 30 生涯模拟工具链：<code>tools/sim_pacing.js</code>（逐进程模拟，防 jsdom 长跑 OOM）+ <code>merge_sim.js</code> + <code>analyze_pacing.js</code> + <code>compare_pacing.js</code>；</li>
+<li>覆盖 NBA / CBA / 欧洲 × 沉浸 / 快速 × 不同天赋，共 <b>846 个赛季</b>；</li>
+<li>逐季记录每季事件数、戏剧占比、题材覆盖、4 年重复率，<b>调参前后各跑一轮对照</b>。</li>
+</ul>
+<h3>修掉的问题：戏剧配额被题材过滤器饿死</h3>
+<ul>
+<li><code>pickGeneric()</code> 先按「本季题材不重复」过滤出候选，再按戏剧配额 9:1 加权。而戏剧事件高度集中在 trade / injury 题材——题材一被本季其他事件用掉，候选池里就没有戏剧可加权了，<b>45% 的配额实测只能跑到 ~28%</b>；</li>
+<li><b>修法</b>：本季缺戏、且题材未重复的候选里已经没有戏剧时，允许戏剧事件撞题材出场——兑现代码注释里自己声明的优先级：「宁可撞题材，也别撞故事」。</li>
+</ul>
+<h3>调参前后（合并口径 Σ戏剧 / Σ事件）</h3>
+<div class="tw"><table>
+<tr><th>窗口</th><th>调整前</th><th>调整后</th></tr>
+<tr><td>生涯第 1~10 季</td><td>36.1%</td><td><b>39.7%</b></td></tr>
+<tr><td>生涯第 11~20 季</td><td>28.2%</td><td><b>35.8%</b></td></tr>
+<tr><td>4 年内事件重复率</td><td>3.0%</td><td><b>0.4%</b></td></tr>
+</table></div>
+<p><b>代价</b>：同季题材重复率 17.8%→34.1%（约 +0.2 次/季），按既定优先级接受。</p>
+<p><b>遗留</b>：第 21 季起戏剧占比回落到 11~18%——每池仅 14~27 条戏剧事件，超长生涯（40+ 季）内容耗尽，归入 P2.2 内容补给，不影响现实生涯跨度。</p>
+<h3>验收线口径修正（已记入开发计划）</h3>
+<ul>
+<li>「每季 2~4 个事件」实为 v4.8 原版的<b>每阶段</b>配额（一季 4 阶段 = 每季 8~16），实测沉浸模式每季中位 7~8（≈2.0/阶段），与原版节奏一致，<b>不改</b>；</li>
+<li>「同题材一季不重复」按字面不可达（每季 8~16 个事件 vs 9 个题材，鸽笼原理），修正为「题材记忆优先、戏剧可豁免」——实现本来如此，只是此前测不出来（旧口径用游戏内已去重的 <code>S.usedTopics</code>，永远显示 0% 重复，是假阳性）。</li>
+</ul>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>11/11 项 · 389/389 断言</b>全部通过（新增 <code>test_drama_quota</code> 13 条断言：缺戏首抽必为戏剧 / 不缺戏不触发兜底 / 常规路径不变）；</li>
+<li><code>tools/build_all.py</code> 重建产物与仓库成品<b>逐字节一致</b>（构建链新增步骤⑧）。</li>
+</ul>
+</div>
 <h2 id="v495">🔍 v4.9.5 · 代码审查：修掉一处「不报错但功能不生效」的 bug <span class="sha">1224aa2</span></h2>
 <div class="card">
 <h3>修复内容</h3>
