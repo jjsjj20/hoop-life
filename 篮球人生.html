@@ -2448,9 +2448,15 @@ function pickGeneric(){
    *    ② 题材不重复是第二优先级（池子薄的时候宁可撞题材，也别撞故事）。 */
   const freshAll=cand.filter(e=>!(S.recent[e.id]>year-EV_RECENT_YEARS));
   const freshTopic=freshAll.filter(e=>topics.indexOf(evTopicOf(e))<0);
-  const finalPool=freshTopic.length?freshTopic:(freshAll.length?freshAll:cand);
-  /* ③ 本季戏剧事件还不够时，给戏剧事件加权 */
   const need=Math.round((S.evSeen+1)*EV_DRAMA_SHARE)-S.evDrama;
+  let finalPool=freshTopic.length?freshTopic:(freshAll.length?freshAll:cand);
+  /* ③ 本季缺戏、而题材未重复的候选里已经没有戏剧时，允许戏剧事件撞题材出场。
+   *    否则题材过滤器会把集中在 trade/injury 上的戏剧候选耗光，
+   *    9:1 的加权只剩流水账可抽，45% 的配额实测只能跑到 ~25%。 */
+  if(need>0&&!finalPool.some(e=>evKindOf(e)==='drama')){
+    const da=freshAll.filter(e=>evKindOf(e)==='drama');
+    if(da.length)finalPool=da;
+  }
   const weights=finalPool.map(e=>{
     const drama=evKindOf(e)==='drama';
     if(need>0)return drama?9:1;   /* 本季缺戏：戏剧事件权重拉高，先保证有故事 */

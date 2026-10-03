@@ -29,6 +29,7 @@ STEPS = [
     ("patch_draft_lottery.py",  "⑤ 真实签位系统",            True),
     ("patch_pick_events.py",    "⑥ 签位主题事件",            True),
     ("patch_audit_fixes.py",    "⑦ 选秀数据工厂收敛（自查修复）", True),
+    ("patch_drama_quota.py",    "⑧ 戏剧配额防饿死（M1 调参）",  True),
     ("optimize_images.py",      "⑦ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
