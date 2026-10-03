@@ -106,11 +106,11 @@ hr{border:none;border-top:1px solid var(--line);margin:30px 0}
 <li>脚本语法编译通过；构建管线可重复执行（二次运行产物哈希不变）。</li>
 </ul>
 </div>
-<h2 id="v49">⚡ v4.9 · 资源外置化 + 键盘操作 + 存档导出导入 <span class="sha">%s</span></h2>
+<h2 id="v49">⚡ v4.9 · 资源外置化 + 键盘操作 + 存档导出导入 <span class="sha">3ae32fe</span></h2>
 <div class="card">
 <h3>更新内容</h3>
 <ul>
-<li><b>图片资源外置</b>：106 张内嵌 base64 WebP 全部拆到 <code>assets/</code>（队徽 68 · 成就图标 18 · 场景插画 19 · 主视觉 1），HTML 内改为相对路径引用；列表里的小图标补 <code>loading="lazy" decoding="async"</code>。首屏从 <b>2,195 KB 降到 790 KB（−64%%）</b>——HTML 解析不再被 1.5MB 内联数据阻塞，图片也能走 HTTP 缓存了；</li>
+<li><b>图片资源外置</b>：106 张内嵌 base64 WebP 全部拆到 <code>assets/</code>（队徽 68 · 成就图标 18 · 场景插画 19 · 主视觉 1），HTML 内改为相对路径引用；列表里的小图标补 <code>loading="lazy" decoding="async"</code>。首屏从 <b>2,195 KB 降到 790 KB（−64%）</b>——HTML 解析不再被 1.5MB 内联数据阻塞，图片也能走 HTTP 缓存了；</li>
 <li><b>键盘操作</b>（作用域限定 <code>#stage</code>，只在游戏主区生效）：
   <ul>
   <li><code>1-9</code> 直接选中对应编号的选项；<code>↑↓</code> 在选项间移动高亮（高亮态与 <code>:hover</code> 同款），<code>Enter</code> 确认；</li>
