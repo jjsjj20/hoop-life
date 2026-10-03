@@ -1,0 +1,24 @@
+name: verify
+
+# 玩法代码 500KB 单文件、449 条事件，靠人工回归已经不可靠。
+# 每次 push / PR 自动跑一遍：9 个测试脚本（367 条断言）+ AST 静态审查。
+# 想确认这道闸门真的有效：随手改坏一处（比如删掉 GATED 里一条），CI 必须变红。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 安装测试依赖
+        run: npm install --no-audit --no-fund
+      - name: 跑全部验证
+        run: node tools/verify_all.js

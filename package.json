@@ -1,0 +1,13 @@
+{
+  "name": "hoop-life-verify",
+  "private": true,
+  "description": "《篮球人生》的自动化验证。游戏本体零依赖，这里的依赖只给 tools/ 下的测试用，不参与发布。",
+  "scripts": {
+    "verify": "node tools/verify_all.js"
+  },
+  "devDependencies": {
+    "acorn": "^8.18.0",
+    "acorn-walk": "^8.3.5",
+    "jsdom": "^30.1.1"
+  }
+}
