@@ -6068,8 +6068,11 @@ function standingsWorstFirst(lg){
     return (TEAMS[lg]||[]).map(t=>({team:t[0],str:t[1],wins:0}))
       .sort((a,b)=>a.str-b.str);
   }
-  return rows.map(r=>({team:r.team,str:r.str,wins:r.wins||0,_t:R.float(0,1)}))
-    .sort((x,y)=>x.wins-y.wins||x._t-y._t);
+  /* v4.15.1：并列战绩的 tiebreak 改为「实力弱者先选」——原先每次调用重掷随机数，
+   * 同一赛季的并列顺序在排名面板/选秀之间漂移（同胜场队跨赔率档位时，
+   * 选秀期望也会随之偶然化）。确定性排序后，同赛季顺序稳定。 */
+  return rows.map(r=>({team:r.team,str:r.str,wins:r.wins||0}))
+    .sort((x,y)=>x.wins-y.wins||x.str-y.str);
 }
 /* 按概率逐签无放回抽样 —— 等价于现场「抽中不放回、抽到重复队就重抽」的小球抽签 */
 function lotteryDraw(order,odds,n){

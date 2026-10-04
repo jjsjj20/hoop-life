@@ -52,6 +52,8 @@ def main():
     ap.add_argument("--src", default=os.path.join(ROOT, "src", "篮球人生-v4.8-原版.html"))
     ap.add_argument("--out", default=os.path.join(ROOT, "dist"))
     ap.add_argument("--skip-optimize", action="store_true")
+    ap.add_argument("--zip", action="store_true",
+                    help="同时打包 ZIP 交付包（游戏+资源+manifest/sw/icons+两份日志+构建说明）")
     args = ap.parse_args()
 
     if not os.path.exists(args.src):
@@ -109,6 +111,39 @@ def main():
         print("  与仓库根的成品一致: %s" % ("✓ 是" if same else "✗ 否（可能是版本不同步）"))
         if not same:
             return 1
+
+    # ── R1（v4.15.1）：--zip 自动打包交付包（版本号取自更新日志） ──
+    if args.zip:
+        import re as _re
+        import zipfile as _zipfile
+        ver = None
+        md_path = os.path.join(ROOT, "更新日志.md")
+        if os.path.exists(md_path):
+            with open(md_path, encoding="utf-8") as f:
+                m = _re.search(r"当前版本：\*\*(v[\d.]+)\*\*", f.read())
+            if m:
+                ver = m.group(1)
+        zip_path = os.path.join(args.out, "hoop-life-%s.zip" % (ver or "dev"))
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
+        with _zipfile.ZipFile(zip_path, "w", _zipfile.ZIP_DEFLATED) as z:
+            z.write(product, "篮球人生.html")
+            for extra in ("manifest.json", "sw.js"):
+                p2 = os.path.join(args.out, extra)
+                if os.path.exists(p2):
+                    z.write(p2, extra)
+            for sub in ("icons", "assets"):
+                d2 = os.path.join(args.out, sub)
+                if os.path.isdir(d2):
+                    for r2, _, fs2 in os.walk(d2):
+                        for f2 in fs2:
+                            full = os.path.join(r2, f2)
+                            z.write(full, os.path.relpath(full, args.out))
+            for md in ("更新日志.md", "更新日志.html", "README-build.md"):
+                p2 = os.path.join(ROOT, md)
+                if os.path.exists(p2):
+                    z.write(p2, md)
+        print("  ZIP 交付包: %s（%d 项）" % (os.path.basename(zip_path), len(_zipfile.ZipFile(zip_path).namelist())))
 
     print("\n✅ 重建完成。产物在 %s/" % os.path.relpath(args.out, ROOT))
     return 0

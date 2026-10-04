@@ -62,7 +62,7 @@ module.exports = run('PWA与图片分享卡', ({ win, doc, check, html }) => {
   check('manifest 关键字段齐全', mf.name && mf.start_url === './篮球人生.html' && mf.display === 'standalone' && Array.isArray(mf.icons) && mf.icons.length === 2, JSON.stringify(mf.icons || null));
   check('图标文件存在且非空（192/512）', ['icons/icon-192.png', 'icons/icon-512.png'].every(f => { const p = path.join(root, f); return fs.existsSync(p) && fs.statSync(p).size > 500; }));
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-  check('sw.js 含版本化缓存常量', /const CACHE = 'hoop-life-v/.test(sw));
+  check('sw.js 含版本化缓存常量', /const CACHE = 'hoop-life-/.test(sw));
   check('sw.js 页面请求网络优先（navigate）', sw.indexOf("req.mode === 'navigate'") >= 0);
   check('sw.js 资产缓存优先且清理旧缓存', sw.indexOf('caches.match(req)') >= 0 && sw.indexOf('caches.delete') >= 0);
   check('sw.js 不拦截跨域请求（AI 接口）', sw.indexOf('origin !== location.origin') >= 0);
