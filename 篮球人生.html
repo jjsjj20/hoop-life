@@ -2942,6 +2942,26 @@ function injHTML(){
 }
 /* 特定（脚本/里程碑）事件规则表：[无副作用条件, 执行(设标记并返回事件)]
  * getEvent 与 pendingSpecial 共用此表，保证"实际触发"与"探测"永远一致 */
+/* v4.14 P7 保签摆烂：我队的未来首轮已被交易、且带前 N（≥3）保护时，
+ * 管理层可能暗示「摆烂换回签位」——触保回退的收益由选秀夜的保护机制自然兑现。 */
+function tankScenarioReady(){
+  if(S.league!=='NBA'&&S.league!=='CBA')return false;
+  if(S.stage!=='winter')return false;
+  if(S.flags['tank'+(S.birthYear+S.age)])return false;
+  ensurePickBoard();
+  const a=pickAssetOf(myLeagueKey(),curDraftYear()+1,1,S.team);
+  if(!a||a.owner===S.team||!(a.prot>=3))return false;
+  return R.chance(.4);
+}
+function evTankHint(){
+  ensurePickBoard();
+  const a=pickAssetOf(myLeagueKey(),curDraftYear()+1,1,S.team)||{prot:'N'};
+  return {id:'tankHint',title:'冬 · 管理层的暗示',scene:`总经理在走廊里拦住${S.name}，话里有话：「明年那支前${a.prot}保护的首轮签，本来是我们的。战绩这个东西……你懂的。」赛季还长，「摆烂」两个字第一次被摆上了明面。`,choices:[
+    ch('拒绝：我们每一场都想赢',{clutch:2,ts:1},'他当着教练组把话挑明。那场比赛球队赢了——用行动回答比用嘴回答有力。'),
+    ch('默许轮换：给年轻人让路',{stability:-2,ts:-1,hustle:1},'他开始打起了「养生篮球」。年轻人的上场时间涨了，他的数据落了。'),
+    ch('装作没听懂',{stability:1},'他笑着点了点头，转头照常训练。有些话，装听不见也是一种回答。')
+  ]};
+}
 const SPECIAL_RULES=[
   /* 伤病（时间化）：每季每阶段掷一次；伤停期间还会给一次复出抉择 */
   [()=>S.age>=16&&!S.injury&&!S.flags['injR'+(S.birthYear+S.age)+S.stage],
@@ -2953,6 +2973,9 @@ const SPECIAL_RULES=[
   /* 季前训练营：每年秋天三选一，给赛季一个起跑姿势 */
   [()=>S.age>=16&&S.stage==='autumn'&&!S.flags['camp'+(S.birthYear+S.age)],
     ()=>{S.flags['camp'+(S.birthYear+S.age)]=true;return evCamp();}],
+  /* v4.14 保签摆烂：我队未来首轮已被交易且带高保护 → 冬季可能触发管理层暗示 */
+  [()=>tankScenarioReady(),
+    ()=>{S.flags['tank'+(S.birthYear+S.age)]=true;return evTankHint();}],
   [()=>S.age===15&&S.stage==='spring'&&!S.flags.ch1,()=>{S.flags.ch1=true;return evCh1();}],
   [()=>S.age===15&&S.stage==='summer'&&!S.flags.ch1s,()=>{S.flags.ch1s=true;return evCh1Summer();}],
   [()=>S.age===15&&S.stage==='autumn'&&!S.flags.ch1a,()=>{S.flags.ch1a=true;return evCh1Autumn();}],
@@ -6134,6 +6157,15 @@ function execPickTrade(lg,fromTeam,toTeam,a){
   t.owner=toTeam;return t;
 }
 function pickName(a){return (a.y<=curDraftYear()?'今年':(a.y-curDraftYear())+'年后')+(a.r===1?'首轮签':'次轮签')+'（'+a.orig+'）';}
+/* 顺位互换（v4.14 P7）：两队交换各自持有的明年首轮签，保护条款各自保留。
+ * 与两笔独立交易不同——互换是同时成交的一笔交易，任一侧不成立则整笔作废。 */
+function execSwap(lg,a,b){
+  const x=pickAssetOf(lg,a.y,a.r,a.orig),y=pickAssetOf(lg,b.y,b.r,b.orig);
+  if(!x||!y||x.owner!==a.owner||y.owner!==b.owner)return null;
+  if(a.orig===b.orig||a.owner===b.owner)return null;
+  x.owner=b.owner;y.owner=a.owner;
+  return [x,y];
+}
 /* AI 球队间的签位交易：截止日成交 1~2 笔，新闻可见 */
 function aiPickTrades(news){
   try{
@@ -6143,9 +6175,16 @@ function aiPickTrades(news){
       const n=R.chance(.6)?2:1;
       for(let i=0;i<n;i++){
         const b=S.pickBoard[lg];
-        const cands=b.assets.filter(a=>a.y>D&&a.owner===a.orig);
-        if(!cands.length)continue;
-        const a=R.pick(cands);
+        const own=b.assets.filter(a=>a.y>D&&a.owner===a.orig&&a.r===1);
+        /* v4.14：三成半概率走「顺位互换」——两队交换明年首轮，保护各自保留 */
+        if(own.length>=2&&R.chance(.35)){
+          const a=R.pick(own);
+          const b2=R.pick(own.filter(x=>x.orig!==a.orig&&x.owner!==a.orig));
+          const done=b2?execSwap(lg,a,b2):null;
+          if(done)news.push('🔁 互换权交易：'+a.orig+' 与 '+b2.orig+' 互换明年首轮签（保护条款各自保留）');
+          continue;
+        }
+        const a=R.pick(own);
         const teams=TEAMS[lg].map(t=>t[0]).filter(t=>t!==a.owner&&t!==a.orig);
         if(!teams.length)continue;
         const to=R.pick(teams);
@@ -7109,8 +7148,13 @@ function seasonGames(lg){return {nba:82,cba:52,euro:34,ncaa:30}[lg]||34;}
 function computeStandings(lg){
   /* 唯一口径（v3.9）：一个赛季只摇一次并缓存——排名面板/联盟榜单/赛季总结/报纸全部读同一份 */
   const _sy=seasonLabel();
-  if(S._stCache&&S._stCache.lg===lg&&S._stCache.season===_sy&&Array.isArray(S._stCache.rows)&&S._stCache.rows.length){
-    return S._stCache.rows.map(r=>Object.assign({},r));
+  /* v4.14：单槽缓存升级为按联赛分槽——旧版换联赛查看会把另一联赛的缓存顶掉，
+   * 同一赛季同一联赛反复重摇，排名前后不一致（已知问题清单的「单槽缓存」项）。 */
+  if(S._stCache&&S._stCache.rows)S._stCache={};   /* 旧形状单槽缓存一次性迁移 */
+  S._stCache=S._stCache||{};
+  const _hit=S._stCache[lg];
+  if(_hit&&_hit.season===_sy&&Array.isArray(_hit.rows)&&_hit.rows.length){
+    return _hit.rows.map(r=>Object.assign({},r));
   }
   const games=seasonGames(lg);
   const rows=(TEAMS[lg]||[]).map(t=>{
@@ -7128,7 +7172,7 @@ function computeStandings(lg){
   });
   rows.sort((a,b)=>b.wins-a.wins||b.str-a.str); /* 同胜场按球队实力决名次（tiebreak） */
   rows.forEach((r,i)=>r.rank=i+1);
-  S._stCache={lg:lg,season:seasonLabel(),rows:rows.map(r=>Object.assign({},r))};
+  S._stCache[lg]={season:seasonLabel(),rows:rows.map(r=>Object.assign({},r))};
   return rows;
 }
 /* 判定玩家球队季后赛资格，返回 {seed,playin,label,conf,confLabel} 或 null */
@@ -8600,6 +8644,25 @@ function showTendHelp(){
   <div class="mini">提示：倾向只会「放大」或「压低」你的场均数据（上限 +${(TEND.cap*TEND.ppgScore).toFixed(1)} 分 / +${(TEND.cap*TEND.apgPass).toFixed(1)} 助攻），球队战绩、荣誉与奖项仍按原有规则结算。</div>
   <button class="btn ghost" style="margin-top:14px" onclick="closeOvl()">关闭</button>`);
 }
+/* 📋 我的签位资产（v4.14 P7）：未来 3 年首轮/次轮的归属与保护一览 */
+function showPickAssets(){
+  if(S.league!=='NBA'&&S.league!=='CBA'){
+    openOvl(`<h3>📋 签位资产</h3><div class="mini">该联赛没有选秀签位，无从交易。</div><button class="btn ghost" style="margin-top:14px" onclick="closeOvl()">关闭</button>`);
+    return;
+  }
+  ensurePickBoard();
+  const lg=myLeagueKey(),D=curDraftYear();
+  const mine=S.pickBoard[lg].assets.filter(a=>a.orig===S.team||a.owner===S.team)
+    .sort((a,b)=>a.y-b.y||a.r-b.r);
+  const desc=a=>{
+    const y=(a.y===D?'今年':(a.y-D)+'年后')+(a.r===1?'首轮':'次轮');
+    if(a.owner===a.orig)return y+' · 自持'+(a.prot!=null?' · 前'+a.prot+'保护':'');
+    if(a.orig===S.team)return y+' · 已交易至 '+a.owner+(a.prot!=null?'（前'+a.prot+'保护，触保归我）':'');
+    return y+'（来自 '+a.orig+'）· 我队持有'+(a.prot!=null?' · 前'+a.prot+'保护':'');
+  };
+  const rows=mine.map(a=>'<div class="row"><span>'+desc(a)+'</span><b>'+(a.owner===S.team?'我方':'对方')+'</b></div>').join('');
+  openOvl(`<h3>📋 签位资产 · ${esc(S.team)}</h3><div class="mini">${esc(LEAGUE_NAMES[S.league]||S.league)} · 未来 3 年首轮/次轮归属（截止日交易与选秀夜实时变动）</div><div class="summ">${rows||'<div class="mini">暂无签位资产记录</div>'}</div><button class="btn ghost" style="margin-top:14px" onclick="closeOvl()">关闭</button>`);
+}
 /* 💼 财务：收入 / 消费 / 投资 / 训练投入（钱要能花出去） */
 function showMoney(){
   const pro=isPro(),ag=S.agent||{name:'普通经纪人',rate:.04,neg:0};
@@ -9364,7 +9427,7 @@ function renderGame(){
             :(SEASON_ICON[S.stage]||'')} · ${chapterTitle()}</div>`);
     $('#app').innerHTML=renderTop()+`<div class="shell"><div class="main">`+head+`<div id="stage"></div><div class="actions">
      <button onclick="showRoster()">👥 阵容</button>
-     ${(S.league==='CBA'||S.league==='NBA'||S.league==='欧洲')?'<button onclick="showStandings()">📊 排名</button>':''}
+     ${(S.league==='CBA'||S.league==='NBA'||S.league==='欧洲')?'<button onclick="showStandings()">📊 排名</button><button onclick="showPickAssets()">📋 签位</button>':''}
      ${S.bracket?'<button onclick="showBracket()">🏆 对阵图</button>':''}
      <button onclick="showMoney()">💼 财务</button><button onclick="showTendHelp()">🧭 倾向</button>
      <button onclick="showArchive()">📋 档案</button>
