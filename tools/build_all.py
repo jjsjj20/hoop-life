@@ -34,7 +34,8 @@ STEPS = [
     ("patch_pick_trades.py",    "⑩ 签位资产板 + 签位交易",     True),
     ("patch_share_card.py",     "⑪ 生涯分享卡",              True),
     ("patch_p4_polish.py",      "⑫ P4 收尾（缩放+工厂收敛）",   True),
-    ("optimize_images.py",      "⑬ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_content_p5.py",     "⑬ P5 内容补给 + 次轮归属播报", True),
+    ("optimize_images.py",      "⑭ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 
