@@ -247,8 +247,8 @@ td:first-child{white-space:nowrap}
 <span class="ball">🏀</span>
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
-<div class="badges"><span class="badge">当前版本 <b>v4.12.0</b></span><span class="badge">文件 <b>536,548</b> 字符</span><span class="badge">更新 <b>25</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
-<nav class="toc"><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<div class="badges"><span class="badge">当前版本 <b>v4.13.0</b></span><span class="badge">文件 <b>552,859</b> 字符</span><span class="badge">更新 <b>26</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
+<nav class="toc"><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.13.0</b></td><td>P5 内容补给：48 条新戏剧事件（题材广度 3→9 类）· 次轮签归属播报</td><td><code>0f0df67</code></td><td>+16,311</td></tr>
 <tr><td><b>v4.12.0</b></td><td>收尾清零：季后赛结果收敛唯一工厂 · 放开双指缩放</td><td><code>f36ce13</code></td><td>+396</td></tr>
 <tr><td><b>v4.11.0</b></td><td>签位成为可交易资产（保护条款 · 交易截止日 · 选秀夜按归属播报）· 生涯分享卡</td><td><code>c1d696d</code></td><td>+12,136</td></tr>
 <tr><td><b>v4.10.0</b></td><td>移除教练模式（整体下线）· 老教练存档自动退役迁移 · 删除教练席横幅</td><td><code>d992710</code></td><td>−12,394</td></tr>
@@ -291,6 +292,31 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v4130">📚 v4.13.0 · P5 内容补给：48 条新戏剧事件 + 次轮签归属播报 <span class="sha">0f0df67</span></h2>
+<div class="card">
+<h3>P5 内容补给（第二周期提案验收项）</h3>
+<p>四季职业池各补 <b>12 条戏剧事件</b>（<code>sd/sud/ad/wd 9~20</code>，共 48 条），全部手工登记 <code>EV_KIND_OVERRIDE</code> 为戏剧。题材刻意投向 life / health / market 洼地——母女手术、失眠、签名鞋质检、婚礼与流言、家乡球场、投资邀约、流感季、赞助压价……</p>
+<ul>
+<li><b>题材广度</b>：戏剧候选从集中在 trade/injury（2~3 类）扩到 <b>9 类题材全覆盖</b>，freshTopic 里戏剧候选存活更久，深生涯直接受益；</li>
+<li><b>次轮签归属播报</b>：资产板本就跟踪次轮归属，现在选秀夜 NBA/CBA 的次轮被交易持有的签也会念出「📋 该签原属 X，由 Y 交易持有」。</li>
+</ul>
+<h3>验收数据（30 生涯 / 564 赛季实测，对照开发计划 P5 验收线）</h3>
+<div class="tw"><table>
+<tr><th>指标</th><th>v4.12.0</th><th>v4.13.0</th><th>验收线</th></tr>
+<tr><td>第 01-10 季戏剧占比</td><td>~40%</td><td><b>47.5%</b></td><td>—</td></tr>
+<tr><td>第 11-20 季戏剧占比</td><td>35.8%</td><td><b>46.1%</b></td><td>—</td></tr>
+<tr><td><b>第 21-30 季戏剧占比</b></td><td>17.8%</td><td><b>39.4%</b></td><td>≥25% ✓</td></tr>
+<tr><td><b>第 31-40 季戏剧占比</b></td><td>11.4%</td><td><b>36.4%</b></td><td>≥25% ✓</td></tr>
+<tr><td>4 年内事件重复率</td><td>0.4%</td><td><b>0.2%</b></td><td>&lt;5% ✓</td></tr>
+<tr><td>同季题材重复赛季占比</td><td>34.1%</td><td><b>27.3%</b></td><td>≤40% ✓</td></tr>
+</table></div>
+<p>题材重复<b>不升反降</b>：戏剧供给摊到 9 类题材后，题材未重复的候选里戏剧存活更久，撞题材兜底的触发次数反而减少——内容补给与机制形成了正循环。</p>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>14/14 项 · 408/408 断言</b>全部通过（新增 <code>p5</code> 15 断言；<code>drama_quota</code> 布景重写为「S.used 精确控制候选集」——v4.13 起戏剧横跨 9 题材，旧的「标记全部戏剧题材」布景不再可行）；</li>
+<li><code>tools/build_all.py</code> 重建（现 14 步）与仓库成品<b>逐字节一致</b>。</li>
+</ul>
+</div>
 <h2 id="v4120">🎲 v4.12.0 · 收尾清零：季后赛结果收敛唯一工厂 · 放开双指缩放 <span class="sha">f36ce13</span></h2>
 <div class="card">
 <p>里程碑 M3（P4 收尾）交付，开发计划全部里程碑（M0~M3）至此清零。</p>
