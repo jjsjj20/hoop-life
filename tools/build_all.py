@@ -36,7 +36,9 @@ STEPS = [
     ("patch_p4_polish.py",      "⑫ P4 收尾（缩放+工厂收敛）",   True),
     ("patch_content_p5.py",     "⑬ P5 内容补给 + 次轮归属播报", True),
     ("patch_p7.py",             "⑭ P7 签位延伸 + 排名缓存分槽", True),
-    ("optimize_images.py",      "⑮ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_card_png.py",       "⑮ 分享卡图片版（Canvas PNG）", True),
+    ("patch_pwa.py",            "⑯ PWA 离线（manifest+SW+图标）", True),
+    ("optimize_images.py",      "⑰ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 

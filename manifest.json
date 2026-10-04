@@ -1,0 +1,15 @@
+{
+  "name": "篮球人生 · 生涯模拟",
+  "short_name": "篮球人生",
+  "description": "中文篮球生涯模拟文字游戏：从青训到退役，写你自己的篮球人生。",
+  "lang": "zh-CN",
+  "start_url": "./篮球人生.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0f1f",
+  "theme_color": "#101830",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
