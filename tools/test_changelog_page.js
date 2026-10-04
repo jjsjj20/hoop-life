@@ -30,7 +30,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   check('v4.12.0（收尾清零）→ 玩法', kOf('v4.12.0') === 'play', kOf('v4.12.0'));
   check('v4.13.0（内容补给）→ 玩法', kOf('v4.13.0') === 'play', kOf('v4.13.0'));
   check('v4.14.0（签位延伸）→ 玩法', kOf('v4.14.0') === 'play', kOf('v4.14.0'));
-  check('v4.15.0（PWA+图片卡）→ 工程', kOf('v4.15.0') === 'eng', kOf('v4.15.0'));
+  check('v4.15.0（PWA+图片卡）→ 美术（图片版+图标）', kOf('v4.15.0') === 'art', kOf('v4.15.0'));
 
   // ── 3. 版本标题被拆成「徽章 + 主题」──────────────────
   const h = secs[0].querySelector('h2');
