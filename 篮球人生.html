@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- 首屏主视觉提前发起下载：它原本要等脚本跑完 renderMenu() 才被发现，白白慢一个来回 -->
 <link rel="preload" as="image" href="assets/art/hero.webp" fetchpriority="high">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -6091,6 +6091,13 @@ function choose(i){
   UI={mode:'result',ev,chIdx:i,changes};
   renderResult(ev,i,changes);save();
 }
+/* 一份季后赛结果的唯一构造点（v4.12 P4.2）。
+ * 之前 7 处各写各的对象字面量，kind/level 时有时无——消费端全靠兜底。
+ * 收敛成唯一工厂：字段补成统一形状，以后加字段不可能只补一半。
+ * 行为等价：'' 与 undefined 在所有消费点（r.kind==='xxx' / if(r.kind)）语义相同。 */
+function makePlayoffResult(o){
+  return Object.assign({rounds:0,champ:false,kind:'',level:''},o||{});
+}
 function advance(){
   if(!UI||UI.mode!=='result')return;
   try{
@@ -6120,11 +6127,11 @@ function advance(){
       const out=marchAdvance(won);
       if(out.over){
         if(out.champ){
-          S._playoffResult={rounds:3,champ:true,kind:'march'};
+          S._playoffResult=makePlayoffResult({rounds:3,champ:true,kind:'march'});
           S.honors.push({y:seasonLabel(),t:'NCAA 疯狂三月冠军'});
           S.log.push({y:seasonLabel(),t:'NCAA 疯狂三月冠军'});
         }else{
-          S._playoffResult={rounds:marchStageNo(ev.march)-1,champ:false,level:'march',kind:'march'};
+          S._playoffResult=makePlayoffResult({rounds:marchStageNo(ev.march)-1,champ:false,level:'march',kind:'march'});
           S.lastLossTeam=(r&&r.box)?(ev.game.opp||S.lastLossTeam):S.lastLossTeam;
         }
         S.bracket.done=true;
@@ -6142,14 +6149,14 @@ function advance(){
         S.playoff.rounds=(S.playoff.rounds||0)+1;
         S.series=null;
         const nx=bracketPlayerWin();
-        if(nx==='champ'||nx==='done'||!nx){S._playoffResult={rounds:3,champ:true};UI={mode:'event',ev:evPlayoffChamp()};}
+        if(nx==='champ'||nx==='done'||!nx){S._playoffResult=makePlayoffResult({rounds:3,champ:true});UI={mode:'event',ev:evPlayoffChamp()};}
         else UI={mode:'event',ev:roundEventFor(nx)||evPlayoffChamp()};
       }else if(s.l>=4){
         finishSeries();
         S.lastLossTeam=s.opp||S.lastLossTeam;   /* 记住是谁把你送走的：下赛季的复仇战有对手了 */
         S.series=null;
         bracketPlayerLose();
-        S._playoffResult={rounds:(S.playoff&&S.playoff.rounds)||0,champ:false,level:st};
+        S._playoffResult=makePlayoffResult({rounds:(S.playoff&&S.playoff.rounds)||0,champ:false,level:st});
         UI={mode:'event',ev:evPlayoffExit()};
       }else{
         UI={mode:'event',ev:evPlayoffSeries()};   /* 还没分出胜负：下一个节点（天王山/抢七/赛点） */
@@ -6169,15 +6176,15 @@ function advance(){
           UI={mode:'event',ev:ns==='confFinal'?evPlayoffConfFinal():evPlayoffFinal()};
         }
         else if(ev.round==='cf'){bracketPlayerWin();UI={mode:'event',ev:evPlayoffFinal()};}
-        else{bracketPlayerWin();S._playoffResult={rounds:3,champ:true};UI={mode:'event',ev:evPlayoffChamp()};}
+        else{bracketPlayerWin();S._playoffResult=makePlayoffResult({rounds:3,champ:true});UI={mode:'event',ev:evPlayoffChamp()};}
       }else{
         const back=bracketPlayerLose();
         if(ev.round==='playin'){
           /* 7/8 号种子输掉第一场后还有「最后一张门票」，那才是赛季结束的地方 */
           if(back==='playin'){UI={mode:'event',ev:evPlayInFinal()};}
-          else{S._playoffResult={rounds:0,champ:false,kind:'playin'};UI={mode:'event',ev:evPlayInExit()};}
+          else{S._playoffResult=makePlayoffResult({rounds:0,champ:false,kind:'playin'});UI={mode:'event',ev:evPlayInExit()};}
         }
-        else{S._playoffResult={rounds:(S.playoff&&S.playoff.rounds)||0,champ:false,level:(S.bracket&&S.bracket.currentStage)||'r1'};UI={mode:'event',ev:evPlayoffExit()};}
+        else{S._playoffResult=makePlayoffResult({rounds:(S.playoff&&S.playoff.rounds)||0,champ:false,level:(S.bracket&&S.bracket.currentStage)||'r1'});UI={mode:'event',ev:evPlayoffExit()};}
       }
       save();renderGame();return;
     }

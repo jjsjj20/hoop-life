@@ -70,7 +70,7 @@ walk.full(ast, node => {
  * _playoffResult.kind / .level —— computeSeason 里两者都是可选判别：
  *   kind 'march' 走疯狂三月分支、'playin' 走附加赛分支，取不到时用 rounds 兜底；
  *   7 个构造点分别对应联盟冠军 / 联盟出局 / 疯狂三月 / 附加赛，字段组合本来就不同。 */
-const OPTIONAL_KEYS = { _playoffResult: ['kind', 'level'] };
+const OPTIONAL_KEYS = {};   /* v4.12：_playoffResult 已收敛 makePlayoffResult() 工厂，各构造点字段一致，白名单清空 */
 const buildSites = {};
 walk.full(ast, node => {
   if (node.type !== 'AssignmentExpression') return;
