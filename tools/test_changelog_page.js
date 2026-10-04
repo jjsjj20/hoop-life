@@ -107,7 +107,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   const must = ['v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', '版本总览', '附录', '音效技术备忘',
     '14 队加权乐透', '首轮签在交易里送走了', '季池', 'AST 静态审查脚本', 'hoop_life_save_v1'];
   must.forEach(k => check('内容未丢失：' + k, text.indexOf(k) >= 0));
-  check('表格数量未变（14 个）', doc.querySelectorAll('table').length === 14,
+  check('表格数量未变（15 个）', doc.querySelectorAll('table').length === 15,
     String(doc.querySelectorAll('table').length));
   check('卡片数量未变（33 个）', doc.querySelectorAll('.card').length === 33,
     String(doc.querySelectorAll('.card').length));
