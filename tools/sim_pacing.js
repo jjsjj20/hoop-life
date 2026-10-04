@@ -75,6 +75,9 @@ const SUMMARIES = [];
  * 内存受限的环境用 bash 循环「一个生涯一个进程」，最后用 merge_sim.js 合并。 */
 const ONE = process.env.SIM_ONE;
 
+const AGE_INIT = Number(process.env.SIM_AGE || 18);   /* R2：SIM_AGE=15 青训起步 */
+const YOUTH = AGE_INIT < 18;
+
 function runCareer(cfg) {
   win.eval(`JSON.stringify((function(){
     // 重新开一局
@@ -82,9 +85,9 @@ function runCareer(cfg) {
     document.getElementById('fName').value='模拟${cfg.tag}';
     doCreate(); allocRandom(); confirmAlloc();
     // 按配置摆联赛与模式
-    S.league=${JSON.stringify(cfg.league)}; S.mode=${JSON.stringify(cfg.mode)};
-    S.team=TEAMS[S.league==='NBA'?'nba':S.league==='CBA'?'cba':'euro'][0][0];
-    S.teamStr=6; S.age=18; S.stage='spring'; S.stageDone=0; S.stageNeed=stageNeedFor();
+    S.age=${AGE_INIT}; S.league=${JSON.stringify(YOUTH?'青训':cfg.league)}; S.mode=${JSON.stringify(cfg.mode)};
+    ${YOUTH ? "S.team='山东高速青年队';S.teamStr=4;" : "S.team=TEAMS[S.league==='NBA'?'nba':S.league==='CBA'?'cba':'euro'][0][0];S.teamStr=6;"}
+    S.stage='spring'; S.stageDone=0; S.stageNeed=stageNeedFor();
     ensureWorld(); if(isPro()&&!S.contract)setContract(S.team,S.league,2,'职业合同');
     // 高能力：让职业生涯能走很长（方便看长期节奏）
     SKILLS.forEach(p=>{S.skills[p[0]]=${cfg.ovrHint};});
