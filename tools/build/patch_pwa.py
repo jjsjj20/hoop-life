@@ -73,16 +73,13 @@ open(os.path.join(OUT, 'manifest.json'), 'w', encoding='utf-8', newline='\n').wr
 print('manifest.json 已生成')
 
 # ═══════════ 5. service worker ═══════════
-import hashlib
-# R1（v4.15.1）：SW 缓存名 = 游戏 HTML 的内容哈希（sha256 前 12 位）——
-# 重建有任何变化即换缓存（老用户资产自动刷新）；完全一致的重建缓存不失效。
-CACHE = 'hoop-life-' + hashlib.sha256(s.encode('utf-8')).hexdigest()[:12]
+# R1（v4.15.1）：SW 缓存名由 patch_sw_cache.py 按最终 HTML 的内容哈希覆写（此处仅占位）
 
-SW = """/* 篮球人生 Service Worker（""" + CACHE + """）
+SW = """/* 篮球人生 Service Worker（""" + 'hoop-life-DEV' + """）
  * HTML：网络优先（发版更新可达），断网回落缓存；
  * 其余同源资产：缓存优先（未命中拉取并入库）；
  * 跨域请求（AI 接口）一律不拦截；发版后旧缓存自动清理。 */
-const CACHE = '""" + CACHE + """';
+const CACHE = 'hoop-life-DEV';
 const CORE = ['./', './篮球人生.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {

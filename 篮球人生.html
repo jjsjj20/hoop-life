@@ -2305,6 +2305,13 @@ const FX=[
     setContract(S.team,S.league,2,'转会合同');
     c.push('📦 交易达成：'+oldTeam+' 将你送至 '+to+'，换回'+(a?' '+pickName(a):'未来资产')+'。新球队的发布会上，总经理说：「我们盯了你很久。」');
     S.log.push({y:seasonLabel(),t:'被交易至 '+to+'（换回签位资产）'});}],
+  /* R3（v4.16）：摆烂机制——默许摆烂后，本季我队胜率被压低（-10 个百分点），
+   * 换来签位触保回退的可能；只在当前赛季生效，跨年自动过期。 */
+  ['tankAccept',(v,c)=>{
+    S.flags.tankYear=S.birthYear+S.age;
+    S._stCache={};                        /* 排名缓存失效：惩罚立即生效 */
+    c.push('📉 管理层按下了计时器——这一年的战绩，为未来签位让路');
+    S.log.push({y:seasonLabel(),t:'默许摆烂：战绩为未来签位让路'});}],
   ['teammateLeave',(v,c)=>{const nm=teammateLeaves();if(nm)c.push(nm+' 离开球队');}],
   ['starter',(v,c)=>{S.starter=!!v;c.push(v?'晋升首发':'跌入替补');}],
   /* ---- 转会 / 选秀 ---- */
@@ -2961,7 +2968,7 @@ function evTankHint(){
   const a=pickAssetOf(myLeagueKey(),curDraftYear()+1,1,S.team)||{prot:'N'};
   return {id:'tankHint',title:'冬 · 管理层的暗示',scene:`总经理在走廊里拦住${S.name}，话里有话：「明年那支前${a.prot}保护的首轮签，本来是我们的。战绩这个东西……你懂的。」赛季还长，「摆烂」两个字第一次被摆上了明面。`,choices:[
     ch('拒绝：我们每一场都想赢',{clutch:2,ts:1},'他当着教练组把话挑明。那场比赛球队赢了——用行动回答比用嘴回答有力。'),
-    ch('默许轮换：给年轻人让路',{stability:-2,ts:-1,hustle:1},'他开始打起了「养生篮球」。年轻人的上场时间涨了，他的数据落了。'),
+    ch('默许轮换：给年轻人让路',{stability:-2,ts:-1,hustle:1,tankAccept:1},'他开始打起了「养生篮球」。年轻人的上场时间涨了，他的数据落了。'),
     ch('装作没听懂',{stability:1},'他笑着点了点头，转头照常训练。有些话，装听不见也是一种回答。')
   ]};
 }
@@ -7169,9 +7176,12 @@ function computeStandings(lg){
     /* 同档球队实力几乎相同：实力系数收窄、随机波动放大，冷门频出 */
     let wpc=clamp(.38+(st-6.5)*.055+R.float(-.17,.17),.06,.94);
     if(t[0]===myTeamName()){
-      /* 玩家球队：波动收窄（实力决定命运），并按 OVR 加成 */
+      /* 玩家球队：波动收窄（实力决定命运），并按 OVR 加成；
+       * R3（v4.16）：默许摆烂的赛季，胜率压低 10 个百分点（验收线 ≥5）——
+       * 槽位更差 → 落入保护区 → 选秀夜签位触保回退（v4.11 机制自然兑现） */
+      const tankPad=(S.flags.tankYear===(S.birthYear+S.age))?0.10:0;
       const adj=ovr()-70;
-      wpc=clamp(.38-lgHard(lg).wpc+(st-6.5)*.055+adj*.005+R.float(-.06,.06),.06,.95);
+      wpc=clamp(.38-lgHard(lg).wpc+(st-6.5)*.055+adj*.005-tankPad+R.float(-.06,.06),.06,.95);
     }
     const wins=Math.round(games*wpc);
     return {team:t[0],str:Math.round(st*10)/10,wins,losses:games-wins};
@@ -7539,6 +7549,8 @@ function finishSeason(){
   settleFinance(res);
   decContract();
   codexSeason();              /* 图鉴：本队/联赛/队友/最强队友 */
+  /* R3（v4.16）：摆烂赛季的结算文案（renderSeason 展示） */
+  if(S.flags.tankYear===(S.birthYear+S.age))res.tankNote='管理层按下了计时器——这一年的战绩，为未来签位让了路';
   /* NBA 的个人奖项要先入账（写进 S.honors）再复算成就，
    * 否则 MVP / FMVP 的徽章要等到下一次复算才补上，玩家这一页看不到「刚解锁」。 */
   if(S.league==='NBA'){
@@ -9716,6 +9728,7 @@ function renderSeason(res){
   <div class="mini">${esc(shotSourceText({pos:S.pos,skills:S.skills,oppStr:leagueDefStr(S.league)}))}</div>`:''}
   <div class="row"><span>球队</span><b>${esc(S.team)}</b></div>
   <div class="row"><span>战绩</span><b>${esc(res.record)}</b></div>
+  ${res.tankNote?`<div class="row"><span>📉 摆烂</span><b style="color:#f87171">${esc(res.tankNote)}</b></div>`:''}
   <div class="row"><span>结果</span><b>${esc(res.playoffs)}</b></div>
   ${res.champTeam?`<div class="row"><span>总冠军球队</span><b style="color:var(--gold)">${esc(res.champTeam)}</b></div>`:''}
   ${res.gameSum?`<div class="row"><span>焦点战（真打）</span><b>${res.gameSum.n} 场 ${res.gameSum.w} 胜 ${res.gameSum.l} 负 · 场均 ${res.gameSum.ppg} 分${res.gameSum.best?(' ｜ 最佳 '+res.gameSum.best.pts+' 分 vs '+esc(res.gameSum.best.opp)):''}</b></div>`:''}

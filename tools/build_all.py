@@ -38,7 +38,9 @@ STEPS = [
     ("patch_p7.py",             "⑭ P7 签位延伸 + 排名缓存分槽", True),
     ("patch_card_png.py",       "⑮ 分享卡图片版（Canvas PNG）", True),
     ("patch_pwa.py",            "⑯ PWA 离线（manifest+SW+图标）", True),
-    ("optimize_images.py",      "⑰ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_r3.py",             "⑰ R3 摆烂机制实装",           True),
+    ("patch_sw_cache.py",       "⑱ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "⑲ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 
