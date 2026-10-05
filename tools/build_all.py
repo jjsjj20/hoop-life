@@ -47,12 +47,9 @@ STEPS = [
     ("patch_difficulty.py",     "㉓ 难度重做（成长/NPC/续战）",  True),
     ("patch_honors.py",         "㉔ 荣誉与冠军校准",            True),
     ("patch_output_align.py",   "㉕ 产出对齐（玩家↔NPC 系数）", True),
-    ("patch_ai_fix.py",         "㉖ AI 生成兼容性修复",          True),
-    ("patch_ai_only.py",        "㉗ AI 只输出正文（规则+清洗）", True),
-    ("patch_ai_echo.py",        "㉘ AI 回声检测与重试",          True),
-    ("patch_ai_echo2.py",       "㉙ 回声判定收紧 + 报纸重试",     True),
-    ("patch_sw_cache.py",       "㉚ SW 缓存名=最终产物哈希",    True),
-    ("optimize_images.py",      "㉛ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_remove_ai.py",      "㉚ 整体移除 AI 点评层",          True),
+    ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 

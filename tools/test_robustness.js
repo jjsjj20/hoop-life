@@ -58,24 +58,6 @@ module.exports = run('鲁棒性', ({ win, doc, check, errors, consoleErrors, war
   check('档案面板有「运行日志」一节', /运行日志/.test(ovl));
   check('运行日志列出了具体异常', /脚本异常/.test(ovl) && /async-boom/.test(ovl));
 
-  // ── 第 6 条 ─────────────────────────────────────────────
-  let aiErr = null;
-  try { win.eval('AI.openPanel();'); } catch (e) { aiErr = e; }
-  const panel = doc.getElementById('ovlBody').innerHTML;
-  check('AI 面板能打开', !aiErr, aiErr && aiErr.message);
-  check('密钥输入下方有明文提示', /明文/.test(panel));
-  check('提示里写了「共用 / 公共电脑上请不要填写」', /公共电脑上请不要填写/.test(panel));
-  check('面板里有「清除密钥」按钮', /AI\.clearKey\(\)/.test(panel));
-
-  // 清除密钥真的清掉了
-  win.eval("AI.cfg.key='sk-should-be-gone'; AI.cfg.on=true; AI.saveCfg();");
-  const stored0 = win.localStorage.getItem('hoop_ai_cfg_v1') || '';
-  check('清除前 localStorage 里确实有明文密钥', /sk-should-be-gone/.test(stored0));
-  win.eval('AI.clearKey();');
-  const stored1 = win.localStorage.getItem('hoop_ai_cfg_v1') || '';
-  check('清除后密钥不再落盘', !/sk-should-be-gone/.test(stored1), stored1);
-  check('清除后 AI 开关关闭', win.eval('AI.cfg.on') === false);
-  check('清除后输入框被清空', (doc.getElementById('aiKey') || {}).value === '');
 
   // ── 结果 ───────────────────────────────────────────────
 }, { ready: 1200 });

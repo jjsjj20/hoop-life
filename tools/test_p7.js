@@ -94,8 +94,8 @@ module.exports = run('P7签位延伸', ({ win, doc, check, html }) => {
   const actM = appHtml.match(/<div class="actions">([\s\S]*?)<\/div>/);
   const inlineN = actM ? (actM[1].match(/<button/g) || []).length : 99;
   check('行动栏内联按钮 ≤ 6 个（原 15）', inlineN <= 6, '实际 ' + inlineN + ' 个');
-  check('保留高频按钮：阵容/排名/AI/存档/更多',
-    ['showRoster()', 'AI.openPanel()', 'saveNow()', 'openMore()'].every(fn => appHtml.indexOf(fn) >= 0));
+  check('保留高频按钮：阵容/排名/存档/更多',
+    ['showRoster()', 'saveNow()', 'openMore()'].every(fn => appHtml.indexOf(fn) >= 0));
   win.eval("openMore()");
   const moreHtml = doc.body.innerHTML;
   check('☰ 更多 菜单含签位/财务/成就/档案',

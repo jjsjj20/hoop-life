@@ -2,7 +2,7 @@
  *  ① shareCardData() 数据模型与 S 一致（计划验收：分享卡可测试）
  *  ② drawShareCard 用录制式 ctx 断言关键数字真的被画出来（无需 canvas 原生包）
  *  ③ shareCardPNG 全链路：toBlob→下载；无画布环境自动回退网页版
- *  ④ PWA：manifest 合法、SW 缓存策略齐全、图标存在、注册带协议守卫、AI 离线明示降级 */
+ *  ④ PWA：manifest 合法、SW 缓存策略齐全、图标存在、注册带协议守卫 */
 const { run } = require('./testkit');
 const fs = require('fs');
 const path = require('path');
@@ -55,7 +55,7 @@ module.exports = run('PWA与图片分享卡', ({ win, doc, check, html }) => {
   check('无画布环境自动回退网页版（返回 html，不抛错）', fb === 'html', String(fb));
   doc.createElement = origCE;
 
-  // ── ④ PWA：manifest / sw / 图标 / 注册守卫 / AI 离线降级 ──
+  // ── ④ PWA：manifest / sw / 图标 / 注册守卫 ──
   const root = path.resolve(__dirname, '..');
   check('manifest.json 存在于仓库根', fs.existsSync(path.join(root, 'manifest.json')));
   const mf = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
@@ -68,6 +68,5 @@ module.exports = run('PWA与图片分享卡', ({ win, doc, check, html }) => {
   check('sw.js 不拦截跨域请求（AI 接口）', sw.indexOf('origin !== location.origin') >= 0);
   check('HTML 含 manifest 链接', html.indexOf('rel="manifest" href="./manifest.json"') >= 0);
   check('SW 注册带协议守卫（file:// 不注册）', html.indexOf("/^https?:$/.test(location.protocol)") >= 0);
-  check('AI 离线明示降级提示就位', html.indexOf('当前离线：AI 功能暂不可用') >= 0 && html.indexOf('navigator.onLine===false') >= 0);
   check('终章页有两个分享卡按钮（HTML+PNG）', html.indexOf('onclick="shareCardDL()"') >= 0 && html.indexOf('onclick="shareCardPNG()"') >= 0);
 });
