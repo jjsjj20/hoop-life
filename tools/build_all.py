@@ -47,8 +47,9 @@ STEPS = [
     ("patch_difficulty.py",     "㉓ 难度重做（成长/NPC/续战）",  True),
     ("patch_honors.py",         "㉔ 荣誉与冠军校准",            True),
     ("patch_output_align.py",   "㉕ 产出对齐（玩家↔NPC 系数）", True),
-    ("patch_sw_cache.py",       "㉖ SW 缓存名=最终产物哈希",    True),
-    ("optimize_images.py",      "㉗ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_ai_fix.py",         "㉖ AI 生成兼容性修复",          True),
+    ("patch_sw_cache.py",       "㉗ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "㉘ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 
