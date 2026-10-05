@@ -10,7 +10,7 @@ JS = """/* AI 生成兼容性（v4.20.2）——回归钉：
  *  ⑤ san 支持自定义上限（报纸长文不再被 700 字截断） */
 const { run } = require('./testkit');
 
-module.exports = run('AI 生成兼容', async ({ win, check }) => {
+module.exports = run('AI 生成兼容', async ({ win, check, html }) => {
   // ── ① textOf：四种响应形状 ──
   const shapes = JSON.parse(win.eval(`JSON.stringify({
     plain: AI.textOf({choices:[{message:{content:'一段战报'}}]}),
