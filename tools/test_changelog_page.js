@@ -8,7 +8,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
 
   // ── 2. 版本段落被正确切分与归类 ─────────────────────
   const secs = [...doc.querySelectorAll('section.ver')];
-  check('版本段被包进 section.ver', secs.length === 35, '实得 ' + secs.length);
+  check('版本段被包进 section.ver', secs.length === 36, '实得 ' + secs.length);
   check('总览/附录没有被误判成版本段', secs.every(s => /^sec-v/.test(s.id)));
 
   const kindOf = s => s.getAttribute('data-kind');
@@ -38,13 +38,14 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   check('v4.19.0（移动端布局重构）→ 工程', kOf('v4.19.0') === 'eng', kOf('v4.19.0'));
   check('v4.19.1（继续吸底修复）→ 修复', kOf('v4.19.1') === 'fix', kOf('v4.19.1'));
   check('v4.19.2（剧情折叠修复）→ 修复', kOf('v4.19.2') === 'fix', kOf('v4.19.2'));
+  check('v4.20.0（难度重构）→ 玩法', kOf('v4.20.0') === 'play', kOf('v4.20.0'));
 
   // ── 3. 版本标题被拆成「徽章 + 主题」──────────────────
   const h = secs[0].querySelector('h2');
   check('版本标题有徽章元素', !!h.querySelector('.vpill'));
-  check('徽章文字含版本号', /v4\.19\.2/.test(h.querySelector('.vpill').textContent), h.querySelector('.vpill').textContent);
+  check('徽章文字含版本号', /v4\.20\.0/.test(h.querySelector('.vpill').textContent), h.querySelector('.vpill').textContent);
   const vt = (h.querySelector('.vt') || {}).textContent || '';
-  check('主题文字已从版本号里拆出来', vt.length > 6 && vt.indexOf('v4.19.2') < 0, JSON.stringify(vt.slice(0, 30)));
+  check('主题文字已从版本号里拆出来', vt.length > 6 && vt.indexOf('v4.20.0') < 0, JSON.stringify(vt.slice(0, 30)));
   check('提交哈希仍在标题里', /[0-9a-f]{7}/.test((h.querySelector('.sha') || {}).textContent || ''));
 
   // ── 4. 总览表：类型圆点 / 量级条 / 移动端 data-label ──
@@ -65,9 +66,9 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   // ── 5. 工具条 ────────────────────────────────────
   const jump = doc.getElementById('tbJump');
   const chips = [...jump.querySelectorAll('a')];
-  check('目录芯片被搬进工具条（35 版 + 附录）', chips.length === 36, String(chips.length));
+  check('目录芯片被搬进工具条（36 版 + 附录）', chips.length === 37, String(chips.length));
   const verChips = chips.filter(a => /^#v\d/.test(a.getAttribute('href')));
-  check('版本芯片都带上了类型色', verChips.length === 35 && verChips.every(a => /k-(art|play|eng|fix|other)/.test(a.className)),
+  check('版本芯片都带上了类型色', verChips.length === 36 && verChips.every(a => /k-(art|play|eng|fix|other)/.test(a.className)),
     verChips.filter(a => !/k-/.test(a.className)).map(a => a.textContent).join(','));
   check('附录芯片保持中性（不属于任何版本类型）', /k-/.test((chips.find(a => /appendix/.test(a.getAttribute('href'))) || {}).className || '') === false);
   check('目录源标记仍在原位（只是运行时被搬走）', /<nav class="toc">/.test(html) && !doc.querySelector('header .toc'));
@@ -94,7 +95,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   const colBtn = doc.getElementById('tbCollapse');
   colBtn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   const collapsed = secs.filter(s => s.classList.contains('col'));
-  check('「只看最近 5 版」收起后 5 个展开', collapsed.length === 35 - 5, String(collapsed.length));
+  check('「只看最近 5 版」收起后 5 个展开', collapsed.length === 36 - 5, String(collapsed.length));
   check('收起的是旧版本不是最新版', !secs.slice(0, 5).some(s => s.classList.contains('col')));
   check('按钮文字切换', colBtn.textContent.indexOf('展开全部') >= 0, colBtn.textContent);
   colBtn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
@@ -108,12 +109,12 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
 
   // ── 7. 内容完整性：一个字都没少 ────────────────────
   const text = doc.body.textContent;
-  const must = ['v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', '版本总览', '附录', '音效技术备忘',
+  const must = ['v4.20.0', 'v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', '版本总览', '附录', '音效技术备忘',
     '14 队加权乐透', '首轮签在交易里送走了', '季池', 'AST 静态审查脚本', 'hoop_life_save_v1'];
   must.forEach(k => check('内容未丢失：' + k, text.indexOf(k) >= 0));
-  check('表格数量未变（15 个）', doc.querySelectorAll('table').length === 15,
+  check('表格数量未变（17 个）', doc.querySelectorAll('table').length === 17,
     String(doc.querySelectorAll('table').length));
-  check('卡片数量未变（37 个）', doc.querySelectorAll('.card').length === 37,
+  check('卡片数量未变（38 个）', doc.querySelectorAll('.card').length === 38,
     String(doc.querySelectorAll('.card').length));
 
   // ── 8. 无控制台告警 ───────────────────────────────
