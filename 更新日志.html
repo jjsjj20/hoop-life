@@ -248,7 +248,7 @@ td:first-child{white-space:nowrap}
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
 <div class="badges"><span class="badge">当前版本 <b>v4.17.0</b></span><span class="badge">文件 <b>576,886</b> 字符</span><span class="badge">更新 <b>31</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
-<nav class="toc"><a href="#v4203">v4.20.3</a><a href="#v4202">v4.20.2</a><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<nav class="toc"><a href="#v4204">v4.20.4</a><a href="#v4203">v4.20.3</a><a href="#v4202">v4.20.2</a><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.20.4</b></td><td>修复：AI 回声检测——复读要求/事实不入缓存，自动重试一次</td><td><code>0ce8c31</code></td><td>+949</td></tr>
 <tr><td><b>v4.20.3</b></td><td>修复：AI 只输出正文（统一输出格式规则 + 清洗兜底）</td><td><code>9dfd1cc</code></td><td>+901</td></tr>
 <tr><td><b>v4.20.2</b></td><td>修复：AI 战报/报纸「接口响应缺少内容」（兼容思考型模型 + 自动重试）</td><td><code>36f2d7c</code></td><td>+1,293</td></tr>
 <tr><td><b>v4.20.1</b></td><td>数值对齐：玩家三项系数对齐 NPC 产线（荣誉/季 6.2→4.8）</td><td><code>d9ffb71</code></td><td>+120</td></tr>
@@ -305,6 +306,22 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v4204">🤖 v4.20.4 · 修复：AI 把要求复述回来了（回声检测 + 重试） <span class="sha">0ce8c31</span></h2>
+<div class="card">
+<p>反馈：「还是这样」——模型把<b>任务要求与事实原样复述</b>回来（甚至重复两遍后截断），而且这类输出一旦写入缓存，同一个事件会一直复现同样的垃圾。</p>
+<h3>修复</h3>
+<ol>
+<li><b>回声识别</b> <code>AI.looksLikeEcho()</code>：命中指令词（要求：/不能编造/只使用给定/Markdown/字数/【任务】/【事实】）或命中 ≥2 个事实标签（球员：/比赛：/结果：/个人数据：/系统旁白：/分节得分：）即判为回声；</li>
+<li><b>自动重试</b>：判为回声 → <b>带加强指令重试一次</b>（"【再次强调】只写正文，不要复述上面的要求或事实。"）；仍为回声 → 明确报错「模型在复述要求，请重试或换一个模型」；</li>
+<li><b>不写缓存</b>：回声输出<b>绝不入缓存</b>（报纸路径同理）——避免垃圾长期复现；</li>
+<li><b>规则与提示词</b>：<code>RULE_ONLY</code> 追加「不要复述题目、事实或要求」；战报用户提示词改为【任务】/【事实】分栏。</li>
+</ol>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>22/22 项 · 572/572 断言</b>全绿（<code>ai</code> 追加 8 断言，含"首次回声→重试成功→缓存干净正文"、"连续回声→明确报错且不写缓存"两条端到端，全部打桩验证）；</li>
+<li>重建（现 30 步）与仓库成品<b>逐字节一致</b>。</li>
+</ul>
+</div>
 <h2 id="v4203">🤖 v4.20.3 · 修复：AI 只输出正文 <span class="sha">9dfd1cc</span></h2>
 <div class="card">
 <p>反馈：模型会把「草稿：…」「检查：…」「（约 160 字）」这类<b>自我说明与字数括注</b>一起交出来——需要它只给正文。</p>
