@@ -248,7 +248,7 @@ td:first-child{white-space:nowrap}
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
 <div class="badges"><span class="badge">当前版本 <b>v4.17.0</b></span><span class="badge">文件 <b>576,886</b> 字符</span><span class="badge">更新 <b>31</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
-<nav class="toc"><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<nav class="toc"><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.19.1</b></td><td>修复：移动端结果页「继续」吸底（选完直接点，不用下滑）</td><td><code>09b1e55</code></td><td>+549</td></tr>
 <tr><td><b>v4.19.0</b></td><td>移动端布局重构：HUD 可收起 · 行动栏吸底 · 插画压缩（游玩反馈第二条）</td><td><code>c2fa788</code></td><td>+1,439</td></tr>
 <tr><td><b>v4.18.0</b></td><td>行动栏减负：15 个按钮收敛为 5（存档/导出/音效收进 ☰ 更多）（游玩反馈第一条落地）</td><td><code>e363c25</code></td><td>+668</td></tr>
 <tr><td><b>v4.17.0</b></td><td>R2 青训补强：40 条青训事件（池 11→21）· 青训段节奏数据补齐（4 年重复率 0.0%）</td><td><code>ebe3ef1</code></td><td>+13,100</td></tr>
@@ -299,6 +300,25 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v4191">📱 v4.19.1 · 修复：移动端结果页「继续」吸底 <span class="sha">09b1e55</span></h2>
+<div class="card">
+<p>游玩反馈第三条：「手机上选完后还要下滑点继续」。结果页的「继续 ▶」按钮落在 <code>#stage</code> 内容流末尾——选项结算信息一多，就得下滑才够得着。</p>
+<h3>修复（桌面不变，仅移动端）</h3>
+<ul>
+<li>结果页原按钮加 <code>.contBtn</code> 类；<code>renderResult</code> 末尾把「继续 ▶」<b>注入吸底行动栏</b>（<code>.contAct</code>）；</li>
+<li>移动端：隐藏原按钮，行动栏显示橙色主行动「继续 ▶」——选完直接点，无需下滑；</li>
+<li>桌面：<code>.contAct</code> 默认隐藏，一切照旧。</li>
+</ul>
+<h3>实现要点（首版踩坑已修）</h3>
+<p><code>choose()</code> 结算后<b>直接调用 <code>renderResult</code>、不重渲整页</b>——因此行动栏按钮必须用 DOM 注入而非在 <code>renderGame</code> 里做条件渲染（首版走的后者，测试立刻抓到按钮不出现）。</p>
+<h3>版本号规则变更（2026-10-05 起）</h3>
+<p>小更新 / 修复<b>只加 0.0.1</b>（本版即首个补丁号版本）；新功能、新玩法、机制级改动才用次版本号。</p>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>20/20 项 · 505/505 断言</b>全部通过（<code>ui</code> 追加 6 断言，含 <code>choose(0)</code> → 结果模式 → 吸底继续 的端到端验证）；</li>
+<li>重建（现 23 步）与仓库成品<b>逐字节一致</b>。</li>
+</ul>
+</div>
 <h2 id="v4190">📱 v4.19.0 · 移动端布局重构：HUD 可收起 · 行动栏吸底 · 插画压缩 <span class="sha">c2fa788</span></h2>
 <div class="card">
 <p>游玩反馈第二条「手机游玩要上下滑动因为看不全」的落地。根因：移动端竖向堆叠里「外壳」占掉太多——顶部 HUD 常驻（sticky，含四季阶段条 + 7 个 chips 换行）、章节行、128px 插画，加 20px 下距的行动栏落在首屏之外。</p>
