@@ -43,8 +43,9 @@ STEPS = [
     ("patch_ui_tidy.py",        "⑲ UI 减负（行动栏 15→5 + ☰ 更多）", True),
     ("patch_ui_mobile.py",      "⑳ 移动端布局（HUD 收起/行动栏吸底）", True),
     ("patch_continue.py",       "㉑ 移动端「继续」吸底",        True),
-    ("patch_sw_cache.py",       "㉒ SW 缓存名=最终产物哈希",    True),
-    ("optimize_images.py",      "㉓ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_result_fold.py",    "㉒ 移动端结果页剧情折叠",      True),
+    ("patch_sw_cache.py",       "㉓ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "㉔ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 
