@@ -248,7 +248,7 @@ td:first-child{white-space:nowrap}
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
 <div class="badges"><span class="badge">当前版本 <b>v4.17.0</b></span><span class="badge">文件 <b>576,886</b> 字符</span><span class="badge">更新 <b>31</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
-<nav class="toc"><a href="#v4202">v4.20.2</a><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<nav class="toc"><a href="#v4203">v4.20.3</a><a href="#v4202">v4.20.2</a><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.20.3</b></td><td>修复：AI 只输出正文（统一输出格式规则 + 清洗兜底）</td><td><code>9dfd1cc</code></td><td>+901</td></tr>
 <tr><td><b>v4.20.2</b></td><td>修复：AI 战报/报纸「接口响应缺少内容」（兼容思考型模型 + 自动重试）</td><td><code>36f2d7c</code></td><td>+1,293</td></tr>
 <tr><td><b>v4.20.1</b></td><td>数值对齐：玩家三项系数对齐 NPC 产线（荣誉/季 6.2→4.8）</td><td><code>d9ffb71</code></td><td>+120</td></tr>
 <tr><td><b>v4.20.0</b></td><td>难度重构：成长上限/NPC 强度/续战硬上限 + 荣誉与冠军校准（成神率减半）</td><td><code>9b9cb5a</code></td><td>+996</td></tr>
@@ -304,6 +305,20 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v4203">🤖 v4.20.3 · 修复：AI 只输出正文 <span class="sha">9dfd1cc</span></h2>
+<div class="card">
+<p>反馈：模型会把「草稿：…」「检查：…」「（约 160 字）」这类<b>自我说明与字数括注</b>一起交出来——需要它只给正文。</p>
+<h3>修复（一处加规则 + 一处兜底，不动任何单条提示词）</h3>
+<ol>
+<li><b>统一输出格式规则</b>：<code>AI.ask</code> 在系统提示词末尾追加——文本类「<code>只输出正文本身：直接给成文内容；不要前言、草稿、自检、字数统计、括注、说明或 Markdown 标记；不要复述要求，不要用引号把全文包起来。</code>」；JSON 类「<code>只输出一个 JSON 对象本身：不要前言、说明、代码块或任何多余文字。</code>」——一处生效，覆盖战报 / 颁奖 / 里程碑 / 终章 / 报纸 / AI 事件全部路径；</li>
+<li><b>清洗兜底</b>（<code>AI.san</code>）：去代码围栏、去「（约 N 字）」括注、去开头寒暄/说明行（好的｜以下是｜草稿｜检查｜注｜字数…）、去整体包裹的引号、去行首标签——含句号的正文首句不会被误吃（有专门断言）。</li>
+</ol>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>22/22 项 · 562/562 断言</b>全绿（<code>ai</code> 追加 10 断言：规则注入 4 项 + 清洗兜底 6 项，全部打桩验证）；</li>
+<li>重建（现 29 步）与仓库成品<b>逐字节一致</b>。</li>
+</ul>
+</div>
 <h2 id="v4202">🤖 v4.20.2 · 修复：AI 战报/报纸「接口响应缺少内容」 <span class="sha">36f2d7c</span></h2>
 <div class="card">
 <p>反馈：「AI 战报和其他生成不了，报『接口响应缺少内容』，但 AI 事件可以生成。」</p>
