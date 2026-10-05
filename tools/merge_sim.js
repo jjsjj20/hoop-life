@@ -1,7 +1,7 @@
 /* 把 sim_part_<i>.json 分片合并成 sim_raw.json（配合 sim_pacing.js 的 SIM_ONE 模式） */
 const fs = require('fs');
 const path = require('path');
-const dir = __dirname;
+const dir = process.env.SIM_OUT || __dirname;
 const parts = fs.readdirSync(dir)
   .filter(f => /^sim_part_\d+\.json$/.test(f))
   .sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]));

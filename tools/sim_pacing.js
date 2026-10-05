@@ -109,13 +109,22 @@ function runCareer(cfg) {
           seasons.push(cur); cur = null;
         }
       }
-      if (!cur) cur = { evY: o.evY, seen: 0, drama: 0, topics: o.topics.slice(), ids: [] };
+      if (!cur) cur = { evY: o.evY, seen: 0, drama: 0, topics: o.topics.slice(), ids: [], peak: 0, maxOvr: 0, ageMin: o.age, ageMax: o.age, tier: o.tier };
       cur.seen = o.seen; cur.drama = o.drama; cur.topics = o.topics.slice(); cur.ids = o.ids.slice();
+      cur.peak = Math.max(cur.peak, o.peak); cur.maxOvr = Math.max(cur.maxOvr, o.ovr);
+      cur.ageMin = Math.min(cur.ageMin, o.age); cur.ageMax = Math.max(cur.ageMax, o.age);
+      cur.titles = o.titles;
     }
     win.__step();
   }
   if (cur) seasons.push(cur);
-  return { tag: cfg.tag, league: cfg.league, mode: cfg.mode, seasons };
+  const last = JSON.parse(win.__snap());
+  return {
+    tag: cfg.tag, league: cfg.league, mode: cfg.mode, seasons,
+    peakO: Math.max(last.peak, ...seasons.map(s => s.peak || 0)),
+    tier: last.tier, finalAge: last.age, honors: last.titles || [],
+    careerSeasons: last.seasons,
+  };
 }
 
 setTimeout(() => {
@@ -125,7 +134,7 @@ setTimeout(() => {
     window.__mode=function(){return UI&&UI.mode;};
     /* S.used 是跨季累计结构（按池子耗尽才清），不能当本季事件用；
      * S.recent[id]=抽中年份，按当年过滤即为本季真实抽到的池事件 id */
-    window.__snap=function(){return JSON.stringify({evY:S.evY,seen:S.evSeen,drama:S.evDrama,topics:S.usedTopics.slice(),ids:Object.keys(S.recent||{}).filter(function(id){return S.recent[id]===S.evY;})});};
+    window.__snap=function(){return JSON.stringify({evY:S.evY,seen:S.evSeen,drama:S.evDrama,topics:S.usedTopics.slice(),ids:Object.keys(S.recent||{}).filter(function(id){return S.recent[id]===S.evY;}),age:S.age,ovr:ovr(),peak:Math.round(S.peakO||0),tier:S.tier||'',titles:(S.honors||[]).map(function(h){return h.t;}),seasons:S.career&&S.career.seasons||0});};
     window.__step=function(){(function(){
       const m=UI&&UI.mode;
       if(m==='event'){const ev=UI.ev;if(ev&&ev.choices&&ev.choices.length){choose(R.int(0,ev.choices.length-1));}else{UI.ev=getEvent();}}
@@ -142,7 +151,7 @@ setTimeout(() => {
   if (ONE !== undefined && ONE !== '') {
     const i = Number(ONE);
     const r = runCareer(careers[i]);
-    fs.writeFileSync(path.resolve(__dirname, 'sim_part_' + i + '.json'), JSON.stringify(r));
+    fs.writeFileSync(path.resolve(process.env.SIM_OUT || __dirname, 'sim_part_' + i + '.json'), JSON.stringify(r));
     console.log('分片 ' + i + ' 完成：' + r.seasons.length + ' 个赛季');
     process.exit(0);
   }
@@ -151,7 +160,7 @@ setTimeout(() => {
     SUMMARIES.push(runCareer(cfg));
   }
 
-  fs.writeFileSync(path.resolve(__dirname, 'sim_raw.json'), JSON.stringify(SUMMARIES));
+  fs.writeFileSync(path.resolve(process.env.SIM_OUT || __dirname, 'sim_raw.json'), JSON.stringify(SUMMARIES));
   console.log('模拟完成：' + SUMMARIES.length + ' 个生涯，共 ' +
     SUMMARIES.reduce((n, c) => n + c.seasons.length, 0) + ' 个赛季');
   process.exit(0);

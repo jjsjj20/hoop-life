@@ -883,7 +883,8 @@ const CFG={
 /* 天赋档位（S/A/B/C/D）：决定球员能力值上限（skillTarget 基准）
  *   S：上限 85-99 ｜ A：上限 70-84 ｜ B：上限 65-75
  *   C：最高 75，无下限（实际取 45-75 保证可玩）｜ D：最高 70，无下限（实际取 35-70） */
-const TIER_RANGE={S:{min:85,max:99},A:{min:70,max:84},B:{min:65,max:75},C:{min:45,max:75},D:{min:35,max:70}};
+/* v4.20.0 难度重做：天赋上限整体下调——S 档不再是「随便玩都能满级」的通行证 */
+const TIER_RANGE={S:{min:82,max:93},A:{min:68,max:82},B:{min:62,max:74},C:{min:45,max:70},D:{min:35,max:60}};
 function tierOf(p){return p>=92?'S':p>=82?'A':p>=72?'B':p>=62?'C':'D';} /* 旧潜力值 → 档位映射 */
 function capFor(tier){const t=TIER_RANGE[tier]||TIER_RANGE.C;return R.int(t.min,t.max);}
 /* ── 打法倾向（选择进数据）────────────────────────────────────────────
@@ -971,11 +972,11 @@ const TEND_RE={
  *   ③ 超出上限的部分不再被一刀切抽回：青少年每年保留 92%、成年后 82%，
  *      所以「夏天的加练」留得住，但也会随年龄慢慢回落。 */
 const GROWTH={
-  convUp:.16,         /* 向上限自然收敛比例（原 .30） */
-  overKeepYouth:.92,  /* ≤24 岁：超出上限的部分每年保留 92% */
-  overKeep:.82,       /* ≥25 岁：超出部分每年保留 82% */
+  convUp:.11,         /* v4.20.0：向上限收敛 16%→11%——到顶更慢，光靠天赋不够 */
+  overKeepYouth:.90,  /* ≤24 岁：超出上限的部分每年保留 90% */
+  overKeep:.76,       /* ≥25 岁：超出部分每年保留 76%（成年后加练红利回落更快） */
   grindPerAlloc:.8,   /* 初始分配：每点「超出基准」的分配折算成长值 */
-  grindMax:8,         /* 训练最多把上限抬高几点 */
+  grindMax:6,         /* v4.20.0：训练最多把上限抬高 6 点（原 8） */
   grindCurve:.25,     /* 成长值 → 上限加成 = floor(sqrt(grind × 该系数)) */
   trainMoneyGrind:1   /* 花钱训练：每点实际提升折算成长值 */
 };
@@ -1629,11 +1630,11 @@ function genWest(){return R.pick(NAMES.wFirst)+' '+R.pick(NAMES.wLast);}
 function genPlayer(lg,team,teamStr,age,role,pos){
   const isCN=lg==='cba';
   const a=age||R.int(19,34);
-  const o=R.int(55,88);
+  const o=R.int(54,92);   /* v4.20.0：联盟顶星上限 88→92——让 MVP/得分王真有对手 */
   /* 潜力：越年轻上升空间越大，老将基本定型（上限 96，且不低于当前能力） */
   const room=a<=21?R.int(8,26):a<=24?R.int(4,18):a<=27?R.int(1,8):R.int(0,2);
   return {n:isCN?genCN():genWest(),p:pos||R.pick(Object.keys(POS)),o,a,t:team,ts:teamStr,role:role||'bench',
-    pot:clamp(o+room,o,96)};
+    pot:clamp(o+room,o,97)};
 }
 /* 老存档兼容：NPC 没有 pot 时按年龄推一个（确定性，读档不会变） */
 function potFor(p){
@@ -2300,7 +2301,11 @@ const FX=[
   ['pmod',()=>{}],         /* 季后赛胜负修正：choose() 系列赛结算中读取 */
   ['finishSeason',()=>{}], /* 立即进入赛季结算：advance() 中处理 */
   ['end',()=>{}],          /* 生涯终结（退役）：advance() 中处理 */
-  ['continued',()=>{}],    /* 继续征战（41岁终章）：advance() 中处理 */
+  /* v4.20.0：继续征战 = 真的再打一年（最多 3 次，45 岁开局强制退役） */
+  ['continued',(v,c)=>{
+    S.flags.contN=(S.flags.contN||0)+1;
+    c.push('💪 续战第 '+S.flags.contN+' 年——他决定再打一年');
+    S.log.push({y:seasonLabel(),t:'宣布再战一年（第'+S.flags.contN+'次）'});}],
   ['next',()=>{}],         /* 链接下一剧情事件：advance() 中处理 */
   /* ---- 球员世界 ---- */
   ['addTeammate',(v,c)=>{ensureWorld();const lg=myLeagueKey();if(lg){S.world[lg].push({n:v,p:R.pick(Object.keys(POS)),o:R.int(55,78),a:R.int(19,26),t:myTeamName(),ts:S.teamStr,role:'bench'});fixRosterAll();}c.push('新援 '+v+' 入队');S.log.push({y:seasonLabel(),t:'新援 '+v+' 加盟'});}],
@@ -3017,7 +3022,9 @@ const SPECIAL_RULES=[
   [()=>S.age===15&&S.stage==='autumn'&&!S.flags.ch1a,()=>{S.flags.ch1a=true;return evCh1Autumn();}],
   [()=>S.age===15&&S.stage==='winter'&&!S.flags.ch1w,()=>{S.flags.ch1w=true;return evCh1Winter();}],
   [()=>S.league==='青训'&&S.age>=16&&S.age<=17&&!S.flags.cutWarned&&ovr()<48,()=>{S.flags.cutWarned=true;return evCutWarning();}],
-  [()=>S.age===41&&S.stage==='winter'&&!S.flags.final,()=>{S.flags.final=true;return evFinal();}],
+  /* v4.20.0：终章可续战——41 岁起每年冬问一次，直到续满 3 次（或退役） */
+  [()=>S.age>=41&&S.stage==='winter'&&(S.flags.contN||0)<3&&S.flags.finalY!==S.age,
+    ()=>{S.flags.finalY=S.age;if(S.age===41)S.flags.final=true;return evFinal();}],
   [()=>S.stage==='spring'&&(S.worldNews||[]).length&&!!myLeagueKey(),()=>evWorldNews()],
   [()=>S.age===17&&S.stage==='spring'&&!S.flags.u17&&ovr()>=56,()=>{S.flags.u17=true;return evU17();}],
   [()=>S.age===18&&S.stage==='spring'&&!S.flags.path,()=>{S.flags.path=true;return evPath();}],
@@ -6134,7 +6141,7 @@ function evLegacy(){return {id:'legacy',title:'秋 · 38岁，传承',scene:`38�
   {t:'手把手带年轻球员',fx:{play:1,ts:2,stability:1},o:'训练结束后，年轻人围着他问东问西，直到保安来催。'},
   {t:'专注自己，保持状态',fx:{outside:1,stability:1},o:'年龄只是数字，他还在和自己的身体较劲。'},
   {t:'兼任球员助教',fx:{play:2,ts:2},o:'更衣室里多了一个教练视角的声音。这条路，似乎也不错。'}]};}
-function evFinal(){return {id:'final',title:'冬 · 终章，41岁',scene:`${S.birthYear+S.age}年冬天，${S.name}迎来了41岁。职业生涯的最后一场比赛结束后，他坐在更衣室里，听着淋浴的水声，回忆像胶片一样一帧帧闪过：${homeTown()}的水泥球场、${S.team}的第一件球衣、每一次绝杀、每一次跌倒与爬起。
+function evFinal(){return {id:'final',title:'冬 · 终章，'+S.age+'岁',scene:`${S.birthYear+S.age}年冬天，${S.name}迎来了${S.age}岁。职业生涯的最后一场比赛结束后，他坐在更衣室里，听着淋浴的水声，回忆像胶片一样一帧帧闪过：${homeTown()}的水泥球场、${S.team}的第一件球衣、每一次绝杀、每一次跌倒与爬起。
 
 主教练和总经理等在门外。人生不会停下，但篮球生涯的时钟，走到了最后一格。`,choices:[
   {t:'光荣退役 🏆',fx:{end:'retire'},o:'他站起来，深深看了一眼更衣室里自己的号码，转身走进灯光里。'},
@@ -7407,7 +7414,7 @@ function computeStandings(lg){
        * 槽位更差 → 落入保护区 → 选秀夜签位触保回退（v4.11 机制自然兑现） */
       const tankPad=(S.flags.tankYear===(S.birthYear+S.age))?0.10:0;
       const adj=ovr()-70;
-      wpc=clamp(.38-lgHard(lg).wpc+(st-6.5)*.055+adj*.005-tankPad+R.float(-.06,.06),.06,.95);
+      wpc=clamp(.38-lgHard(lg).wpc+(st-6.5)*.055+adj*.003-tankPad+R.float(-.06,.06),.06,.95);   /* v4.20.0：顶星对球队胜率的加成 .005→.003——冠军不再是一人之力 */
     }
     const wins=Math.round(games*wpc);
     return {team:t[0],str:Math.round(st*10)/10,wins,losses:games-wins};
@@ -7869,7 +7876,8 @@ function computeSeason(pr,wpcIn,po){
       if(cfg.fmvp&&_board&&_board.my&&_board.my.mvp<=6&&R.chance(.45))H.push(cfg.fmvp);
     }
     /* 进步最快球员：生涯一次，必须在榜单上有存在感 */
-    if(cfg.mip&&!S.flags.gotMIP&&(S.career.seasons||0)>=1&&o>=70&&_board&&_board.my&&_board.my.mvp<=14&&R.chance(.35)){
+    /* v4.20.0：进步最快至少第 2 季、排名 ≤10、概率 .25——不再「新秀季即进步最快」 */
+    if(cfg.mip&&!S.flags.gotMIP&&(S.career.seasons||0)>=2&&o>=70&&_board&&_board.my&&_board.my.mvp<=10&&R.chance(.25)){
       H.push(cfg.mip);S.flags.gotMIP=true;
     }
     /* 周最佳之类的阶段性小奖：保留轻量随机（它不是联盟级荣誉） */
@@ -8213,9 +8221,10 @@ function competeHonors(res,cfgIn){
   if(rank('s')===1&&T.s)H.push(T.s);
   if(rank('b')===1&&T.b)H.push(T.b);
   /* MVP / DPOY：只有联盟前 3 才有资格谈，概率随排名递减 */
-  const base=[.55,.28,.10];
-  if(cfg.mvp&&rank('mvp')<=3&&R.chance(base[rank('mvp')-1]+(res&&res.champ?.12:0)))H.push(cfg.mvp);
-  if(cfg.dpoy&&rank('def')<=3&&R.chance([.45,.22,.08][rank('def')-1]))H.push(cfg.dpoy);
+  /* v4.20.0：MVP/DPOY 概率下调——前三名也不再是「常客价」 */
+  const base=[.42,.16,.05];
+  if(cfg.mvp&&rank('mvp')<=3&&R.chance(base[rank('mvp')-1]+(res&&res.champ?.10:0)))H.push(cfg.mvp);
+  if(cfg.dpoy&&rank('def')<=3&&R.chance([.36,.15,.05][rank('def')-1]))H.push(cfg.dpoy);
   /* 最佳阵容：同位置前 2 → 一阵，3-4 → 二阵，5-6 → 三阵（NBA；其他联赛只有一档） */
   const pr=my.pos||999;
   if(cfg.xi&&cfg.xi.length){
@@ -8236,8 +8245,9 @@ function competeHonors(res,cfgIn){
   const rookie=(S.history||[]).filter(h=>h.league===S.league).length<=0&&S.age<=23;
   if(cfg.roy&&rookie&&E.my.mvpRookie===1)H.push(cfg.roy);
   if(!cfg.roy&&rookie&&E.my.mvpRookie===1)H.push('最佳新秀');
-  if(cfg.six&&!S.starter&&rank('mvp')<=8)H.push(cfg.six);
-  if(cfg.clutch&&rank('mvp')<=6&&(S.skills.clutch||60)>=82)H.push(cfg.clutch);
+  /* v4.20.0：第六人非新秀才给；最佳关键球员门槛提高（前 4 + 大心脏 ≥88） */
+  if(cfg.six&&!S.starter&&!rookie&&rank('mvp')<=8)H.push(cfg.six);
+  if(cfg.clutch&&rank('mvp')<=4&&(S.skills.clutch||60)>=88)H.push(cfg.clutch);
   return [...new Set(H)];
 }
 /* ── 榜单展示：赛季页一行摘要 + 奖项页完整榜单 ── */
@@ -8309,6 +8319,8 @@ function computeNBAAwards(res){
   return uniq;
 }
 function nextYear(){
+  /* v4.20.0：续战硬上限——45 岁开局强制退役（生涯最长打到 45 岁） */
+  if(S.age>=45&&!S.retired){S.retired=true;UI={mode:'end'};save();showEnd();return;}
   S.age++;S.stage='spring';S.stageDone=0;S._finDone=null;S.stageTotal=0;S.stageNeed=stageNeedFor();
   S.form=clamp(Math.round((formNow()+60*2)/3),35,90);   /* 休赛期把状态拉回中位 */
   S.focus=null;                                          /* 新赛季重新排焦点战 */

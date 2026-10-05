@@ -44,8 +44,10 @@ STEPS = [
     ("patch_ui_mobile.py",      "⑳ 移动端布局（HUD 收起/行动栏吸底）", True),
     ("patch_continue.py",       "㉑ 移动端「继续」吸底",        True),
     ("patch_result_fold.py",    "㉒ 移动端结果页剧情折叠",      True),
-    ("patch_sw_cache.py",       "㉓ SW 缓存名=最终产物哈希",    True),
-    ("optimize_images.py",      "㉔ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_difficulty.py",     "㉓ 难度重做（成长/NPC/续战）",  True),
+    ("patch_honors.py",         "㉔ 荣誉与冠军校准",            True),
+    ("patch_sw_cache.py",       "㉕ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "㉖ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 
