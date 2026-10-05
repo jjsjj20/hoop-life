@@ -248,7 +248,7 @@ td:first-child{white-space:nowrap}
 <h1>篮球人生 · 更新文档</h1>
 <div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a><br>按版本倒序汇总近期全部更新 · 所有提交均在 2026-10-01</div>
 <div class="badges"><span class="badge">当前版本 <b>v4.17.0</b></span><span class="badge">文件 <b>576,886</b> 字符</span><span class="badge">更新 <b>31</b> 个版本</span><span class="badge">资源外置 · 105 张 WebP</span></div>
-<nav class="toc"><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
+<nav class="toc"><a href="#v4202">v4.20.2</a><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
 <div class="toolbar" id="toolbar">
@@ -265,6 +265,7 @@ td:first-child{white-space:nowrap}
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>提交</th><th>字符增量</th></tr>
+<tr><td><b>v4.20.2</b></td><td>修复：AI 战报/报纸「接口响应缺少内容」（兼容思考型模型 + 自动重试）</td><td><code>36f2d7c</code></td><td>+1,293</td></tr>
 <tr><td><b>v4.20.1</b></td><td>数值对齐：玩家三项系数对齐 NPC 产线（荣誉/季 6.2→4.8）</td><td><code>d9ffb71</code></td><td>+120</td></tr>
 <tr><td><b>v4.20.0</b></td><td>难度重构：成长上限/NPC 强度/续战硬上限 + 荣誉与冠军校准（成神率减半）</td><td><code>9b9cb5a</code></td><td>+996</td></tr>
 <tr><td><b>v4.19.2</b></td><td>修复：移动端结果页剧情可折叠（默认收起，结果直出）</td><td><code>621ebe2</code></td><td>+510</td></tr>
@@ -303,6 +304,25 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.7</b></td><td>音效增强「更爽版」：立体声场 / 混响 / 滑音引擎</td><td><code>a9ab2f0</code></td><td>+3,640</td></tr>
 <tr><td><b>v3.6</b></td><td>音效升级：21 种音色 + 噪声/颤音/低通合成引擎</td><td><code>51b155f</code></td><td>+4,057</td></tr>
 </table></div></div>
+<h2 id="v4202">🤖 v4.20.2 · 修复：AI 战报/报纸「接口响应缺少内容」 <span class="sha">36f2d7c</span></h2>
+<div class="card">
+<p>反馈：「AI 战报和其他生成不了，报『接口响应缺少内容』，但 AI 事件可以生成。」</p>
+<h3>根因</h3>
+<p>三类生成共用同一个 <code>AI.ask</code>，<b>差异只在参数</b>：AI 事件用 <code>mt 800</code> + JSON 模式（成功）；战报/里程碑/赛季/报纸用<b>默认 <code>mt 360</code></b>（失败）。思考型模型（reasoning 类）会把 360 的预算吃在<b>思考轨迹</b>上，留给正式内容的 token 所剩无几 → <code>choices[0].message.content</code> 为空 → 被误判成「接口不支持」。另有两点加重症状：15 秒超时偏紧；响应解析只认一种形状。</p>
+<h3>修复</h3>
+<ol>
+<li><b>响应形状兼容</b> <code>AI.textOf()</code>：content 字符串 / 数组分片 / <code>reasoning_content</code> / <code>choices[0].text</code> / <code>output_text</code> 五种形状都能取到正文；</li>
+<li><b>预算与超时</b>：默认 <code>mt 360→900</code>；超时 <code>15s→20s</code>（大预算 30s）；</li>
+<li><b>空内容自动重试</b>：抬预算到 ≥1200 并去掉 JSON 模式重试一次——用户无感知地走通「思考吃光预算」这条死路；</li>
+<li><b>诊断信息</b>：失败提示带 <code>finish_reason</code>；</li>
+<li><b>长文不再被截断</b>：<code>AI.san</code> 支持自定义上限，报纸放宽到 1200 字。</li>
+</ol>
+<h3>验证记录</h3>
+<ul>
+<li>验证套件 <b>22/22 项 · 550/550 断言</b>全绿（新增 <code>ai</code> 14 断言，全部用打桩 fetch 验证，无需真实网络）；</li>
+<li>重建（现 28 步）与仓库成品<b>逐字节一致</b>。</li>
+</ul>
+</div>
 <h2 id="v4201">⚖️ v4.20.1 · 数值对齐：荣誉不再「每季一大把」 <span class="sha">d9ffb71</span></h2>
 <div class="card">
 <p>v4.20.0 遗留项（荣誉/季 6.3、目标 2~3）的落地。</p>
