@@ -51,6 +51,13 @@ module.exports = run('难度平衡', ({ win, check, html }) => {
   `);
   const after = JSON.parse(win.eval(`JSON.stringify({retired:S.retired, mode:UI.mode})`));
   check('45 岁开局强制退役并进终章页', after.retired === true && after.mode === 'end', JSON.stringify(after));
+
+  // ── ④ v4.20.1 产出对齐：玩家系数对齐 NPC 产线 ──
+  check('得分系数已对齐（.36→.28）', html.indexOf('o*.28-4+tw.ppg') >= 0);
+  check('篮板系数已对齐（.08/.09→.065/.07）', html.indexOf('o*.065+((pos===' + String.fromCharCode(39) + 'C' + String.fromCharCode(39) + '||pos===' + String.fromCharCode(39) + 'PF' + String.fromCharCode(39) + ')?o*.07:0)') >= 0);
+  check('助攻系数已对齐（.10→.06）', html.indexOf('o*.06+(pos===' + String.fromCharCode(39) + 'PG' + String.fromCharCode(39) + '?o*.06') >= 0);
+  const npcStar = JSON.parse(win.eval('JSON.stringify(npcSeasonLine({o:92,p:' + String.fromCharCode(39) + 'SG' + String.fromCharCode(39) + ',a:26,t:' + String.fromCharCode(39) + '队' + String.fromCharCode(39) + ',ts:6,rrank:1},' + String.fromCharCode(39) + 'nba' + String.fromCharCode(39) + '))'));
+  check('NPC 顶星产出在 19~24 分（对照档位）', npcStar.ppg >= 19 && npcStar.ppg <= 24, String(npcStar.ppg));
 });
 """
 

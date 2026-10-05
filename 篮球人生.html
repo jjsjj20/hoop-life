@@ -7808,9 +7808,11 @@ function computeSeason(pr,wpcIn,po){
   const capA0=pos==='PG'?16:13;
   const capP=38+Math.max(0,Math.floor(tw.ppg))+Math.max(0,Math.floor(stabAdd()+tsAdd()));
   const capA=capA0+Math.max(0,Math.floor(tw.apg))+Math.max(0,Math.floor(tsNum()*ATTR.tsApg));
-  const ppg0=clamp(Math.round((o*.36-4+tw.ppg+stabAdd()+tsAdd()+R.float(-4,4)*stabMul())*mul),2,capP);
-  const rpg0=clamp(Math.round((o*.08+((pos==='C'||pos==='PF')?o*.09:0)+hustleRpgAdd()+R.float(-2,2))*mul),1,17);
-  const apg0=clamp(Math.round((o*.10+(pos==='PG'?o*.10:pos==='SG'?o*.03:0)+tw.apg+tsNum()*ATTR.tsApg+R.float(-2,2))*mul),0,capA);
+  /* v4.20.1 产出对齐：玩家三项系数对齐 NPC 产线（实测 o=92 顶星 21 分/6 板/10 助）——
+   * 之前 .36/.10 档让同能力玩家高出 40~84%，得分王/助攻王几乎必得、荣誉每季大满贯。 */
+  const ppg0=clamp(Math.round((o*.28-4+tw.ppg+stabAdd()+tsAdd()+R.float(-4,4)*stabMul())*mul),2,capP);
+  const rpg0=clamp(Math.round((o*.065+((pos==='C'||pos==='PF')?o*.07:0)+hustleRpgAdd()+R.float(-2,2))*mul),1,17);
+  const apg0=clamp(Math.round((o*.06+(pos==='PG'?o*.06:pos==='SG'?o*.02:0)+tw.apg+tsNum()*ATTR.tsApg+R.float(-2,2))*mul),0,capA);
   const wpc=(wpcIn!=null)?wpcIn:clamp(.5-lgHard().wpc+(S.teamStr-6)*.08+(o-70)*.006+R.float(-.12,.12),.2,.85);
   /* 赛季长度按联赛取：NBA 82 / CBA 52 / 欧洲 34 / NCAA 30 / 青训 14（与 CAREER_GAMES、排名表、伤病时钟同源）。
    * 旧写法写死「NBA 82、青年 14、其余 34」，CBA 的战绩就变成 34 场的假数（排名表却按 52 场排），
