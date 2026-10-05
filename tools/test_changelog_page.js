@@ -8,7 +8,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
 
   // ── 2. 版本段落被正确切分与归类 ─────────────────────
   const secs = [...doc.querySelectorAll('section.ver')];
-  check('版本段被包进 section.ver', secs.length === 43, '实得 ' + secs.length);
+  check('版本段被包进 section.ver', secs.length === 44, '实得 ' + secs.length);
   check('总览/附录没有被误判成版本段', secs.every(s => /^sec-v/.test(s.id)));
 
   const kindOf = s => s.getAttribute('data-kind');
@@ -46,6 +46,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   check('v4.20.5（回声判定收紧）→ 修复', kOf('v4.20.5') === 'fix', kOf('v4.20.5'));
   check('v4.21.0（AI 层移除）→ 工程', kOf('v4.21.0') === 'eng', kOf('v4.21.0'));
   check('v3.5（视觉精修）→ 美术', kOf('v3.5') === 'art', kOf('v3.5'));
+  check('v3.4（实时事件流）→ 玩法', kOf('v3.4') === 'play', kOf('v3.4'));
 
   // ── 3. 版本标题被拆成「徽章 + 主题」──────────────────
   const h = secs[0].querySelector('h2');
@@ -65,7 +66,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
     const s = secs.find(x => noOf(x) === no);
     return s && r.querySelector('.dot').className === 'dot k-' + kindOf(s);
   }));
-  check('字符增量列有量级条', rows.filter(r => r.querySelector('.mg')).length >= rows.length - 1,
+  check('字符增量列有量级条（±0 与补录条目无量级条属正常）', rows.filter(r => r.querySelector('.mg')).length >= rows.length - 2,
     rows.filter(r => r.querySelector('.mg')).length + '/' + rows.length);
   check('单元格带 data-label（窄屏卡片化用）',
     rows[0].querySelectorAll('td[data-label]').length >= 3);
@@ -73,9 +74,9 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   // ── 5. 工具条 ────────────────────────────────────
   const jump = doc.getElementById('tbJump');
   const chips = [...jump.querySelectorAll('a')];
-  check('目录芯片被搬进工具条（43 版 + 附录）', chips.length === 44, String(chips.length));
+  check('目录芯片被搬进工具条（44 版 + 附录）', chips.length === 45, String(chips.length));
   const verChips = chips.filter(a => /^#v\d/.test(a.getAttribute('href')));
-  check('版本芯片都带上了类型色', verChips.length === 43 && verChips.every(a => /k-(art|play|eng|fix|other)/.test(a.className)),
+  check('版本芯片都带上了类型色', verChips.length === 44 && verChips.every(a => /k-(art|play|eng|fix|other)/.test(a.className)),
     verChips.filter(a => !/k-/.test(a.className)).map(a => a.textContent).join(','));
   check('附录芯片保持中性（不属于任何版本类型）', /k-/.test((chips.find(a => /appendix/.test(a.getAttribute('href'))) || {}).className || '') === false);
   check('目录源标记仍在原位（只是运行时被搬走）', /<nav class="toc">/.test(html) && !doc.querySelector('header .toc'));
@@ -102,7 +103,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   const colBtn = doc.getElementById('tbCollapse');
   colBtn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   const collapsed = secs.filter(s => s.classList.contains('col'));
-  check('「只看最近 5 版」收起后 5 个展开', collapsed.length === 43 - 5, String(collapsed.length));
+  check('「只看最近 5 版」收起后 5 个展开', collapsed.length === 44 - 5, String(collapsed.length));
   check('收起的是旧版本不是最新版', !secs.slice(0, 5).some(s => s.classList.contains('col')));
   check('按钮文字切换', colBtn.textContent.indexOf('展开全部') >= 0, colBtn.textContent);
   colBtn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
@@ -116,12 +117,12 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
 
   // ── 7. 内容完整性：一个字都没少 ────────────────────
   const text = doc.body.textContent;
-  const must = ['v4.21.0', 'v4.20.5', 'v4.20.4', 'v4.20.3', 'v4.20.2', 'v4.20.1', 'v4.20.0', 'v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', 'v3.5', '视觉精修', 'v35halo', '版本总览', '附录', '音效技术备忘',
+  const must = ['v4.21.0', 'v4.20.5', 'v4.20.4', 'v4.20.3', 'v4.20.2', 'v4.20.1', 'v4.20.0', 'v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', 'v3.5', '视觉精修', 'v35halo', 'v3.4', '实时事件流', '冰敷之后', '210ff68a', '版本总览', '附录', '音效技术备忘',
     '14 队加权乐透', '首轮签在交易里送走了', '季池', 'AST 静态审查脚本', 'hoop_life_save_v1'];
   must.forEach(k => check('内容未丢失：' + k, text.indexOf(k) >= 0));
-  check('表格数量未变（20 个）', doc.querySelectorAll('table').length === 20,
+  check('表格数量未变（22 个）', doc.querySelectorAll('table').length === 22,
     String(doc.querySelectorAll('table').length));
-  check('卡片数量未变（45 个）', doc.querySelectorAll('.card').length === 45,
+  check('卡片数量未变（46 个）', doc.querySelectorAll('.card').length === 46,
     String(doc.querySelectorAll('.card').length));
 
   // ── 8. 无控制台告警 ───────────────────────────────
