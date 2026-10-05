@@ -43,6 +43,22 @@ module.exports = run('移动端布局', ({ win, doc, check, html }) => {
   check('再切换恢复展开态', hud3.className.indexOf('min') < 0, hud3.className);
   check('localStorage 同步为 0', ls2 === '0', String(ls2));
 
+  // ── ⑤ 结果页「继续」吸底（v4.19.1）──
+  check('结果页原按钮带 .contBtn 类', html.indexOf('class="btn contBtn" onclick="advance()"') >= 0);
+  check('桌面隐藏吸底继续按钮（.contAct 基础态 display:none）', html.indexOf('.contAct{display:none}') >= 0);
+  check('移动端隐藏原按钮、显示橙色吸底继续',
+    html.indexOf('.contBtn{display:none}') >= 0 &&
+    html.indexOf('.contAct{display:block;background:linear-gradient(180deg,#f97316,#ea580c)') >= 0);
+  win.eval("UI={mode:'event',ev:null};renderGame();");
+  const actEv = doc.querySelector('.actions');
+  check('事件模式下行动栏无「继续」', !actEv.querySelector('.contAct'));
+  win.eval('choose(0)');
+  check('选择后进入结果模式', win.eval('UI.mode') === 'result', String(win.eval('UI.mode')));
+  const actRes = doc.querySelector('.actions');
+  check('结果模式下行动栏出现吸底「继续」',
+    !!actRes.querySelector('.contAct') &&
+    actRes.querySelector('.contAct').getAttribute('onclick') === 'advance()');
+
   // ── ④ 事件内容不因切换丢失 ──
   check('切换 HUD 后事件仍在（renderGame 保留 UI.ev）', !!win.eval('UI.ev'));
 });

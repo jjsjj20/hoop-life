@@ -200,6 +200,7 @@ select:disabled{color:var(--dim)}
 .art.sm .artsym{font-size:58px}
 @media(max-width:430px){.heroArt{height:200px}.heroTx{padding:18px 10px 50px}.hero h1{font-size:26px}.art{height:112px}.art .artsym{font-size:62px}.art .artcap{right:96px;font-size:11.5px}}
 /* 移动端布局优化（v4.19.0）：HUD 可收起 + 行动栏吸底 + 插画/间距压缩——一屏看得更多 */
+.contAct{display:none}
 .hudmin{display:none;align-items:center;justify-content:center;width:28px;height:28px;flex:0 0 auto;
   border-radius:9px;border:1px solid #273046;background:var(--btn2);color:var(--muted);font-size:12px;cursor:pointer}
 .hudmin:hover{border-color:#3d4a66;color:var(--txt)}
@@ -216,6 +217,8 @@ select:disabled{color:var(--dim)}
   .actions{position:sticky;bottom:0;z-index:7;margin-top:12px;padding:8px 0 calc(8px + env(safe-area-inset-bottom));
     background:linear-gradient(180deg,rgba(8,10,17,0),rgba(8,10,17,.94) 30%,rgba(8,10,17,.98))}
   .actions button{min-width:0;height:42px;font-size:13px;padding:0 6px}
+  .contBtn{display:none}
+  .contAct{display:block;background:linear-gradient(180deg,#f97316,#ea580c);border-color:#fb923c;color:#fff;font-weight:800}
 }
 /* ── 结果页 ───────────────────────────────────────────── */
 .result{margin-top:14px;position:relative;padding:16px 16px 16px 20px;border-radius:var(--r);overflow:hidden}
@@ -9813,6 +9816,7 @@ function renderGame(){
             ?('📅 '+stageLabel(S.stage,S.stageDone||0,S.stageNeed||1)+(STAGE_PHASE[S.stage]?(' · '+STAGE_PHASE[S.stage]):''))
             :(SEASON_ICON[S.stage]||'')} · ${chapterTitle()}</div>`);
     $('#app').innerHTML=renderTop()+`<div class="shell"><div class="main">`+head+`<div id="stage"></div><div class="actions">
+     ${UI.mode==='result'?'<button class="contAct" onclick="advance()">继续 ▶</button>':''}
      <button onclick="showRoster()">👥 阵容</button>
      ${(S.league==='CBA'||S.league==='NBA'||S.league==='欧洲')?'<button onclick="showStandings()">📊 排名</button>':''}
      <button onclick="AI.openPanel()">🤖 AI</button>
@@ -9920,7 +9924,13 @@ function renderResult(ev,i,changes){
    <i>队内地位</i> ${'★'.repeat(clamp(3+Math.round(S.ts/2),1,7))} ${roleTxt}
    <i>倾向</i> ${esc(tendDesc(S.tend))}</span><br>
   ${skillLine()}</div></div>
-  <button class="btn" onclick="advance()">继续 ▶</button>`;
+  <button class="btn contBtn" onclick="advance()">继续 ▶</button>`;
+  /* v4.19.1：把「继续」同步放进吸底行动栏（桌面由 CSS 隐藏，移动端显示为橙色主行动） */
+  try{
+    const _act=document.querySelector('.actions');
+    if(_act&&!_act.querySelector('.contAct'))
+      _act.insertAdjacentHTML('afterbegin','<button class="contAct" onclick="advance()">继续 ▶</button>');
+  }catch(e){}
   kbHint();
 }
 function renderAwards(awards,res){
