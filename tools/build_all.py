@@ -41,8 +41,9 @@ STEPS = [
     ("patch_r3.py",             "⑰ R3 摆烂机制实装",           True),
     ("patch_qingxun.py",        "⑱ R2 青训体验补强",           True),
     ("patch_ui_tidy.py",        "⑲ UI 减负（行动栏 15→5 + ☰ 更多）", True),
-    ("patch_sw_cache.py",       "⑳ SW 缓存名=最终产物哈希",    True),
-    ("optimize_images.py",      "㉑ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_ui_mobile.py",      "⑳ 移动端布局（HUD 收起/行动栏吸底）", True),
+    ("patch_sw_cache.py",       "㉑ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "㉒ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 
