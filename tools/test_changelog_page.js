@@ -10,6 +10,16 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   const secs = [...doc.querySelectorAll('section.ver')];
   check('版本段被包进 section.ver', secs.length === 47, '实得 ' + secs.length);
   check('总览/附录没有被误判成版本段', secs.every(s => /^sec-v/.test(s.id)));
+  // 顺序守卫：版本段物理顺序必须与版本号严格倒序一致（防止补录条目插错位置）
+  const verNums = secs.map(s => (s.querySelector('.vpill').textContent.match(/v[\d.]+/) || [''])[0]);
+  const seg = v => v.slice(1).split('.').map(Number);
+  let ordered = true, badAt = '';
+  for (let i = 1; i < verNums.length; i++) {
+    const a = seg(verNums[i - 1]), b = seg(verNums[i]);
+    const cmp = (a[0] - b[0]) || ((a[1] || 0) - (b[1] || 0)) || ((a[2] || 0) - (b[2] || 0));
+    if (cmp < 0) { ordered = false; badAt = verNums[i - 1] + '→' + verNums[i]; break; }
+  }
+  check('版本段物理顺序与版本号倒序一致', ordered, badAt || verNums.join('>'));
 
   const kindOf = s => s.getAttribute('data-kind');
   const noOf = s => (s.querySelector('.vpill').textContent.match(/v[\d.]+/) || [''])[0];
