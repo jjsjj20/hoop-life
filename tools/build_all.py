@@ -40,8 +40,9 @@ STEPS = [
     ("patch_pwa.py",            "⑯ PWA 离线（manifest+SW+图标）", True),
     ("patch_r3.py",             "⑰ R3 摆烂机制实装",           True),
     ("patch_qingxun.py",        "⑱ R2 青训体验补强",           True),
-    ("patch_sw_cache.py",       "⑲ SW 缓存名=最终产物哈希",    True),
-    ("optimize_images.py",      "⑳ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_ui_tidy.py",        "⑲ UI 减负（行动栏 15→5 + ☰ 更多）", True),
+    ("patch_sw_cache.py",       "⑳ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "㉑ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 
