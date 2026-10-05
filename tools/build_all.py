@@ -50,8 +50,9 @@ STEPS = [
     ("patch_ai_fix.py",         "㉖ AI 生成兼容性修复",          True),
     ("patch_ai_only.py",        "㉗ AI 只输出正文（规则+清洗）", True),
     ("patch_ai_echo.py",        "㉘ AI 回声检测与重试",          True),
-    ("patch_sw_cache.py",       "㉙ SW 缓存名=最终产物哈希",    True),
-    ("optimize_images.py",      "㉚ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
+    ("patch_ai_echo2.py",       "㉙ 回声判定收紧 + 报纸重试",     True),
+    ("patch_sw_cache.py",       "㉚ SW 缓存名=最终产物哈希",    True),
+    ("optimize_images.py",      "㉛ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
 
 

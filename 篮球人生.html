@@ -10237,11 +10237,15 @@ AI.RULE_ONLY='【输出格式】只输出正文本身：直接给成文内容；
 AI.RULE_JSON='【输出格式】只输出一个 JSON 对象本身：不要前言、说明、代码块或任何多余文字。';
 /* v4.20.4：回声/复读识别——模型把要求或事实原样吐回来时，判定为无效输出 */
 AI.looksLikeEcho=function(t){
+ /* v4.20.5：改打分制——避免误伤（报纸正文天然会引用「结果：」这类标签） */
  const x=String(t||'');
- if(/要求[:：]|不能编造|只使用给定|Markdown|字数\s*[:：]|【任务】|【事实】/.test(x))return true;
+ if(/不能编造|只使用给定|【任务】|【事实】|不要复述/.test(x))return true;   /* 强特征：只在提示词里出现 */
+ let weak=0;
+ ['要求：','要求:','字数','Markdown'].forEach(function(k){if(x.indexOf(k)>=0)weak++;});
+ if(weak>=2)return true;                                                  /* 弱特征需≥2 */
  const labels=['球员：','比赛：','结果：','个人数据：','系统旁白：','分节得分：','关键时刻：'];
  let hit=0;labels.forEach(function(k){if(x.indexOf(k)>=0)hit++;});
- return hit>=2;
+ return hit>=3;                                                           /* 事实标签需≥3（回声通常 5~6 个） */
 };
 AI.ask=function(sys,user,opt){
  const mt0=(opt&&opt.mt)||900;                     /* v4.20.2：默认预算 360→900（思考型模型要留够正式内容的额度） */
@@ -10555,8 +10559,19 @@ AI.newsGo=function(el){
  AI.ask(b.sys,b.user,{mt:900}).then(function(t){
   const txt=AI.san(t,1200);   /* v4.20.2：多段长文（报纸）不再被 700 字截断 */
   if(!txt)throw new Error('返回内容为空');
-  /* v4.20.4：回声检测——复述要求/素材的报纸不入缓存 */
-  if(AI.looksLikeEcho(txt))throw new Error('模型在复述要求，请重试或换一个模型');
+  /* v4.20.5：回声 → 重试一次（带加强指令）；仍回声才报错，且不写缓存 */
+  if(AI.looksLikeEcho(txt)){
+   return AI.ask(b.sys,b.user+'\n【再次强调】只写报纸正文，不要复述上面的要求或素材。',{mt:900}).then(function(t2){
+    const txt2=AI.san(t2,1200);
+    if(!txt2||AI.looksLikeEcho(txt2))throw new Error('模型在复述要求，请重试或换一个模型');
+    AI.busy=false;
+    AI.cSet(b.key,txt2);
+    const wrap2=document.getElementById('npWrap');
+    if(wrap2)wrap2.innerHTML=AI.newsMast()+AI.newsHTML(txt2,b.key);
+    try{sfx('msg');}catch(e){}
+    if(typeof toast==='function')toast('本期报纸已出刊 📰');
+   });
+  }
   AI.busy=false;
   AI.cSet(b.key,txt);
   const wrap=document.getElementById('npWrap');

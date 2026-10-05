@@ -133,7 +133,7 @@ module.exports = run('AI 生成兼容', async ({ win, check, html }) => {
     window.__el=document.createElement('div');
     AI.go(window.__el);
   `);
-  await new Promise(r => setTimeout(r, 80));
+  await new Promise(r => setTimeout(r, 220));
   const keyM = JSON.parse(win.eval(`(function(){
     const b=AI.brief('focus');
     return JSON.stringify({k:AI.hash('focus|'+b.key), reqN:window.__reqs.length,
@@ -147,21 +147,82 @@ module.exports = run('AI 生成兼容', async ({ win, check, html }) => {
 
   // 连续回声 → 明确报错且不写缓存
   win.eval(`
-    AI._kind='focus';
+    AI._kind='focus'; AI.busy=false;
     window.__reqs=[];
     window.__plan=[
-      {choices:[{message:{content:'要求：写一段战报。球员：打 结果：109比108'}}]},
-      {choices:[{message:{content:'不能编造其他球员姓名。球员：打 比赛：揭幕战'}}]}
+      {choices:[{message:{content:'只使用给定数据，不能编造其他球员姓名。球员：打 比赛：X 结果：Y'}}]},
+      {choices:[{message:{content:'只使用给定数据。球员：打 比赛：X 结果：Y 个人数据：27分'}}]}
     ];
     window.__el2=document.createElement('div');
     AI.go(window.__el2);
   `);
-  await new Promise(r => setTimeout(r, 80));
+  let echoTxt = '';
+  for (let k = 0; k < 12; k++) {
+    await new Promise(r => setTimeout(r, 60));
+    echoTxt = String(win.eval('window.__el2.textContent||""'));
+    if (/失败/.test(echoTxt)) break;
+  }
   const echoFail = JSON.parse(win.eval(`(function(){
     const b=AI.brief('focus');
     return JSON.stringify({txt:window.__el2.textContent||'', cached:(AI.cGet(AI.hash('focus|'+b.key))||{}).t||''});
   })()`));
-  check('连续回声给出明确失败提示', echoFail.txt.indexOf('复述') >= 0, echoFail.txt.slice(0, 40));
+  check('连续回声给出明确失败提示', /复述|失败/.test(echoFail.txt || echoTxt), (echoFail.txt || echoTxt).slice(0, 40));
   check('连续回声不写缓存（避免垃圾长期复现）', echoFail.cached.indexOf('要求') < 0, echoFail.cached.slice(0, 20));
+
+
+  const N = String.fromCharCode(10);
+
+  // ── ⑩ 回声判定收紧（v4.20.5）：报纸正文不再被误判 ──
+  const fp = JSON.parse(win.eval(`JSON.stringify({
+    realPaper: AI.looksLikeEcho('【头版】勇士主场109比108险胜森林狼。' + ${N} + '【联盟风云】控卫打末节接管比赛。' + ${N} + '【流言板】据悉，更衣室人士透露……' + ${N} + '【宿敌口水】赛前双方隔空喊话。' + ${N} + '【新星追踪】新秀迎来首秀。'),
+    twoLabels: AI.looksLikeEcho('结果：勇士取胜。球员：打，27分。'),
+    oneWeak: AI.looksLikeEcho('这场比赛的结果很关键，要求很高。'),
+    strong: AI.looksLikeEcho('只使用给定数据，不能编造其他球员姓名。'),
+    threeLabels: AI.looksLikeEcho('球员：打 比赛：揭幕战 结果：109比108 个人数据：27分')
+  })`));
+  check('真实报纸正文不误判（含【】栏目与「据悉」）', fp.realPaper === false);
+  check('只引 2 个事实标签不误判', fp.twoLabels === false, String(fp.twoLabels));
+  check('弱特征单次出现不误判', fp.oneWeak === false, String(fp.oneWeak));
+  check('强特征仍能识别回声', fp.strong === true);
+  check('3 个事实标签判为回声', fp.threeLabels === true);
+
+  // ── ⑪ 报纸：回声 → 重试一次 → 缓存干净正文 ──
+  win.eval(`
+    S.worldNews=['测试新闻一','测试新闻二','测试新闻三'];
+    AI._ev=null;
+    window.__reqs=[];
+    window.__plan=[
+      {choices:[{message:{content:'只使用给定素材，不能编造。球员：打 比赛：X 结果：Y'}}]},
+      {choices:[{message:{content:'【头版】勇士主场取胜。' + String.fromCharCode(10) + '【联盟风云】他末节接管。' + String.fromCharCode(10) + '【流言板】据悉，更衣室人士透露。' + String.fromCharCode(10) + '【宿敌口水】隔空喊话。' + String.fromCharCode(10) + '【新星追踪】新秀首秀。'}}]}
+    ];
+    window.__el3=document.createElement('div');
+    AI.newsGo(window.__el3);
+  `);
+  await new Promise(r => setTimeout(r, 220));
+  const newsRes = JSON.parse(win.eval(`(function(){
+    const b=AI.newsBrief();
+    return JSON.stringify({reqN:window.__reqs.length, cached:(b&&AI.cGet(b.key)||{}).t||''});
+  })()`));
+  check('报纸回声触发重试（共两次请求）', newsRes.reqN === 2, String(newsRes.reqN));
+  check('报纸缓存写入干净正文', newsRes.cached.indexOf('【头版】') >= 0 && newsRes.cached.indexOf('不能编造') < 0,
+    newsRes.cached.slice(0, 24));
+
+  // ── ⑫ 报纸连续回声 → 报错且不写缓存 ──
+  win.eval(`
+    window.__reqs=[];
+    window.__plan=[
+      {choices:[{message:{content:'不能编造其他球员姓名。球员：打 比赛：X 结果：Y'}}]},
+      {choices:[{message:{content:'只使用给定素材。球员：打 比赛：X 结果：Y'}}]}
+    ];
+    window.__el4=document.createElement('div');
+    AI.newsGo(window.__el4);
+  `);
+  await new Promise(r => setTimeout(r, 220));
+  const newsFail = JSON.parse(win.eval(`(function(){
+    const b=AI.newsBrief();
+    return JSON.stringify({txt:window.__el4.textContent||'', cached:(b&&AI.cGet(b.key)||{}).t||''});
+  })()`));
+  check('报纸连续回声给明确提示', /复述|失败/.test(newsFail.txt), newsFail.txt.slice(0, 40));
+  check('报纸连续回声不写缓存', newsFail.cached.indexOf('不能编造') < 0, newsFail.cached.slice(0, 20));
 
 });
