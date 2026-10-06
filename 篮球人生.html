@@ -7268,9 +7268,16 @@ function playoffDateFor(stage,g){
   const base={r1:['四月中','四月下'],r2:['五月中','五月下'],confFinal:['五月下','五月下'],final:['六月初','六月中']}[stage]||['四月中','四月下'];
   return g<=2?base[0]:base[1];
 }
+/* v4.22.0 季后赛对抗烈度：系列赛每个对手都打出超出纸面实力的一档篮球
+ * （全民皆兵 + 谁都想掀翻强队）。NBA +1.5、CBA +2.5（对手偏弱且少一轮，
+ * 需要更大修正）、欧洲 +1.0。500 次完整对阵图实测见 patch 头注：
+ * NBA 2号种子夺冠率 78.4%→48.4%、CBA 96.2%→69.2%；顶级豪强 96.2%→87.0%。
+ * 附加赛（掷骰）与 NPC 互打（simWinnerOf）不经此函数，不受影响。 */
 function seriesOppStr(game){
   const o=seriesOpponentOf();
-  return o&&o.str?o.str:6;
+  const opp=(o&&o.str)?o.str:6;
+  const bump={nba:1.5,cba:2.5,euro:1}[myLeagueKey()]||0;
+  return Math.round((opp+bump)*10)/10;
 }
 function seriesOpponentOf(){
   const B=S.bracket;

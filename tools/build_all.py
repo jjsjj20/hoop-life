@@ -49,6 +49,7 @@ STEPS = [
     ("patch_output_align.py",   "㉕ 产出对齐（玩家↔NPC 系数）", True),
     ("patch_remove_ai.py",      "㉚ 整体移除 AI 点评层",          True),
     ("patch_contact_fix.py",    "㉝ 清掉行动栏残留「继续」",      True),
+    ("patch_po_bump.py",        "㉞ 季后赛对抗烈度（对手拔高）",  True),
     ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
     ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
