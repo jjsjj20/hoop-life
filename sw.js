@@ -2,7 +2,7 @@
  * HTML：网络优先（发版更新可达），断网回落缓存；
  * 其余同源资产：缓存优先（未命中拉取并入库）；
  * 跨域请求（AI 接口）一律不拦截；发版后旧缓存自动清理。 */
-const CACHE = 'hoop-life-e927c157fd91';
+const CACHE = 'hoop-life-aeb9e99d533b';
 const CORE = ['./', './篮球人生.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {

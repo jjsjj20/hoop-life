@@ -6,7 +6,7 @@ v4.14.0 的「管理层的暗示」此前只是叙事抉择——接受后战绩
 本补丁把它变成机制：
 
   ① 摆烂抉择（默许轮换）写入 S.flags.tankYear（=当前生涯年）；
-  ② computeStandings 对摆烂球队施加 **wpc −0.10**（10 个百分点，验收线 ≥5）——
+  ② computeStandings 对摆烂球队施加 **wpc −0.15**（15 个百分点，v4.21.2 由 10 上调；验收线 ≥5）——
      排名面板/选秀顺位/赛季总结全部同源生效；tankYear 只对当前赛季匹配，
      nextYear 之后自动过期（想再摆，得再谈一次）；
   ③ 接受摆烂时清空排名缓存（S._stCache），惩罚立即生效；
@@ -35,7 +35,7 @@ def sub1(old, new, why):
 # ═══════════ 1. FX 注册：tankAccept（默许摆烂）═══════════
 sub1("""    S.log.push({y:seasonLabel(),t:'被交易至 '+to+'（换回签位资产）'});}],""",
 """    S.log.push({y:seasonLabel(),t:'被交易至 '+to+'（换回签位资产）'});}],
-  /* R3（v4.16）：摆烂机制——默许摆烂后，本季我队胜率被压低（-10 个百分点），
+  /* R3（v4.16）：摆烂机制——默许摆烂后，本季我队胜率被压低（-15 个百分点，v4.21.2 上调），
    * 换来签位触保回退的可能；只在当前赛季生效，跨年自动过期。 */
   ['tankAccept',(v,c)=>{
     S.flags.tankYear=S.birthYear+S.age;
@@ -51,9 +51,9 @@ sub1("""    if(t[0]===myTeamName()){
     }""",
 """    if(t[0]===myTeamName()){
       /* 玩家球队：波动收窄（实力决定命运），并按 OVR 加成；
-       * R3（v4.16）：默许摆烂的赛季，胜率压低 10 个百分点（验收线 ≥5）——
+       * R3（v4.16）：默许摆烂的赛季，胜率压低 15 个百分点（v4.21.2 由 10 上调；验收线 ≥5）——
        * 槽位更差 → 落入保护区 → 选秀夜签位触保回退（v4.11 机制自然兑现） */
-      const tankPad=(S.flags.tankYear===(S.birthYear+S.age))?0.10:0;
+      const tankPad=(S.flags.tankYear===(S.birthYear+S.age))?0.15:0;
       const adj=ovr()-70;
       wpc=clamp(.38-lgHard(lg).wpc+(st-6.5)*.055+adj*.005-tankPad+R.float(-.06,.06),.06,.95);
     }""", 'computeStandings 摆烂惩罚')

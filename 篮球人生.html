@@ -2334,7 +2334,7 @@ const FX=[
     setContract(S.team,S.league,2,'转会合同');
     c.push('📦 交易达成：'+oldTeam+' 将你送至 '+to+'，换回'+(a?' '+pickName(a):'未来资产')+'。新球队的发布会上，总经理说：「我们盯了你很久。」');
     S.log.push({y:seasonLabel(),t:'被交易至 '+to+'（换回签位资产）'});}],
-  /* R3（v4.16）：摆烂机制——默许摆烂后，本季我队胜率被压低（-10 个百分点），
+  /* R3（v4.16）：摆烂机制——默许摆烂后，本季我队胜率被压低（-15 个百分点，v4.21.2 上调），
    * 换来签位触保回退的可能；只在当前赛季生效，跨年自动过期。 */
   ['tankAccept',(v,c)=>{
     S.flags.tankYear=S.birthYear+S.age;
@@ -7410,9 +7410,9 @@ function computeStandings(lg){
     let wpc=clamp(.38+(st-6.5)*.055+R.float(-.17,.17),.06,.94);
     if(t[0]===myTeamName()){
       /* 玩家球队：波动收窄（实力决定命运），并按 OVR 加成；
-       * R3（v4.16）：默许摆烂的赛季，胜率压低 10 个百分点（验收线 ≥5）——
+       * R3（v4.16）：默许摆烂的赛季，胜率压低 15 个百分点（v4.21.2 由 10 上调；验收线 ≥5）——
        * 槽位更差 → 落入保护区 → 选秀夜签位触保回退（v4.11 机制自然兑现） */
-      const tankPad=(S.flags.tankYear===(S.birthYear+S.age))?0.10:0;
+      const tankPad=(S.flags.tankYear===(S.birthYear+S.age))?0.15:0;
       const adj=ovr()-70;
       wpc=clamp(.38-lgHard(lg).wpc+(st-6.5)*.055+adj*.003-tankPad+R.float(-.06,.06),.06,.95);   /* v4.20.0：顶星对球队胜率的加成 .005→.003——冠军不再是一人之力 */
     }
