@@ -9956,7 +9956,12 @@ function renderResult(ev,i,changes){
   }catch(e){}
   kbHint();
 }
+/* v4.21.1：清掉行动栏里残留的吸底「继续」——赛季总结/颁奖夜直接渲染 #stage、
+ * 不重渲整页，上一个结果页注入的 .contAct 会活着跟过来：移动端可见、点不动
+ * （advance 的模式守卫拦着不会误推进，但玩家会看到一个失灵的按钮）。 */
+function clearContAct(){try{const _ca=document.querySelector('.actions .contAct');if(_ca)_ca.remove();}catch(e){}}
 function renderAwards(awards,res){
+  clearContAct();
   const box=$('#stage');
   if(awards&&awards.length)sfx('trophy');else sfx('whistle');
   const list=awards&&awards.length
@@ -9987,6 +9992,7 @@ function renderAwards(awards,res){
 }
 function awardsNext(){const res=UI.season;UI={mode:'season',season:res};save();renderSeason(res);}
 function renderSeason(res){
+  clearContAct();
   const box=$('#stage');
   sfx(res.champ?'fanfare':'whistle');   /* 赛季收官：夺冠是号角，其余是终场哨 */
   const hons=medalHTML(res.honors,'本赛季无个人荣誉');
