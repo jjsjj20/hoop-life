@@ -6277,14 +6277,18 @@ function draftRangeText(v){
 }
 function draftStockInit(){
   const o=ovr(),age=S.age;let base;
-  if(o>=86)base=R.float(3,9);
-  else if(o>=82)base=R.float(7,16);
-  else if(o>=78)base=R.float(13,24);
-  else if(o>=74)base=R.float(20,33);
-  else if(o>=70)base=R.float(28,44);
-  else if(o>=67)base=R.float(38,54);
-  else if(o>=64)base=R.float(48,62);
-  else base=R.float(56,72);
+  /* v4.23.0 选秀门槛整体后移：同评分段的行情普遍差 4~12 位——NBA 不再是
+   * 「练到 70 分就保送」。真实链路实测（含试训加成与承诺救援，age 20 · 500 次）：
+   * 70~73 分 落选 0%→13~16% · 68 分 17%→51% · 64~66 分 65%→89~93%；
+   * 75~77 分 首轮率 36~40%→15%（顺位预期从中段滑到次轮）。 */
+  if(o>=86)base=R.float(4,12);
+  else if(o>=82)base=R.float(9,20);
+  else if(o>=78)base=R.float(15,28);
+  else if(o>=74)base=R.float(24,42);
+  else if(o>=70)base=R.float(33,55);
+  else if(o>=67)base=R.float(43,62);
+  else if(o>=64)base=R.float(53,70);
+  else base=R.float(61,76);
   base+=age>=23?8:age>=22?5:age>=21?2:0;
   if(age<=19)base-=2;
   return clamp(Math.round(base),1,72);
@@ -7269,14 +7273,15 @@ function playoffDateFor(stage,g){
   return g<=2?base[0]:base[1];
 }
 /* v4.22.0 季后赛对抗烈度：系列赛每个对手都打出超出纸面实力的一档篮球
- * （全民皆兵 + 谁都想掀翻强队）。NBA +1.5、CBA +2.5（对手偏弱且少一轮，
- * 需要更大修正）、欧洲 +1.0。500 次完整对阵图实测见 patch 头注：
- * NBA 2号种子夺冠率 78.4%→48.4%、CBA 96.2%→69.2%；顶级豪强 96.2%→87.0%。
+ * （全民皆兵 + 谁都想掀翻强队）。
+ * v4.23.0 二次加压（反馈「还是太简单」）：NBA +1.5→+2.8、CBA +2.5→+4.0、
+ * 欧洲 +1.0→+1.5。实测：68 分·强队 59.1%→31.4%、76 分·中强队 50.9%→23.7%、
+ * 80 分·头号种子 80.9%→54.0%（500 次完整对阵图，见 patch 头注）。
  * 附加赛（掷骰）与 NPC 互打（simWinnerOf）不经此函数，不受影响。 */
 function seriesOppStr(game){
   const o=seriesOpponentOf();
   const opp=(o&&o.str)?o.str:6;
-  const bump={nba:1.5,cba:2.5,euro:1}[myLeagueKey()]||0;
+  const bump={nba:2.8,cba:4,euro:1.5}[myLeagueKey()]||0;
   return Math.round((opp+bump)*10)/10;
 }
 function seriesOpponentOf(){
@@ -7882,7 +7887,9 @@ function computeSeason(pr,wpcIn,po){
     /* 联赛冠军与总决赛 MVP：冠军是打出来的（champ），FMVP 还要联盟排名靠前 */
     if(champ){
       if(cfg.champ)H.push(cfg.champ);
-      if(cfg.fmvp&&_board&&_board.my&&_board.my.mvp<=6&&R.chance(.45))H.push(cfg.fmvp);
+      /* v4.23.0：同 NBA——固定 45% 改为随实力起跳（常规赛 MVP 榜前三另 +15%）：
+       * o70 → 5%，o73 → 20%，o78 榜外 → 45%（与原值持平），o78 榜三 → 60%。 */
+      if(cfg.fmvp&&_board&&_board.my&&_board.my.mvp<=6&&R.chance(clamp(.05+(o-70)*.05+(_board.my.mvp<=3?.15:0),.05,.85)))H.push(cfg.fmvp);
     }
     /* 进步最快球员：生涯一次，必须在榜单上有存在感 */
     /* v4.20.0：进步最快至少第 2 季、排名 ≤10、概率 .25——不再「新秀季即进步最快」 */
@@ -8317,7 +8324,10 @@ function computeNBAAwards(res){
     H.push('NBA总冠军');
     const d=Math.round(S.skills.perdef*.4+S.skills.intdef*.35+S.skills.block*.25+((S.h.hustle||60)-60)*ATTR.hustleDfs);
     const top=E&&E.my&&E.my.mvp<=3;
-    if(R.chance(clamp(.35+(o-78)*.05+(top?.2:0),.35,.85)))H.push('NBA总决赛MVP（FMVP）');
+    /* v4.23.0：FMVP 概率改为随实力起跳——旧公式下限锁死 35%，68 分球员夺冠后
+     * 也有 35% 拿 FMVP（59.1% 夺冠率 × 35% ≈ 每季 20%），「角色球员总决赛 MVP」
+     * 成为高频事件。新公式：o70 → 5%，o78 → 45%，o82 → 65%，o86+ → 85%。 */
+    if(R.chance(clamp(.05+(o-70)*.05+(top?.2:0),.05,.85)))H.push('NBA总决赛MVP（FMVP）');
   }
   /* 进步最快球员：生涯一次，且必须真的比上赛季强 */
   if(!S.flags.gotMIP&&(S.nbaSeasons||0)>=1&&o>=74&&E&&E.my&&E.my.mvp<=12&&R.chance(.35)){
