@@ -32,6 +32,14 @@ hoop-life 改造 step 36：NBA 选秀与签位抽签系统（v4.26.0）
   抽签：从状元签开始点一次揭一位（？？？→球队），四签揭完才排定 1-14 与按钮；
   选秀：从第 1 顺位开始逐位宣布（最新的在最上面），另给「直接看完全部」跳过；
   揭晓进度（UI.lr / UI.dr）随存档保存，中途退出回来接着出。
+
+【v4.27.0】游玩反馈「玩家的 NBA 选秀也加入这个系统」：玩家参选走同一套仪式——
+  · 签位表单源化：newDraft / ensureDraft 改读 draftPlanFor（与联盟选秀同一份），
+    玩家的抽签结果 = 联盟的抽签结果，不再各掷各的；
+  · 选秀夜流程：点「等待命运的宣判」→【抽签揭牌页】→【选秀大会逐位念名】
+    → 念到玩家顺位定格（fanfare）或 60 位念完（落选）→ 恢复原结果页（合同等）；
+  · 仪式数据挂在 UI.crm（含原事件与 changes），随存档持久化可续；
+  · 选秀夜夜景与结果页不再重复播报乐透抽签（改由揭牌页呈现）。
 """
 import os
 
@@ -116,6 +124,13 @@ function resolveDraftInto(order,myPick,me){
   }
   return {y:y,picks:picks};
 }
+/* 结算本届并把结果写回年度计划（v4.27.0：玩家选秀夜与联盟选秀共用同一份） */
+function resolveDraftForPlan(myPick,me){
+  const plan=draftPlanFor(curDraftYear());
+  const r=resolveDraftInto(plan.order,myPick,me);
+  plan.picks=r.picks;plan.resolved=true;
+  return r;
+}
 /* 休赛期序列：赛季页「进入下一年」先走两个页面（仅 NBA），再真进下一年 */
 function seasonNext(){
   if(!S.retired&&S.league==='NBA'&&S.age<45){
@@ -128,10 +143,9 @@ function goDraftDay(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   if(!plan){nextYear();return;}
   if(!plan.resolved){
-    plan.picks=resolveDraftInto(plan.order,null,null).picks;
-    plan.resolved=true;save();
+    resolveDraftForPlan();save();
   }
-  UI={mode:'draftday',dy:plan.y,dr:0};save();renderGame();
+  UI={mode:'draftday',dy:plan.y,dr:0,crm:UI.crm||null};save();renderGame();
 }
 /* 逐位揭晓（v4.26.2）：抽签从状元签开始一个个揭牌；选秀从第 1 顺位一个个念 */
 function revealLottery(){
@@ -144,13 +158,23 @@ function revealPick(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   if(!plan||!plan.picks)return;
   if(UI.dr==null)UI.dr=0;
-  if(UI.dr<plan.picks.length){UI.dr++;try{sfx('draft');}catch(e){}}
+  const meP=UI.crm?(plan.picks.filter(p=>p.me)[0]||null):null;
+  const cap=meP?meP.pick:plan.picks.length;
+  if(UI.dr<cap){UI.dr++;try{sfx(meP&&UI.dr===meP.pick?'fanfare':'draft');}catch(e){}}
   save();renderGame();
 }
 function revealAllPicks(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   if(!plan||!plan.picks)return;
-  UI.dr=plan.picks.length;save();renderGame();
+  const meP=UI.crm?(plan.picks.filter(p=>p.me)[0]||null):null;
+  UI.dr=meP?meP.pick:plan.picks.length;save();renderGame();
+}
+/* 仪式收尾（v4.27.0）：回到选秀夜原本的结果页（合同 / 顺位播报 / 落选文案都在 changes 里） */
+function finishDraftCeremony(){
+  const c=UI&&UI.crm;
+  if(!c||!c.ev){UI={mode:'event',ev:safeEvent()};save();renderGame();return;}
+  UI={mode:'result',ev:c.ev,chIdx:c.chIdx,changes:c.changes};
+  save();renderGame();
 }
 /* ① 签位抽签页：从状元签开始逐一揭牌（？？？→球队），揭完四签才排定 1-14 */
 function renderLottery(){
@@ -184,33 +208,45 @@ function renderLottery(){
   (done?'<button class="btn" onclick="goDraftDay()">前往选秀大会 ▶</button>'
        :'<button class="btn" onclick="revealLottery()">揭晓'+slot[UI.lr]+' ▶</button>');
 }
-/* ② 选秀大会页：从第 1 顺位开始逐位宣布；最新的在最上面，可选「直接看完全部」 */
+/* ② 选秀大会页：从第 1 顺位开始逐位宣布；最新的在最上面，可选「直接看完全部」。
+ * v4.27.0：仪式模式（UI.crm）下念到玩家顺位即定格，按钮切「继续」回结果页。 */
 function renderDraftDay(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   const box=$('#stage');
   if(!plan||!plan.resolved||!plan.picks){box.innerHTML='<div class="mini">本届选秀尚未结算。</div><button class="btn" onclick="nextYear()">继续 ▶</button>';return;}
   if(UI.dr==null)UI.dr=0;
   const myT=myTeamName();
-  const all=plan.picks,done=UI.dr>=all.length;
-  const line=p=>{const mine=p.team===myT;
+  const all=plan.picks;
+  const crm=UI.crm||null;
+  const meP=crm?(all.filter(p=>p.me)[0]||null):null;
+  const stop=meP?meP.pick:all.length;
+  const done=UI.dr>=stop;
+  const line=p=>{const mine=(crm&&p.me)||p.team===myT;
     return '<div class="mini" style="line-height:1.9">'+(mine?'<b style="color:var(--gold)">':'')+
-      '#'+p.pick+' <b>'+esc(p.team)+'</b> —— '+esc(p.n)+' <span style="opacity:.65">'+p.p+' · 综合 '+p.o+' · '+p.a+'岁</span>'+(mine?'（你队）</b>':'')+'</div>';};
+      '#'+p.pick+' <b>'+esc(p.team)+'</b> —— '+esc(p.n)+' <span style="opacity:.65">'+p.p+' · 综合 '+p.o+' · '+p.a+'岁</span>'+(p.me?'（就是你！）':(mine?'（你队）':''))+(mine?'</b>':'')+'</div>';};
   let body;
   if(done){
-    body='<div class="summ"><h3>前三顺位</h3>'+
-    all.slice(0,3).map((p,i)=>'<div class="row"><span>'+['🥇 状元','🥈 榜眼','🥉 探花'][i]+'</span><b>'+esc(p.team)+' —— '+esc(p.n)+'（'+p.p+' · '+p.o+'）</b></div>').join('')+
-    '<div class="mini">60 个顺位全部落定；被选中的新秀已经进入对应球队的名单。</div></div>'+
-    '<div class="summ"><h3>首轮（1-30）</h3>'+all.slice(0,30).map(line).join('')+'</div>'+
-    '<div class="summ"><h3>次轮（31-60）</h3>'+all.slice(30,60).map(line).join('')+'</div>';
+    if(crm){
+      body='<div class="summ"><h3>'+(meP?('🎙️ 第 '+meP.pick+' 顺位：'+esc(meP.team)+' 选择了你！'):'两轮念完，没有念到他')+'</h3>'+
+      (meP?'':'<div class="mini">接下来是另一条路——训练、试训，或者回联赛再打回来。</div>')+
+      all.slice(0,stop).map(line).join('')+'</div>';
+    }else{
+      body='<div class="summ"><h3>前三顺位</h3>'+
+      all.slice(0,3).map((p,i)=>'<div class="row"><span>'+['🥇 状元','🥈 榜眼','🥉 探花'][i]+'</span><b>'+esc(p.team)+' —— '+esc(p.n)+'（'+p.p+' · '+p.o+'）</b></div>').join('')+
+      '<div class="mini">60 个顺位全部落定；被选中的新秀已经进入对应球队的名单。</div></div>'+
+      '<div class="summ"><h3>首轮（1-30）</h3>'+all.slice(0,30).map(line).join('')+'</div>'+
+      '<div class="summ"><h3>次轮（31-60）</h3>'+all.slice(30,60).map(line).join('')+'</div>';
+    }
   }else{
     const latest=all.slice(0,UI.dr).reverse();
-    body='<div class="summ"><h3>已公布 '+UI.dr+' / '+all.length+' 位</h3>'+
+    body='<div class="summ"><h3>已公布 '+UI.dr+(crm?' 位':' / '+all.length+' 位')+'</h3>'+
     (latest.length?latest.map(line).join(''):'<div class="mini">选秀大会开始——点下面的按钮，逐一宣布今年的新秀。</div>')+'</div>';
   }
   box.innerHTML='<div class="etitle">🎓 六月 · 选秀大会</div>'+body+
-  (done?'<button class="btn" onclick="nextYear()">休赛期结束 · 进入下一年 ▶</button>'
+  (done?(crm?'<button class="btn" onclick="finishDraftCeremony()">继续 ▶</button>'
+             :'<button class="btn" onclick="nextYear()">休赛期结束 · 进入下一年 ▶</button>')
        :'<button class="btn" onclick="revealPick()">宣布第 '+(UI.dr+1)+' 顺位 ▶</button>'+
-        '<button class="btn ghost" onclick="revealAllPicks()">直接看完全部 '+all.length+' 位</button>');
+        '<button class="btn ghost" onclick="revealAllPicks()">'+(meP?'直接看我的顺位':'直接看完全部 '+all.length+' 位')+'</button>');
 }""",
      '选秀班底与两个页面')
 
@@ -261,6 +297,69 @@ sub1("      if(UI&&(UI.mode==='season'||UI.mode==='awards')){S.stage='winter';}"
 sub1(" * ⑤落选判定与行情挂钩；⑥选秀班底 59 人，播报本届前三。 */",
      " * ⑤落选判定与行情挂钩；⑥选秀班底 60 人（两轮）——签位抽签与选秀大会为独立页面，新秀真实入队（v4.26.0）。 */",
      '选秀头注')
+
+# ═══════════ 10. 玩家参选单源化：newDraft / ensureDraft 读年度计划 ═══════════
+sub1("""function newDraft(){
+  const m=draftOrderOf('nba');
+  return {stock:draftStockInit(),order:m.order,draw:m.draw,lotto:m.lotto,slot:m.slot,
+          promise:null,pick:null,y:seasonLabel()};
+}""",
+     """function newDraft(){
+  const plan=draftPlanFor(curDraftYear());   /* v4.27.0：与联盟选秀共用同一份年度签位表 */
+  return {stock:draftStockInit(),order:plan.order,draw:plan.draw,lotto:plan.lotto,slot:plan.slot,
+          promise:null,pick:null,y:seasonLabel()};
+}""",
+     'newDraft 单源化')
+
+sub1("""  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length||S.draft.y!==seasonLabel()||!S.draft.draw){
+    const m=draftOrderOf('nba');
+    S.draft.order=m.order;S.draft.draw=m.draw;S.draft.lotto=m.lotto;S.draft.slot=m.slot;S.draft.y=seasonLabel();
+  }""",
+     """  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length||S.draft.y!==seasonLabel()||!S.draft.draw){
+    const plan=draftPlanFor(curDraftYear());   /* v4.27.0：与联盟选秀共用同一份年度签位表 */
+    S.draft.order=plan.order;S.draft.draw=plan.draw;S.draft.lotto=plan.lotto;S.draft.slot=plan.slot;S.draft.y=seasonLabel();
+  }""",
+     'ensureDraft 单源化')
+
+# ═══════════ 11. 选秀夜结算写回年度计划 + 去掉重复播报 ═══════════
+sub1("    resolveDraftInto(d.order);   /* v4.26.0：落选不影响本届其余顺位照常落位入队 */",
+     "    resolveDraftForPlan();   /* v4.27.0：落选不影响本届其余顺位照常落位入队，结果写回年度计划 */",
+     '落选写回')
+
+sub1("  const _dr=resolveDraftInto(d.order,pick,{name:S.name,pos:S.pos,ovr:o,age:S.age});   /* v4.26.0：本届全部顺位落定，新秀入队 */",
+     "  const _dr=resolveDraftForPlan(pick,{name:S.name,pos:S.pos,ovr:o,age:S.age});   /* v4.27.0：本届全部顺位落定，结果写回年度计划 */",
+     '玩家结算写回')
+
+sub1("  if(pick!==1){const _lt=lottoText(d.draw,d.slot);if(_lt)changes.push('🎯 '+_lt);}",
+     "  /* v4.27.0：乐透抽签改由「抽签揭晓页」逐个揭牌，结果页不再重复播报 */",
+     '去重播报')
+
+# ═══════════ 12. 选秀夜夜景：不提前剧透抽签结果 ═══════════
+sub1("""  /* v4.9.3：乐透抽签结果先亮一次——签位顺序不再是黑箱 */
+  const lotto=lottoText(d.draw,d.slot);
+  return {id:'draftNight',title:'夏 · 选秀夜',scene:'选秀夜。'+(lotto?(lotto+'。\\n\\n'):'')+(green?""",
+     """  /* v4.27.0：乐透抽签改由「抽签揭晓页」逐个揭牌，夜景不再提前剧透 */
+  return {id:'draftNight',title:'夏 · 选秀夜',scene:'选秀夜。'+(green?""",
+     '夜景去剧透')
+
+# ═══════════ 13. choose() 尾钩子：选秀夜 → 仪式两页 → 结果页 ═══════════
+sub1("""  UI={mode:'result',ev,chIdx:i,changes};
+  renderResult(ev,i,changes);save();
+}
+/* 一份季后赛结果的唯一构造点（v4.12 P4.2）。""",
+     """  /* v4.27.0：玩家 NBA 选秀夜 → 先进「抽签揭牌 → 选秀大会」两个揭晓页，结果页最后再出 */
+  if(ch0&&ch0.fx&&ch0.fx.rollDraft==='nba'){
+    const _dp=draftPlanFor(curDraftYear());
+    if(_dp&&_dp.picks&&_dp.picks.length){
+      UI={mode:'lottery',dy:_dp.y,lr:0,crm:{ev:ev,chIdx:i,changes:changes}};
+      save();renderGame();return;
+    }
+  }
+  UI={mode:'result',ev,chIdx:i,changes};
+  renderResult(ev,i,changes);save();
+}
+/* 一份季后赛结果的唯一构造点（v4.12 P4.2）。""",
+     '仪式钩子')
 
 open(HTML, 'w', encoding='utf-8', newline='').write(s)
 print('NBA 选秀与签位抽签系统已应用：%d -> %d 字符（%+d）' % (orig, len(s), len(s) - orig))

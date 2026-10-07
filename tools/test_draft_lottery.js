@@ -103,10 +103,11 @@ module.exports = run('真实签位系统', ({ win, doc, check, errors, warns, ht
   sorted.slice(0, 6).forEach(x =>
     console.log('    %s  期望 %s%%  实测 %s%%', x.t.padEnd(8), (x.exp * 100).toFixed(2), (x.got * 100).toFixed(2)));
 
-  // ══ 端到端：签位信息真的出现在选秀夜场景里 ══
+  // ══ 端到端：抽签呈现路径（v4.27.0 起改为「揭晓页逐位揭牌」，选秀夜不再剧透） ══
   const night = JSON.parse(win.eval('JSON.stringify(evDraftNight())'));
-  check('选秀夜场景带上了乐透抽签结果', /本届乐透抽签/.test(night.scene), (night.scene || '').slice(0, 60));
-  check('抽签结果里有状元签归属与概率', /状元签 .+（\d/.test(night.scene));
+  check('选秀夜场景不再提前剧透抽签结果', !/本届乐透抽签/.test(night.scene), (night.scene || '').slice(0, 60));
+  const lottoTxt = win.eval('lottoText(ensureDraft().draw,ensureDraft().slot)');
+  check('抽签文案仍有状元签归属与概率（揭晓页/播报同源）', /状元签 .+（\d/.test(String(lottoTxt)), String(lottoTxt).slice(0, 60));
   const combine = JSON.parse(win.eval('JSON.stringify(evDraftCombine())'));
   check('联合试训场景仍正常（未受改动影响）', /选前行情/.test(combine.scene));
 

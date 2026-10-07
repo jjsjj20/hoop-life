@@ -6,7 +6,8 @@
  * ⑤ 新秀首季保留 rk 参评标记（worldTick 清标不误伤刚选中的新秀）
  * ⑥ 非 NBA 球员的休赛期不出现这两个页面
  * ⑦ 班底名字构成：中国面孔稀少（约 4%，v4.26.1）
- * ⑧ 逐位揭晓（v4.26.2）：抽签从状元签逐个揭牌、选秀从第 1 顺位逐位宣布，进度可续 */
+ * ⑧ 逐位揭晓（v4.26.2）：抽签从状元签逐个揭牌、选秀从第 1 顺位逐位宣布，进度可续
+ * ⑨ 玩家参选仪式（v4.27.0）：选秀夜 → 抽签揭牌 → 逐位念到本人（或念完落选）→ 结果页 */
 const { run } = require('./testkit');
 
 module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
@@ -118,4 +119,62 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   /* ── ⑦ 班底名字构成：中国面孔稀少（v4.26.1；300 抽样期望 12，上界 30） ── */
   const cnCnt = win.eval(`(function(){let c=0;for(let i=0;i<300;i++){if(/[\\u4e00-\\u9fa5]/.test(draftProspect().n))c++;}return c;})()`);
   check('中国球员存在但稀少（1~30 / 300，约 4%）', cnCnt >= 1 && cnCnt <= 30, String(cnCnt));
+
+  /* ── ⑧ 玩家参选仪式：场景一「落选」（stock=72 → 顺位必 >60） ── */
+  const nightScene = win.eval(`
+    S.age=20; S.league='CBA'; S.stage='summer'; S.retired=false;
+    S.team='广东华南虎'; S.teamStr=8; S.flags.undrafted=false;
+    S.draftPlans={};
+    const _d1=newDraft(); _d1.stock=72; S.draft=_d1;
+    evDraftNight().scene;
+  `);
+  check('选秀夜夜景不再提前剧透抽签', String(nightScene).indexOf('乐透抽签') < 0);
+  const worldPre1 = win.eval('S.world.nba.length');
+  win.eval('UI={mode:"event",ev:evDraftNight()};choose(0);');
+  check('落选场景：选秀夜 → 先进入抽签揭晓页（crm 随行）',
+    win.eval('UI.mode') === 'lottery' && win.eval('!!(UI.crm&&UI.crm.ev&&UI.crm.ev.id)') === true);
+  check('落选场景：确为落选（stock 72 被 cap 至 61+）', win.eval('S.flags.undrafted') === true);
+  win.eval('revealLottery();revealLottery();revealLottery();revealLottery();goDraftDay();');
+  check('仪式：抽签页走完 → 选秀大会页（crm 随行）',
+    win.eval('UI.mode') === 'draftday' && win.eval('!!UI.crm') === true);
+  check('落选场景：计划里没有 me 顺位', win.eval('draftPlanFor(curDraftYear()).picks.filter(p=>p.me).length') === 0);
+  win.eval('revealAllPicks();');
+  const cx1 = doc.querySelector('#stage').textContent;
+  check('落选场景：60 位念完出现「没有念到他」+ 继续', cx1.includes('没有念到他') && cx1.includes('继续 ▶'));
+  win.eval('finishDraftCeremony();');
+  check('落选场景：回到结果页（含落选播报）',
+    win.eval('UI.mode') === 'result' && win.eval('UI.ev.id') === 'draftNight' &&
+    win.eval('UI.changes.join("|")').indexOf('没有被念到') >= 0);
+  check('落选场景：60 名 NPC 新秀照常入队', win.eval('S.world.nba.length') - worldPre1 === 60,
+    String(win.eval('S.world.nba.length') - worldPre1));
+
+  /* ── ⑨ 玩家参选仪式：场景二「被念到名字」（stock=8 → 顺位 3~16） ── */
+  const worldPre2 = win.eval('S.world.nba.length');
+  win.eval(`
+    S.age=21; S.league='CBA'; S.stage='summer';
+    S.team='广东华南虎'; S.teamStr=8; S.flags.undrafted=false;
+    S.draftPlans={}; S.draft=null;
+    const _d2=newDraft(); _d2.stock=8; S.draft=_d2;
+    UI={mode:'event',ev:evDraftNight()};
+    choose(0);
+  `);
+  check('选秀场景：进入抽签揭晓页', win.eval('UI.mode') === 'lottery');
+  win.eval('revealLottery();revealLottery();revealLottery();revealLottery();goDraftDay();');
+  const meP = JSON.parse(win.eval('JSON.stringify(draftPlanFor(curDraftYear()).picks.filter(p=>p.me)[0]||null)'));
+  check('计划里插入玩家本人（me 标记 · 顺位 3~16）',
+    !!meP && meP.n === '选秀测试' && meP.pick >= 3 && meP.pick <= 16,
+    JSON.stringify(meP && { pick: meP.pick, team: meP.team }));
+  win.eval(`for(let k=0;k<${meP.pick};k++)revealPick();`);
+  check('逐位念到自己即定格', win.eval('UI.dr') === meP.pick, String(win.eval('UI.dr')));
+  const cx2 = doc.querySelector('#stage').textContent;
+  check('定格画面：「选择了你」+ 继续按钮', cx2.includes('选择了你') && cx2.includes('继续 ▶'));
+  win.eval('revealPick();');
+  check('到达本人顺位后不再越过（封顶）', win.eval('UI.dr') === meP.pick);
+  win.eval('finishDraftCeremony();');
+  check('被选中结果页回归（第 N 顺位播报 · 无重复乐透播报）',
+    win.eval('UI.mode') === 'result' &&
+    win.eval('UI.changes.join("|")').indexOf('选择了 选秀测试') >= 0 &&
+    win.eval('UI.changes.join("|")').indexOf('乐透抽签') < 0);
+  check('选秀场景：其余 59 签入队（玩家不在 NPC 名单里）', win.eval('S.world.nba.length') - worldPre2 === 59,
+    String(win.eval('S.world.nba.length') - worldPre2));
 });
