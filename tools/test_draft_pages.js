@@ -5,7 +5,8 @@
  * ④ 选秀 60 顺位全部落定；选中的球员写入球队名单（含玩家参选路径）
  * ⑤ 新秀首季保留 rk 参评标记（worldTick 清标不误伤刚选中的新秀）
  * ⑥ 非 NBA 球员的休赛期不出现这两个页面
- * ⑦ 班底名字构成：中国面孔稀少（约 4%，v4.26.1） */
+ * ⑦ 班底名字构成：中国面孔稀少（约 4%，v4.26.1）
+ * ⑧ 逐位揭晓（v4.26.2）：抽签从状元签逐个揭牌、选秀从第 1 顺位逐位宣布，进度可续 */
 const { run } = require('./testkit');
 
 module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
@@ -45,11 +46,20 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
     return a===b&&JSON.stringify(a.order)===JSON.stringify(b.order)&&JSON.stringify(a.draw)===JSON.stringify(b.draw);})()`);
   check('同一届签位表只生成一份（两次取到同一对象）', samePlan === true);
 
-  /* ── 抽签页渲染 ── */
+  /* ── 抽签页渲染：逐位揭牌（v4.26.2） ── */
   win.eval('renderGame();');
-  const stage1 = doc.querySelector('#stage').textContent;
-  check('抽签页：标题 / 球队 / 前往选秀按钮就位',
-    stage1.includes('选秀抽签') && stage1.includes('前往选秀大会') && stage1.includes(snap.draw[0].team));
+  let st = doc.querySelector('#stage').textContent;
+  const hitCount = () => (doc.querySelector('#stage').textContent.match(/概率命中/g) || []).length;
+  check('抽签页初始：四签全部「？？？」，按钮=揭晓状元签',
+    st.includes('选秀抽签') && (st.match(/？？？/g) || []).length === 4 && st.includes('揭晓状元签') && hitCount() === 0);
+  win.eval('revealLottery();');
+  check('揭牌一次：状元签出现、按钮切到榜眼签',
+    hitCount() === 1 && doc.querySelector('#stage').textContent.includes('揭晓榜眼签'));
+  check('揭晓进度写入 UI（存档可续）', win.eval('UI.lr') === 1, String(win.eval('UI.lr')));
+  win.eval('revealLottery();revealLottery();revealLottery();');
+  st = doc.querySelector('#stage').textContent;
+  check('四签揭完：出现「前往选秀大会」+ 最终顺位标注',
+    hitCount() === 4 && st.includes('前往选秀大会') && st.includes('第14顺位'));
 
   /* ── ④ 选秀大会：60 顺位全部落定并写入名单 ── */
   const worldBefore = win.eval('S.world.nba.length');
@@ -66,11 +76,19 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
     return S.world.nba.some(w=>w.t===p.team&&w.n===p.n&&w.pot!=null&&w.a>=19&&w.a<=23&&w.pend===1);})()`);
   check('状元签选中的人出现在该队名单（带潜力/年龄/入行标记）', inRoster === true);
 
-  /* 选秀页渲染 */
-  win.eval('renderGame();');
-  const stage2 = doc.querySelector('#stage').textContent;
-  check('选秀页：标题 / 首轮 / 次轮 / 状元名字就位',
-    stage2.includes('选秀大会') && stage2.includes('首轮（1-30）') && stage2.includes('次轮（31-60）') && stage2.includes(topPick.n));
+  /* 选秀页渲染：逐位宣布（v4.26.2） */
+  st = doc.querySelector('#stage').textContent;
+  check('选秀页初始：0/60，尚未公布任何名字',
+    st.includes('选秀大会') && st.includes('已公布 0 / 60') && st.includes('宣布第 1 顺位'));
+  check('初始状态不泄露顺位结果', !st.includes('#1 ') && !st.includes(topPick.n));
+  win.eval('revealPick();');
+  st = doc.querySelector('#stage').textContent;
+  check('宣布一次 → 状元（#1）出现、进度 1/60',
+    st.includes('已公布 1 / 60') && st.includes('#1 ') && st.includes(topPick.n) && st.includes('宣布第 2 顺位'));
+  win.eval('revealAllPicks();');
+  st = doc.querySelector('#stage').textContent;
+  check('直接看完全部 → 首轮/次轮全表 + 进入下一年',
+    st.includes('首轮（1-30）') && st.includes('次轮（31-60）') && st.includes('进入下一年') && st.includes(plan2.picks[59].n));
 
   /* ── ⑤ 新秀标记：进入下一年后 rk 保留 ── */
   win.eval('nextYear();');

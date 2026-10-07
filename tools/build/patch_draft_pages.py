@@ -27,6 +27,11 @@ hoop-life 改造 step 36：NBA 选秀与签位抽签系统（v4.26.0）
 
 【v4.26.1】游玩反馈「NBA 选秀中的中国人太多了」：班底名字构成从 28% 中国名
   （每届约 17 人）降到 4%（每届约 1~3 人）——NBA 背景以欧美球员为主。
+
+【v4.26.2】游玩反馈「想要名单一个一个出」：两个页面改为逐位揭晓——
+  抽签：从状元签开始点一次揭一位（？？？→球队），四签揭完才排定 1-14 与按钮；
+  选秀：从第 1 顺位开始逐位宣布（最新的在最上面），另给「直接看完全部」跳过；
+  揭晓进度（UI.lr / UI.dr）随存档保存，中途退出回来接着出。
 """
 import os
 
@@ -115,7 +120,7 @@ function resolveDraftInto(order,myPick,me){
 function seasonNext(){
   if(!S.retired&&S.league==='NBA'&&S.age<45){
     const plan=draftPlanFor(curDraftYear());
-    if(!plan.resolved){UI={mode:'lottery',dy:plan.y};save();renderGame();return;}
+    if(!plan.resolved){UI={mode:'lottery',dy:plan.y,lr:0};save();renderGame();return;}
   }
   nextYear();
 }
@@ -126,51 +131,86 @@ function goDraftDay(){
     plan.picks=resolveDraftInto(plan.order,null,null).picks;
     plan.resolved=true;save();
   }
-  UI={mode:'draftday',dy:plan.y};save();renderGame();
+  UI={mode:'draftday',dy:plan.y,dr:0};save();renderGame();
 }
-/* ① 签位抽签页：乐透区 14 队的战绩 × 状元签概率 × 抽签结果 */
+/* 逐位揭晓（v4.26.2）：抽签从状元签开始一个个揭牌；选秀从第 1 顺位一个个念 */
+function revealLottery(){
+  const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
+  if(!plan)return;
+  if((UI.lr||0)<plan.draw.length){UI.lr=(UI.lr||0)+1;try{sfx('draft');}catch(e){}}
+  save();renderGame();
+}
+function revealPick(){
+  const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
+  if(!plan||!plan.picks)return;
+  if(UI.dr==null)UI.dr=0;
+  if(UI.dr<plan.picks.length){UI.dr++;try{sfx('draft');}catch(e){}}
+  save();renderGame();
+}
+function revealAllPicks(){
+  const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
+  if(!plan||!plan.picks)return;
+  UI.dr=plan.picks.length;save();renderGame();
+}
+/* ① 签位抽签页：从状元签开始逐一揭牌（？？？→球队），揭完四签才排定 1-14 */
 function renderLottery(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   const box=$('#stage');
   if(!plan){box.innerHTML='<div class="mini">选秀计划数据缺失。</div><button class="btn" onclick="nextYear()">继续 ▶</button>';return;}
+  if(UI.lr==null)UI.lr=0;
   const slot=plan.slot||['状元签','榜眼签','探花签','第四顺位'];
   const myT=myTeamName();
+  const done=UI.lr>=plan.draw.length;
   const rec=t=>{const r=plan.recs&&plan.recs[t];return r?(r.w+'胜'+r.l+'负'):'—';};
-  const rows=plan.order.slice(0,14).map((t,i)=>
-    '<div class="tr'+(t===myT?' me':'')+'"><span class="rk'+(i<3?(' g'+(i+1)):'')+'">'+(i+1)+'</span>'+
+  /* 揭榜区：状元签 → 第四顺位，点一次出一位 */
+  const drawRows=plan.draw.map((d,i)=>'<div class="row"><span>'+['🥇 状元签','🥈 榜眼签','🥉 探花签','4️⃣ 第四顺位'][i]+'</span><b>'+
+    (i<UI.lr?(esc(d.team)+'（'+Math.round(d.p*10)/10+'% 概率命中）'):'？？？')+'</b></div>').join('');
+  /* 乐透区表：始终按「战绩倒序（机会大小）」排；全部揭晓后再标注最终顺位 */
+  const pickOf={};plan.order.slice(0,14).forEach((t,i)=>{pickOf[t]=i+1;});
+  const rows=plan.lotto.map((t,i)=>
+    '<div class="tr'+(t===myT?' me':'')+'"><span class="rk'+(done&&pickOf[t]<=3?(' g'+pickOf[t]):'')+'">'+(done?pickOf[t]:(i+1))+'</span>'+
     '<span class="tm">'+crestOf(t)+esc(t)+(t===myT?' （你）':'')+'</span>'+
     '<span class="rec">'+rec(t)+'</span>'+
-    '<span class="pb"><i style="width:'+Math.round(NBA_LOTTO_ODDS[plan.lotto.indexOf(t)]||0)+'%"></i></span>'+
-    (i<4?('<span class="tg gold">'+slot[i]+'</span>'):'')+'</div>').join('');
+    '<span class="pb"><i style="width:'+Math.round(NBA_LOTTO_ODDS[i]||0)+'%"></i></span>'+
+    (done?('<span class="tg gold">'+(pickOf[t]<=4?slot[pickOf[t]-1]:('第'+pickOf[t]+'顺位'))+'</span>'):'')+'</div>').join('');
   const rest=plan.order.slice(14,30);
   box.innerHTML='<div class="etitle">🎱 六月 · 选秀抽签大会</div>'+
-  '<div class="summ"><h3>乐透区 · 14 队</h3>'+
-  '<div class="mini">战绩越差 → 状元签概率越高；抽签结果决定第 1-14 号签的归属。</div>'+
-  rows+
+  '<div class="summ"><h3>抽签现场</h3>'+drawRows+
+  (done?'<div class="mini">抽签完毕——第 1-14 号签的归属已全部排定。</div>'
+       :'<div class="mini">从状元签开始，点一次揭晓一位。</div>')+'</div>'+
+  '<div class="summ"><h3>乐透区 · 14 队（按战绩倒序 · 机会大小）</h3>'+rows+
   '<div class="mini" style="margin-top:8px">15-30 号签：未进乐透的 16 队按战绩倒序——'+
   rest.map((t,i)=>((i+15)+'.'+esc(t))).join('　')+'</div></div>'+
-  '<div class="summ"><h3>抽签结果</h3>'+
-  plan.draw.map((d,i)=>'<div class="row"><span>'+['🥇 状元签','🥈 榜眼签','🥉 探花签','4️⃣ 第四顺位'][i]+'</span><b>'+esc(d.team)+'（'+Math.round(d.p*10)/10+'% 概率命中）</b></div>').join('')+
-  '<div class="mini">接下来：各队在选秀大会上按这份签位表挑选新秀。</div></div>'+
-  '<button class="btn" onclick="goDraftDay()">前往选秀大会 ▶</button>';
+  (done?'<button class="btn" onclick="goDraftDay()">前往选秀大会 ▶</button>'
+       :'<button class="btn" onclick="revealLottery()">揭晓'+slot[UI.lr]+' ▶</button>');
 }
-/* ② 选秀大会页：60 顺位逐签结果 + 新秀入队播报 */
+/* ② 选秀大会页：从第 1 顺位开始逐位宣布；最新的在最上面，可选「直接看完全部」 */
 function renderDraftDay(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   const box=$('#stage');
   if(!plan||!plan.resolved||!plan.picks){box.innerHTML='<div class="mini">本届选秀尚未结算。</div><button class="btn" onclick="nextYear()">继续 ▶</button>';return;}
+  if(UI.dr==null)UI.dr=0;
   const myT=myTeamName();
+  const all=plan.picks,done=UI.dr>=all.length;
   const line=p=>{const mine=p.team===myT;
     return '<div class="mini" style="line-height:1.9">'+(mine?'<b style="color:var(--gold)">':'')+
       '#'+p.pick+' <b>'+esc(p.team)+'</b> —— '+esc(p.n)+' <span style="opacity:.65">'+p.p+' · 综合 '+p.o+' · '+p.a+'岁</span>'+(mine?'（你队）</b>':'')+'</div>';};
-  const top3=plan.picks.slice(0,3);
-  box.innerHTML='<div class="etitle">🎓 六月 · 选秀大会</div>'+
-  '<div class="summ"><h3>前三顺位</h3>'+
-  top3.map((p,i)=>'<div class="row"><span>'+['🥇 状元','🥈 榜眼','🥉 探花'][i]+'</span><b>'+esc(p.team)+' —— '+esc(p.n)+'（'+p.p+' · '+p.o+'）</b></div>').join('')+
-  '<div class="mini">60 个顺位全部落定；被选中的新秀已经进入对应球队的名单。</div></div>'+
-  '<div class="summ"><h3>首轮（1-30）</h3>'+plan.picks.slice(0,30).map(line).join('')+'</div>'+
-  '<div class="summ"><h3>次轮（31-60）</h3>'+plan.picks.slice(30,60).map(line).join('')+'</div>'+
-  '<button class="btn" onclick="nextYear()">休赛期结束 · 进入下一年 ▶</button>';
+  let body;
+  if(done){
+    body='<div class="summ"><h3>前三顺位</h3>'+
+    all.slice(0,3).map((p,i)=>'<div class="row"><span>'+['🥇 状元','🥈 榜眼','🥉 探花'][i]+'</span><b>'+esc(p.team)+' —— '+esc(p.n)+'（'+p.p+' · '+p.o+'）</b></div>').join('')+
+    '<div class="mini">60 个顺位全部落定；被选中的新秀已经进入对应球队的名单。</div></div>'+
+    '<div class="summ"><h3>首轮（1-30）</h3>'+all.slice(0,30).map(line).join('')+'</div>'+
+    '<div class="summ"><h3>次轮（31-60）</h3>'+all.slice(30,60).map(line).join('')+'</div>';
+  }else{
+    const latest=all.slice(0,UI.dr).reverse();
+    body='<div class="summ"><h3>已公布 '+UI.dr+' / '+all.length+' 位</h3>'+
+    (latest.length?latest.map(line).join(''):'<div class="mini">选秀大会开始——点下面的按钮，逐一宣布今年的新秀。</div>')+'</div>';
+  }
+  box.innerHTML='<div class="etitle">🎓 六月 · 选秀大会</div>'+body+
+  (done?'<button class="btn" onclick="nextYear()">休赛期结束 · 进入下一年 ▶</button>'
+       :'<button class="btn" onclick="revealPick()">宣布第 '+(UI.dr+1)+' 顺位 ▶</button>'+
+        '<button class="btn ghost" onclick="revealAllPicks()">直接看完全部 '+all.length+' 位</button>');
 }""",
      '选秀班底与两个页面')
 
