@@ -50,6 +50,15 @@ hoop-life 改造 step 36：NBA 选秀与签位抽签系统（v4.26.0）
       8~22（≤20 岁）/5~16——潜力均值 ~68 → 15 年漂移 +0.35，联盟稳定在既有水平；
     · 顺带收益：状元签期望最高、二轮尾是落选级，比平铺更真实；resolveDraftInto
       不再需要「按行情排序」，直接按顺位生成（与探针口径逐字一致）。
+
+【v4.27.2】游玩反馈两条：
+  ① 「玩家还没被选中就已经显示球队」——doDraft 在仪式前写入 S.team，顶栏/侧栏/
+     合同一直在剧透。修复：选秀夜暂存 S._preDraft，仪式未念到名字前 myTeamName/
+     teamLabel/contractLabel/renderTop 全部按原球队口径显示（crmMaskOn /
+     dispTeam 统一遮盖），finishDraftCeremony 清除暂存。
+  ② 「玩家综合 72 结果 35 顺位，NPC 综合 70 结果 6 顺位」——旧行情档位表是按
+     「平铺班底」校准的，与按顺位加权的新班底不同尺。修复：draftStockInit 改为
+     班底曲线逆函数 58-(o-40)/0.55 + 年龄修正（无随机），综合直接决定期望顺位。
 """
 import os
 
@@ -140,6 +149,17 @@ function resolveDraftForPlan(myPick,me){
   plan.picks=r.picks;plan.resolved=true;
   return r;
 }
+/* v4.27.2 防剧透：选秀仪式（UI.crm）在念到玩家名字之前，对外仍显示原球队——
+ * 顶栏/侧栏/阵容/合同全部走这三个helper，doDraft 提前写入的新球队不外泄。 */
+function crmRevealed(){
+  if(!UI||!UI.crm)return true;
+  const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
+  if(!plan||!plan.picks)return true;
+  const meP=plan.picks.filter(p=>p.me)[0];
+  return meP?((UI.dr||0)>=meP.pick):((UI.dr||0)>=plan.picks.length);
+}
+function crmMaskOn(){return !!(UI&&UI.crm&&!crmRevealed());}
+function dispTeam(){const p=crmMaskOn()?S._preDraft:null;return p?{team:(p.team||'待定'),league:p.league}:{team:(S.team||'待定'),league:S.league};}
 /* 休赛期序列：赛季页「进入下一年」先走两个页面（仅 NBA），再真进下一年 */
 function seasonNext(){
   if(!S.retired&&S.league==='NBA'&&S.age<45){
@@ -178,9 +198,11 @@ function revealAllPicks(){
   const meP=UI.crm?(plan.picks.filter(p=>p.me)[0]||null):null;
   UI.dr=meP?meP.pick:plan.picks.length;save();renderGame();
 }
-/* 仪式收尾（v4.27.0）：回到选秀夜原本的结果页（合同 / 顺位播报 / 落选文案都在 changes 里） */
+/* 仪式收尾（v4.27.0）：回到选秀夜原本的结果页（合同 / 顺位播报 / 落选文案都在 changes 里）；
+ * v4.27.2：同时清掉防剧透暂存——对外恢复显示新球队。 */
 function finishDraftCeremony(){
   const c=UI&&UI.crm;
+  S._preDraft=null;
   if(!c||!c.ev){UI={mode:'event',ev:safeEvent()};save();renderGame();return;}
   UI={mode:'result',ev:c.ev,chIdx:c.chIdx,changes:c.changes};
   save();renderGame();
@@ -369,6 +391,91 @@ sub1("""  UI={mode:'result',ev,chIdx:i,changes};
 }
 /* 一份季后赛结果的唯一构造点（v4.12 P4.2）。""",
      '仪式钩子')
+
+# ═══════════ 14. v4.27.2：行情与班底同尺（综合决定顺位）═══════════
+sub1("""function draftStockInit(){
+  const o=ovr(),age=S.age;let base;
+  /* v4.23.0 选秀门槛整体后移：同评分段的行情普遍差 4~12 位——NBA 不再是
+   * 「练到 70 分就保送」。真实链路实测（含试训加成与承诺救援，age 20 · 500 次）：
+   * 70~73 分 落选 0%→13~16% · 68 分 17%→51% · 64~66 分 65%→89~93%；
+   * 75~77 分 首轮率 36~40%→15%（顺位预期从中段滑到次轮）。 */
+  if(o>=86)base=R.float(4,12);
+  else if(o>=82)base=R.float(9,20);
+  else if(o>=78)base=R.float(15,28);
+  else if(o>=74)base=R.float(24,42);
+  else if(o>=70)base=R.float(33,55);
+  else if(o>=67)base=R.float(43,62);
+  else if(o>=64)base=R.float(53,70);
+  else base=R.float(61,76);
+  base+=age>=23?8:age>=22?5:age>=21?2:0;
+  if(age<=19)base-=2;
+  return clamp(Math.round(base),1,72);
+}""",
+     """function draftStockInit(){
+  /* v4.27.2：行情与班底同尺——班底曲线 o(pick)=40+(58-pick)×0.55 的逆函数：
+   * 综合 o 的期望顺位 ≈ 58-(o-40)/0.55。旧档位表是按「平铺班底」校准的，
+   * 与按顺位加权的新班底对不上（72 综合曾掉到 35 顺位、70 的 NPC 却走 6 顺位）。
+   * 试训涨跌/球队承诺/选秀夜噪音/顺位保护照旧。速查：72 ≈ 状元热门区、
+   * 64 ≈ 首轮中段、56 ≈ 次轮、≤43 ≈ 落选边缘。 */
+  const o=ovr(),age=S.age;
+  let base=58-(o-40)/0.55;
+  base+=age>=23?4:age>=22?3:age>=21?1:0;
+  if(age<=19)base-=1;
+  return clamp(Math.round(base),1,72);
+}""",
+     '选秀行情曲线')
+
+# ═══════════ 15. v4.27.2：仪式防剧透（显示层统一遮盖）═══════════
+sub1("function myTeamName(){return S.team;}",
+     "function myTeamName(){const p=crmMaskOn()?S._preDraft:null;return p?p.team:S.team;}",
+     'myTeamName 遮盖')
+
+sub1("""function teamLabel(){
+  if(S.trial)return S.trial.kind==='tenDay'?`${S.trial.team}（10天短合同）`:`${S.trial.team} 发展联盟`;
+  return (S.team||'待定')+' · '+LEAGUE_NAMES[S.league];
+}""",
+     """function teamLabel(){
+  if(S.trial)return S.trial.kind==='tenDay'?`${S.trial.team}（10天短合同）`:`${S.trial.team} 发展联盟`;
+  const _p=crmMaskOn()?S._preDraft:null;   /* v4.27.2：仪式未揭晓前显示原球队 */
+  if(_p)return (_p.team||'待定')+' · '+(LEAGUE_NAMES[_p.league]||'');
+  return (S.team||'待定')+' · '+LEAGUE_NAMES[S.league];
+}""",
+     'teamLabel 遮盖')
+
+sub1("""function contractLabel(){
+  if(!S)return '';
+  if(S.trial)return S.trial.kind==='tenDay'?'10天短合同':'发展联盟合同';
+  if(S.league==='青训')return '青训补贴';
+  if(S.league==='NCAA')return '大学奖学金';
+  if(!S.contract)return '自由球员';
+  return S.contract.team+' · €'+S.contract.wage+'万/年 · 剩'+S.contract.years+'年';
+}""",
+     """function contractLabel(){
+  if(!S)return '';
+  if(S.trial)return S.trial.kind==='tenDay'?'10天短合同':'发展联盟合同';
+  /* v4.27.2：仪式未揭晓前按原球队口径显示（防剧透） */
+  const _p=crmMaskOn()?S._preDraft:null;
+  if(_p){
+    if(_p.league==='青训')return '青训补贴';
+    if(_p.league==='NCAA')return '大学奖学金';
+    if(!_p.contract)return '自由球员';
+    return _p.contract.team+' · €'+_p.contract.wage+'万/年 · 剩'+_p.contract.years+'年';
+  }
+  if(S.league==='青训')return '青训补贴';
+  if(S.league==='NCAA')return '大学奖学金';
+  if(!S.contract)return '自由球员';
+  return S.contract.team+' · €'+S.contract.wage+'万/年 · 剩'+S.contract.years+'年';
+}""",
+     'contractLabel 遮盖')
+
+sub1("  const who={n:S.name,s:`${esc(S.team||'待定')} <span class=\"lg\">${LEAGUE_NAMES[S.league]||''}</span>`,v:ovr(),tag:'🏀 '+POS[S.pos].n.slice(0,2)};",
+     """  const _dt=dispTeam();
+  const who={n:S.name,s:`${esc(_dt.team)} <span class="lg">${LEAGUE_NAMES[_dt.league]||''}</span>`,v:ovr(),tag:'🏀 '+POS[S.pos].n.slice(0,2)};""",
+     'renderTop 遮盖')
+
+sub1("  S.team=team;S.teamStr=mt;S.league='NBA';S.ts=2;S.value=baseValue();\n  if(!S.played.includes(S.team))S.played.push(S.team);\n  const years=r1?4:3;",
+     "  S._preDraft={team:S.team,teamStr:S.teamStr,ts:S.ts,league:S.league,contract:S.contract};   /* v4.27.2：仪式期间对外仍显示原球队（防剧透） */\n  S.team=team;S.teamStr=mt;S.league='NBA';S.ts=2;S.value=baseValue();\n  if(!S.played.includes(S.team))S.played.push(S.team);\n  const years=r1?4:3;",
+     '选秀夜暂存原球队')
 
 open(HTML, 'w', encoding='utf-8', newline='').write(s)
 print('NBA 选秀与签位抽签系统已应用：%d -> %d 字符（%+d）' % (orig, len(s), len(s) - orig))

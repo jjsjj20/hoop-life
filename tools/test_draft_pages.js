@@ -172,13 +172,18 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   check('计划里插入玩家本人（me 标记 · 顺位 3~16）',
     !!meP && meP.n === '选秀测试' && meP.pick >= 3 && meP.pick <= 16,
     JSON.stringify(meP && { pick: meP.pick, team: meP.team }));
+  check('防剧透：念到之前对外仍显示原球队（顶栏/侧栏/阵容同源）',
+    win.eval('myTeamName()') === '广东华南虎' && win.eval('teamLabel()').indexOf('广东华南虎') >= 0,
+    String(win.eval('teamLabel()')));
   win.eval(`for(let k=0;k<${meP.pick};k++)revealPick();`);
   check('逐位念到自己即定格', win.eval('UI.dr') === meP.pick, String(win.eval('UI.dr')));
+  check('揭晓后对外恢复新球队', win.eval('myTeamName()') === meP.team, String(win.eval('myTeamName()')));
   const cx2 = doc.querySelector('#stage').textContent;
   check('定格画面：「选择了你」+ 继续按钮', cx2.includes('选择了你') && cx2.includes('继续 ▶'));
   win.eval('revealPick();');
   check('到达本人顺位后不再越过（封顶）', win.eval('UI.dr') === meP.pick);
   win.eval('finishDraftCeremony();');
+  check('仪式收尾清掉防剧透暂存', win.eval('!S._preDraft') === true);
   check('被选中结果页回归（第 N 顺位播报 · 无重复乐透播报）',
     win.eval('UI.mode') === 'result' &&
     win.eval('UI.changes.join("|")').indexOf('选择了 选秀测试') >= 0 &&
