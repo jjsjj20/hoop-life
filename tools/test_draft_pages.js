@@ -5,9 +5,8 @@
  * ④ 选秀 60 顺位全部落定；选中的球员写入球队名单（含玩家参选路径）
  * ⑤ 新秀首季保留 rk 参评标记（worldTick 清标不误伤刚选中的新秀）
  * ⑥ 非 NBA 球员的休赛期不出现这两个页面
- * ⑦ 班底名字构成：中国面孔稀少（约 4%，v4.26.1）
- * ⑧ 逐位揭晓（v4.26.2）：抽签从状元签逐个揭牌、选秀从第 1 顺位逐位宣布，进度可续
- * ⑨ 玩家参选仪式（v4.27.0）：选秀夜 → 抽签揭牌 → 逐位念到本人（或念完落选）→ 结果页 */
+ * ⑦ 班底组成：中国面孔稀少（约 4%）· 按顺位加权 · 整体降格（v4.26.1 / v4.27.1）
+ * ⑧ 玩家参选仪式（v4.27.0）：选秀夜 → 抽签揭牌 → 逐位念到本人（或念完落选）→ 结果页 */
 const { run } = require('./testkit');
 
 module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
@@ -119,6 +118,15 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   /* ── ⑦ 班底名字构成：中国面孔稀少（v4.26.1；300 抽样期望 12，上界 30） ── */
   const cnCnt = win.eval(`(function(){let c=0;for(let i=0;i<300;i++){if(/[\\u4e00-\\u9fa5]/.test(draftProspect().n))c++;}return c;})()`);
   check('中国球员存在但稀少（1~30 / 300，约 4%）', cnCnt >= 1 && cnCnt <= 30, String(cnCnt));
+
+  /* ── ⑦b 班底按顺位加权 + 整体降格（v4.27.1 膨胀平衡修复） ── */
+  const curve = JSON.parse(win.eval(`JSON.stringify((function(){
+    let a=0,b=0;for(let k=0;k<200;k++){a+=draftProspect(3).o;b+=draftProspect(55).o;}
+    return {a:Math.round(a/200*10)/10,b:Math.round(b/200*10)/10};
+  })())`));
+  check('班底按顺位加权（探花期望 − 55 号期望 ≥ 15）', curve.a - curve.b >= 15, `探花 ${curve.a} vs 55号 ${curve.b}`);
+  const classAvgO = win.eval(`(function(){let s=0,n=0;for(let r=0;r<10;r++)for(let pk=1;pk<=60;pk++){s+=draftProspect(pk).o;n++;}return Math.round(s/n*10)/10;})()`);
+  check('班底整体降格（全届平均能力 48~62）', classAvgO >= 48 && classAvgO <= 62, String(classAvgO));
 
   /* ── ⑧ 玩家参选仪式：场景一「落选」（stock=72 → 顺位必 >60） ── */
   const nightScene = win.eval(`

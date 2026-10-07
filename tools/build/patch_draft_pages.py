@@ -40,6 +40,16 @@ hoop-life 改造 step 36：NBA 选秀与签位抽签系统（v4.26.0）
     → 念到玩家顺位定格（fanfare）或 60 位念完（落选）→ 恢复原结果页（合同等）；
   · 仪式数据挂在 UI.crm（含原事件与 changes），随存档持久化可续；
   · 选秀夜夜景与结果页不再重复播报乐透抽签（改由揭牌页呈现）。
+
+【v4.27.1】游玩反馈「选秀导致联盟实力膨胀」。15 年世界演化探针实测（每年 60 人注入 +
+  nextYear 全流程）：平铺 56~80 + 大潜力房（均值 ~87）把联盟从 73.2 灌到 86.1（+12.9）、
+  30 队实力全部顶死在 9.75（天花板）。两轮对照实验结论：
+    · 主因 = 入口潜力均值（均衡值 ≈ 班底潜力均值×0.55 + 36.6），与「留队价值的选择
+      偏差」无关（削弱选择后 +5.55 / 纯能力裁员 +6.91，反而更胀）；
+    · 修复 = 班底整体降格 + 按顺位加权（E2 版）：o=40+(58−pick)×0.55±5、潜力房
+      8~22（≤20 岁）/5~16——潜力均值 ~68 → 15 年漂移 +0.35，联盟稳定在既有水平；
+    · 顺带收益：状元签期望最高、二轮尾是落选级，比平铺更真实；resolveDraftInto
+      不再需要「按行情排序」，直接按顺位生成（与探针口径逐字一致）。
 """
 import os
 
@@ -65,10 +75,15 @@ sub1("function genDraftClass(){const c=[];for(let i=0;i<59;i++)c.push({n:R.chanc
  *   →【选秀大会】60 个顺位逐签落定，选中的新秀写入球队名单 → 新赛季开启。
  * 数据关联：一届只有一份签位表（draftPlanFor 按年缓存）——抽签页、选秀页、
  * 选秀夜公告读同一份；页面展示的战绩与抽签用的是同一张战绩表。 */
-function draftProspect(){
-  const o=R.int(56,80);
+function draftProspect(pick){
+  /* v4.27.1 平衡：按顺位加权 + 整体降格。老版平铺 56~80、潜力均值 ~87 会把联盟
+   * 15 年灌到平均能力 86 / 30 队实力全部顶格（探针实测 +12.9）——均衡值 ≈ 班底
+   * 潜力均值×0.55+36.6，本版潜力均值 ~68 → 15 年漂移 +0.35，停在既有水平。
+   * 而「留队价值的选择偏差」经对照实验证明不是主因，未动。 */
+  const pk=clamp(pick||30,1,60);
+  const o=clamp(Math.round(40+(58-pk)*0.55+R.float(-5,5)),38,84);
   const a=R.int(19,22);
-  const room=(a<=20)?R.int(12,30):R.int(8,24);
+  const room=(a<=20)?R.int(8,22):R.int(5,16);
   /* 名字构成（v4.26.1）：NBA 选秀班底以欧美球员为主，中国面孔约 4%——
    * 每届 60 人里 1~3 位中国新秀，偶尔出现，符合现实观感。 */
   return {n:R.chance(.96)?genWest():genCN(),p:R.pick(Object.keys(POS)),o:o,a:a,
@@ -95,19 +110,13 @@ function draftSignRookie(team,pr){
     ts:((TEAMS.nba.find(x=>x[0]===team)||[,'6'])[1]),role:'bench',rk:1,pend:1});
 }
 /* 逐签解析一届选秀：60 顺位（两轮）全部落位——含交易签与保护回退；
- * 班底先按行情排序（能力 + 潜力 + 噪音），最好的新秀先被选走；
+ * 班底按顺位生成（v4.27.1：状元签期望最高、二轮尾是落选级，不再整体排序）；
  * 玩家参选时把玩家插在第 myPick 位，其余顺位由班底补齐。 */
 function resolveDraftInto(order,myPick,me){
   const y=curDraftYear();
   ensurePickBoard();
   const own1=draftOwnership('nba',order,y);
-  const cls=[];
-  for(let i=0;i<60;i++)cls.push(draftProspect());
-  cls.forEach(p=>{p._sc=p.o+p.pot*.5+R.float(-6,6);});
-  cls.sort((a,b)=>b._sc-a._sc);
-  cls.forEach(p=>{delete p._sc;});
   const picks=[];
-  let j=0;
   for(let i=1;i<=60;i++){
     const slotTeam=teamAtPick(order,i);
     const r1=i<=30;
@@ -117,7 +126,7 @@ function resolveDraftInto(order,myPick,me){
       picks.push({pick:i,team:team,orig:slotTeam,owner:team,reverted:!!(so&&so.reverted),
         n:me.name,p:me.pos,o:me.ovr,a:me.age,me:true});
     }else{
-      const pr=cls[j++];
+      const pr=draftProspect(i);
       draftSignRookie(team,pr);
       picks.push({pick:i,team:team,orig:slotTeam,owner:team,reverted:!!(so&&so.reverted),n:pr.n,p:pr.p,o:pr.o,a:pr.a});
     }
