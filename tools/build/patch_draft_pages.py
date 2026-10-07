@@ -59,6 +59,12 @@ hoop-life 改造 step 36：NBA 选秀与签位抽签系统（v4.26.0）
   ② 「玩家综合 72 结果 35 顺位，NPC 综合 70 结果 6 顺位」——旧行情档位表是按
      「平铺班底」校准的，与按顺位加权的新班底不同尺。修复：draftStockInit 改为
      班底曲线逆函数 58-(o-40)/0.55 + 年龄修正（无随机），综合直接决定期望顺位。
+
+【v4.27.3】游玩反馈「新秀第一个赛季结束之后不会显示选秀与签位抽签」：
+  根因=键冲突——玩家参选年份与「新秀赛季结束后的休赛期」同岁（年龄在赛季末才 +1），
+  seasonNext 取 draftPlanFor(curDraftYear()) 命中了参选年已被仪式 resolved 的计划，
+  两个页面被整段吞掉。修复：联盟页面改用「下一届」键 curDraftYear()+1（每届一键、
+  永不复用）；resolveDraftForPlan 改为显式传计划（参选路径传参选年键、联盟传 UI.dy 计划）。
 """
 import os
 
@@ -142,11 +148,12 @@ function resolveDraftInto(order,myPick,me){
   }
   return {y:y,picks:picks};
 }
-/* 结算本届并把结果写回年度计划（v4.27.0：玩家选秀夜与联盟选秀共用同一份） */
-function resolveDraftForPlan(myPick,me){
-  const plan=draftPlanFor(curDraftYear());
-  const r=resolveDraftInto(plan.order,myPick,me);
-  plan.picks=r.picks;plan.resolved=true;
+/* 结算本届并把结果写回年度计划（v4.27.0：玩家选秀夜与联盟选秀共用同一份；
+ * v4.27.3：支持显式传入计划——联盟页面按「下一届」键取计划，不再依赖默认键） */
+function resolveDraftForPlan(plan,myPick,me){
+  const p=plan||draftPlanFor(curDraftYear());
+  const r=resolveDraftInto(p.order,myPick,me);
+  p.picks=r.picks;p.resolved=true;
   return r;
 }
 /* v4.27.2 防剧透：选秀仪式（UI.crm）在念到玩家名字之前，对外仍显示原球队——
@@ -163,7 +170,10 @@ function dispTeam(){const p=crmMaskOn()?S._preDraft:null;return p?{team:(p.team|
 /* 休赛期序列：赛季页「进入下一年」先走两个页面（仅 NBA），再真进下一年 */
 function seasonNext(){
   if(!S.retired&&S.league==='NBA'&&S.age<45){
-    const plan=draftPlanFor(curDraftYear());
+    /* v4.27.3：用「下一届」键（+1）——玩家参选年份与「新秀赛季结束后的休赛期」
+     * 同岁（年龄在赛季末才 +1），同键会命中参选年已 resolved 的计划、把页面吞掉；
+     * +1 后每一届各有一个键，永不复用。 */
+    const plan=draftPlanFor(curDraftYear()+1);
     if(!plan.resolved){UI={mode:'lottery',dy:plan.y,lr:0};save();renderGame();return;}
   }
   nextYear();
@@ -172,7 +182,7 @@ function goDraftDay(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   if(!plan){nextYear();return;}
   if(!plan.resolved){
-    resolveDraftForPlan();save();
+    resolveDraftForPlan(plan);save();
   }
   UI={mode:'draftday',dy:plan.y,dr:0,crm:UI.crm||null};save();renderGame();
 }
@@ -354,11 +364,11 @@ sub1("""  if(!S.draft.order||S.draft.order.length!==TEAMS.nba.length||S.draft.y!
 
 # ═══════════ 11. 选秀夜结算写回年度计划 + 去掉重复播报 ═══════════
 sub1("    resolveDraftInto(d.order);   /* v4.26.0：落选不影响本届其余顺位照常落位入队 */",
-     "    resolveDraftForPlan();   /* v4.27.0：落选不影响本届其余顺位照常落位入队，结果写回年度计划 */",
+     "    resolveDraftForPlan(draftPlanFor(curDraftYear()));   /* v4.27.3：显式传计划（参选年键） */",
      '落选写回')
 
 sub1("  const _dr=resolveDraftInto(d.order,pick,{name:S.name,pos:S.pos,ovr:o,age:S.age});   /* v4.26.0：本届全部顺位落定，新秀入队 */",
-     "  const _dr=resolveDraftForPlan(pick,{name:S.name,pos:S.pos,ovr:o,age:S.age});   /* v4.27.0：本届全部顺位落定，结果写回年度计划 */",
+     "  const _dr=resolveDraftForPlan(draftPlanFor(curDraftYear()),pick,{name:S.name,pos:S.pos,ovr:o,age:S.age});   /* v4.27.3：显式传计划（参选年键） */",
      '玩家结算写回')
 
 sub1("  if(pick!==1){const _lt=lottoText(d.draw,d.slot);if(_lt)changes.push('🎯 '+_lt);}",

@@ -6,7 +6,8 @@
  * ⑤ 新秀首季保留 rk 参评标记（worldTick 清标不误伤刚选中的新秀）
  * ⑥ 非 NBA 球员的休赛期不出现这两个页面
  * ⑦ 班底组成：中国面孔稀少（约 4%）· 按顺位加权 · 整体降格（v4.26.1 / v4.27.1）
- * ⑧ 玩家参选仪式（v4.27.0）：选秀夜 → 抽签揭牌 → 逐位念到本人（或念完落选）→ 结果页 */
+ * ⑧ 玩家参选仪式（v4.27.0）：选秀夜 → 抽签揭牌 → 逐位念到本人（或念完落选）→ 结果页
+ * ⑨ 新秀赛季结束后的选秀页面仍会出现（v4.27.3 键冲突回归） */
 const { run } = require('./testkit');
 
 module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
@@ -27,7 +28,7 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   /* ── ② 抽签由常规赛战绩决定 ── */
   const snap = JSON.parse(win.eval(`JSON.stringify((function(){
     const w={};computeStandings('nba').forEach(r=>{w[r.team]=r.wins;});
-    const plan=draftPlanFor(curDraftYear());
+    const plan=S.draftPlans[String(UI.dy)];   /* v4.27.3：联盟页面按「下一届」键存计划，直接取 UI.dy 那份 */
     return {wins:w,order:plan.order,lotto:plan.lotto,draw:plan.draw,recs:Object.keys(plan.recs).length};
   })())`));
   const wOf = t => snap.wins[t];
@@ -42,7 +43,7 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   check('页面战绩快照覆盖 30 队（与抽签同源）', snap.recs === 30, String(snap.recs));
 
   /* ── ③ 年内幂等：再取还是同一份 ── */
-  const samePlan = win.eval(`(function(){const a=draftPlanFor(curDraftYear()),b=draftPlanFor(curDraftYear());
+  const samePlan = win.eval(`(function(){const k=Number(UI.dy);const a=draftPlanFor(k),b=draftPlanFor(k);
     return a===b&&JSON.stringify(a.order)===JSON.stringify(b.order)&&JSON.stringify(a.draw)===JSON.stringify(b.draw);})()`);
   check('同一届签位表只生成一份（两次取到同一对象）', samePlan === true);
 
@@ -66,13 +67,13 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   win.eval('goDraftDay();');
   const m2 = win.eval('UI.mode');
   check('抽签页之后是选秀大会页（顺序正确）', m2 === 'draftday', String(m2));
-  const plan2 = JSON.parse(win.eval('JSON.stringify(draftPlanFor(curDraftYear()))'));
+  const plan2 = JSON.parse(win.eval('JSON.stringify(S.draftPlans[String(UI.dy)])'));
   check('本届 60 签全部落定', plan2.picks.length === 60 && plan2.resolved === true);
   check('每签都有合法球队与球员', plan2.picks.every(p => nbaTeams.includes(p.team) && !!p.n && !!p.p));
   const worldAfter = win.eval('S.world.nba.length');
   check('60 名新秀全部写入名单', worldAfter - worldBefore === 60, `${worldBefore} → ${worldAfter}`);
   const topPick = plan2.picks[0];
-  const inRoster = win.eval(`(function(){const p=draftPlanFor(curDraftYear()).picks[0];
+  const inRoster = win.eval(`(function(){const p=S.draftPlans[String(UI.dy)].picks[0];
     return S.world.nba.some(w=>w.t===p.team&&w.n===p.n&&w.pot!=null&&w.a>=19&&w.a<=23&&w.pend===1);})()`);
   check('状元签选中的人出现在该队名单（带潜力/年龄/入行标记）', inRoster === true);
 
@@ -190,4 +191,15 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
     win.eval('UI.changes.join("|")').indexOf('乐透抽签') < 0);
   check('选秀场景：其余 59 签入队（玩家不在 NPC 名单里）', win.eval('S.world.nba.length') - worldPre2 === 59,
     String(win.eval('S.world.nba.length') - worldPre2));
+
+  /* ── ⑩ 新秀赛季结束后的选秀页面（v4.27.3 键冲突回归） ── */
+  const declareKey = win.eval('String(curDraftYear())');   /* 参选年（已被仪式 resolved） */
+  win.eval("S.stage='playoffs';");
+  win.eval('seasonNext();');
+  check('新秀赛季结束后仍进入签位抽签页（不再被吞）', win.eval('UI.mode') === 'lottery', String(win.eval('UI.mode')));
+  check('是新一届（计划键 ≠ 参选年）', win.eval('String(UI.dy)') !== declareKey,
+    `${win.eval('String(UI.dy)')} vs 参选年 ${declareKey}`);
+  check('新一届计划未结算（不是参选年旧计划）', win.eval('!S.draftPlans[String(UI.dy)].resolved') === true);
+  win.eval('revealLottery();revealLottery();revealLottery();revealLottery();goDraftDay();');
+  check('新一届可正常揭晓进入选秀大会', win.eval('UI.mode') === 'draftday');
 });

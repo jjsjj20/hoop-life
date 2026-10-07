@@ -6450,11 +6450,12 @@ function resolveDraftInto(order,myPick,me){
   }
   return {y:y,picks:picks};
 }
-/* 结算本届并把结果写回年度计划（v4.27.0：玩家选秀夜与联盟选秀共用同一份） */
-function resolveDraftForPlan(myPick,me){
-  const plan=draftPlanFor(curDraftYear());
-  const r=resolveDraftInto(plan.order,myPick,me);
-  plan.picks=r.picks;plan.resolved=true;
+/* 结算本届并把结果写回年度计划（v4.27.0：玩家选秀夜与联盟选秀共用同一份；
+ * v4.27.3：支持显式传入计划——联盟页面按「下一届」键取计划，不再依赖默认键） */
+function resolveDraftForPlan(plan,myPick,me){
+  const p=plan||draftPlanFor(curDraftYear());
+  const r=resolveDraftInto(p.order,myPick,me);
+  p.picks=r.picks;p.resolved=true;
   return r;
 }
 /* v4.27.2 防剧透：选秀仪式（UI.crm）在念到玩家名字之前，对外仍显示原球队——
@@ -6471,7 +6472,10 @@ function dispTeam(){const p=crmMaskOn()?S._preDraft:null;return p?{team:(p.team|
 /* 休赛期序列：赛季页「进入下一年」先走两个页面（仅 NBA），再真进下一年 */
 function seasonNext(){
   if(!S.retired&&S.league==='NBA'&&S.age<45){
-    const plan=draftPlanFor(curDraftYear());
+    /* v4.27.3：用「下一届」键（+1）——玩家参选年份与「新秀赛季结束后的休赛期」
+     * 同岁（年龄在赛季末才 +1），同键会命中参选年已 resolved 的计划、把页面吞掉；
+     * +1 后每一届各有一个键，永不复用。 */
+    const plan=draftPlanFor(curDraftYear()+1);
     if(!plan.resolved){UI={mode:'lottery',dy:plan.y,lr:0};save();renderGame();return;}
   }
   nextYear();
@@ -6480,7 +6484,7 @@ function goDraftDay(){
   const plan=S.draftPlans&&S.draftPlans[String(UI.dy)];
   if(!plan){nextYear();return;}
   if(!plan.resolved){
-    resolveDraftForPlan();save();
+    resolveDraftForPlan(plan);save();
   }
   UI={mode:'draftday',dy:plan.y,dr:0,crm:UI.crm||null};save();renderGame();
 }
@@ -6729,7 +6733,7 @@ function doDraft(kind,changes){
   pick=clamp(pick,1,cap);
   if(pick>60){
     S.flags.undrafted=true;
-    resolveDraftForPlan();   /* v4.27.0：落选不影响本届其余顺位照常落位入队，结果写回年度计划 */
+    resolveDraftForPlan(draftPlanFor(curDraftYear()));   /* v4.27.3：显式传计划（参选年键） */
     changes.push('第二轮结束，他的名字依然没有被念到……');
     S.log.push({y:seasonLabel(),t:'NBA选秀落选'});
     return;
@@ -6749,7 +6753,7 @@ function doDraft(kind,changes){
   ensureWorld();
   S.flags.undrafted=false;
   d.pick=pick;
-  const _dr=resolveDraftForPlan(pick,{name:S.name,pos:S.pos,ovr:o,age:S.age});   /* v4.27.0：本届全部顺位落定，结果写回年度计划 */
+  const _dr=resolveDraftForPlan(draftPlanFor(curDraftYear()),pick,{name:S.name,pos:S.pos,ovr:o,age:S.age});   /* v4.27.3：显式传计划（参选年键） */
   changes.push('🎙️ 第 '+pick+' 顺位：'+team+' 选择了 '+S.name+'！'+(r1?'（首轮秀）':'（次轮秀）'));
   if(so&&so.orig!==so.owner)changes.push('📋 该签原属 '+so.orig+(so.reverted?('（前'+so.prot+'保护触发，归还原队'+so.comp+'）'):('，由 '+so.owner+' 交易持有')));
   else if(!r1&&team!==slotTeam)changes.push('📋 次轮该签原属 '+slotTeam+'，由 '+team+' 交易持有');
