@@ -7499,11 +7499,14 @@ function playoffDateFor(stage,g){
  * v4.23.0 二次加压（反馈「还是太简单」）：NBA +1.5→+2.8、CBA +2.5→+4.0、
  * 欧洲 +1.0→+1.5。实测：68 分·强队 59.1%→31.4%、76 分·中强队 50.9%→23.7%、
  * 80 分·头号种子 80.9%→54.0%（500 次完整对阵图，见 patch 头注）。
+ * v4.27.4 三次加压（反馈「季后赛还是太简单」）：顶级球星球星闸门 77.7%（ovr88·队形9）
+ * 是新的简单来源 → NBA +4.8、CBA +4.8、欧洲 +2.2。实测 88 分档 77.7%→27.9%、
+ * 84 分档 35%→7%、老化世界「更新阵容 9.5 仍有 36%」（四轮探针 N=400~800）。
  * 附加赛（掷骰）与 NPC 互打（simWinnerOf）不经此函数，不受影响。 */
 function seriesOppStr(game){
   const o=seriesOpponentOf();
   const opp=(o&&o.str)?o.str:6;
-  const bump={nba:2.8,cba:4,euro:1.5}[myLeagueKey()]||0;
+  const bump={nba:4.8,cba:4.8,euro:2.2}[myLeagueKey()]||0;
   return Math.round((opp+bump)*10)/10;
 }
 function seriesOpponentOf(){
