@@ -4,7 +4,8 @@
  * ③ 年内幂等：同一届只生成一份签位表（两个页面/公告读同一份）
  * ④ 选秀 60 顺位全部落定；选中的球员写入球队名单（含玩家参选路径）
  * ⑤ 新秀首季保留 rk 参评标记（worldTick 清标不误伤刚选中的新秀）
- * ⑥ 非 NBA 球员的休赛期不出现这两个页面 */
+ * ⑥ 非 NBA 球员的休赛期不出现这两个页面
+ * ⑦ 班底名字构成：中国面孔稀少（约 4%，v4.26.1） */
 const { run } = require('./testkit');
 
 module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
@@ -95,4 +96,8 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   win.eval('seasonNext();');
   check('非 NBA 职业：不出现选秀页面，直接进下一年',
     win.eval('S.age') === a2 + 1 && win.eval('UI.mode') !== 'lottery' && win.eval('UI.mode') !== 'draftday');
+
+  /* ── ⑦ 班底名字构成：中国面孔稀少（v4.26.1；300 抽样期望 12，上界 30） ── */
+  const cnCnt = win.eval(`(function(){let c=0;for(let i=0;i<300;i++){if(/[\\u4e00-\\u9fa5]/.test(draftProspect().n))c++;}return c;})()`);
+  check('中国球员存在但稀少（1~30 / 300，约 4%）', cnCnt >= 1 && cnCnt <= 30, String(cnCnt));
 });

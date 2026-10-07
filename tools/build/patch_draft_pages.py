@@ -24,6 +24,9 @@ hoop-life 改造 step 36：NBA 选秀与签位抽签系统（v4.26.0）
 
 边界：CBA/欧洲/NCAA 流程不动；非 NBA 球员的休赛期不出现这两个页面；
 玩家参选路径的顺位计算（行情+波动+承诺+cap）不变，只是其余 59 签一起落位。
+
+【v4.26.1】游玩反馈「NBA 选秀中的中国人太多了」：班底名字构成从 28% 中国名
+  （每届约 17 人）降到 4%（每届约 1~3 人）——NBA 背景以欧美球员为主。
 """
 import os
 
@@ -53,7 +56,9 @@ function draftProspect(){
   const o=R.int(56,80);
   const a=R.int(19,22);
   const room=(a<=20)?R.int(12,30):R.int(8,24);
-  return {n:R.chance(.72)?genWest():genCN(),p:R.pick(Object.keys(POS)),o:o,a:a,
+  /* 名字构成（v4.26.1）：NBA 选秀班底以欧美球员为主，中国面孔约 4%——
+   * 每届 60 人里 1~3 位中国新秀，偶尔出现，符合现实观感。 */
+  return {n:R.chance(.96)?genWest():genCN(),p:R.pick(Object.keys(POS)),o:o,a:a,
     pot:clamp(o+room,o,97),role:'bench',rk:1,pend:1};
 }
 function draftPlanFor(y){

@@ -6393,7 +6393,9 @@ function draftProspect(){
   const o=R.int(56,80);
   const a=R.int(19,22);
   const room=(a<=20)?R.int(12,30):R.int(8,24);
-  return {n:R.chance(.72)?genWest():genCN(),p:R.pick(Object.keys(POS)),o:o,a:a,
+  /* 名字构成（v4.26.1）：NBA 选秀班底以欧美球员为主，中国面孔约 4%——
+   * 每届 60 人里 1~3 位中国新秀，偶尔出现，符合现实观感。 */
+  return {n:R.chance(.96)?genWest():genCN(),p:R.pick(Object.keys(POS)),o:o,a:a,
     pot:clamp(o+room,o,97),role:'bench',rk:1,pend:1};
 }
 function draftPlanFor(y){
