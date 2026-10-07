@@ -1674,19 +1674,20 @@ function npcValue(p){
   const room=(p.pot&&p.pot>p.o)?Math.min(8,(p.pot-p.o)*.45):0;
   return p.o+room-Math.max(0,(p.a||25)-29)*1.1;
 }
-/* 阵容实力 → 球队星级（前 8 人平均能力映射回原来的 2~10 标尺） */
+/* 阵容实力 → 球队星级（前 10 人平均能力映射回原来的 2~10 标尺；v4.24.0 由前 8 人改为前 10 人） */
 function rosterStr(lg,team){
   const rs=(S.world&&S.world[lg]?S.world[lg]:[]).filter(p=>p.t===team&&!p.ret);
   if(rs.length<5)return null;
-  const top=rs.slice().sort((a,b)=>b.o-a.o).slice(0,8);
+  const top=rs.slice().sort((a,b)=>b.o-a.o).slice(0,10);
   const avg=top.reduce((s,p)=>s+p.o,0)/top.length;
   return clamp(6.4+(avg-74)*.75,2,10.5);
 }
-/* 球队实力 = 俱乐部底子(静态) + 当前阵容(会长会退)，让新星崛起真的改变联盟格局 */
+/* 球队实力 = 俱乐部底子(静态 30%) + 当前阵容(70%，会长会退)，让新星崛起真的改变联盟格局
+ * v4.24.0：阵容权重 55%→70%（底子 45%→30%）——阵容是球队实力的主导项 */
 function teamStrength(lg,team,base){
   const rs=rosterStr(lg,team);
   if(rs==null)return base;
-  return clamp((base||6)*.45+rs*.55,2,11);
+  return clamp((base||6)*.3+rs*.7,2,11);
 }
 function leagueKey(){return S.league==='CBA'?'cba':S.league==='NBA'?'nba':S.league==='欧洲'?'euro':S.league==='NCAA'?'ncaa':'';}
 function myLeagueKey(){return leagueKey();}
@@ -1956,9 +1957,9 @@ function showTeamRoster(teamN){
   const bench=rs.filter(p=>p.role!=='start').sort((a,b)=>b.o-a.o);
   const teamStr=(TEAMS[lg]||[]).find(t=>t[0]===teamN);
   const stAll=teamStr?teamStrength(lg,teamN,teamStr[1]):rosterStr(lg,teamN);
-  const topN=rs.slice(0,8);
+  const topN=rs.slice(0,10);   /* v4.24.0：与 rosterStr 同口径（前 10 人） */
   const avgTop=topN.length?Math.round(topN.reduce((s,p)=>s+p.o,0)/topN.length):0;
-  let h=`<h3>🏟 ${crestOf(teamN)}${esc(teamN)} · 阵容</h3><div class="mini">${S.league} · 全队 ${rs.length} 人${stAll!=null?(' · 当前实力 '+'★'.repeat(clamp(Math.round(stAll)-4,1,5))+' '+stAll.toFixed(1)):''}${avgTop?(' · 前 8 人均值 '+avgTop):''}</div><hr style="border-color:#232c40">`;
+  let h=`<h3>🏟 ${crestOf(teamN)}${esc(teamN)} · 阵容</h3><div class="mini">${S.league} · 全队 ${rs.length} 人${stAll!=null?(' · 当前实力 '+'★'.repeat(clamp(Math.round(stAll)-4,1,5))+' '+stAll.toFixed(1)):''}${avgTop?(' · 前 10 人均值 '+avgTop):''}</div><hr style="border-color:#232c40">`;
   if(!rs.length){
     h+=`<div class="mini">该队暂无球员数据</div>`;
   }else{
@@ -7416,7 +7417,7 @@ function computeStandings(lg){
   }
   const games=seasonGames(lg);
   const rows=(TEAMS[lg]||[]).map(t=>{
-    /* 球队实力跟着阵容走：新星崛起 → 球队变强 → 排名上升（静态底子只占 45%） */
+    /* 球队实力跟着阵容走：新星崛起 → 球队变强 → 排名上升（静态底子只占 30%，v4.24.0：45%→30%） */
     const st=teamStrength(lg,t[0],t[1]);
     /* 同档球队实力几乎相同：实力系数收窄、随机波动放大，冷门频出 */
     let wpc=clamp(.38+(st-6.5)*.055+R.float(-.17,.17),.06,.94);

@@ -51,6 +51,7 @@ STEPS = [
     ("patch_contact_fix.py",    "㉝ 清掉行动栏残留「继续」",      True),
     ("patch_po_bump.py",        "㉞ 季后赛对抗烈度（对手拔高）",  True),
     ("patch_nba_gate.py",       "㉟ NBA 门槛（选秀后移 + FMVP 修正）", True),
+    ("patch_team_strength.py",  "㊱ 球队实力模型（前10人 + 权重70%）", True),
     ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
     ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
