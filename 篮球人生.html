@@ -1256,6 +1256,8 @@ function ensureState(){
   S.history=S.history||[];   /* 逐季数据（生涯曲线用）：老存档从当前赛季开始记录 */
   S.nbaTries=S.nbaTries||0;S.nbaSeasons=S.nbaSeasons||0;S.trial=S.trial||null;S.draft=S.draft||null;S.a=S.a||{};S.h=S.h||{};
   S.worldNews=S.worldNews||[];
+  /* v4.27.5：老档的 teamStr 是「静态底子」→ 一次性升级为当前阵容账面（与新加盟口径一致） */
+  if(!S._joinV2&&S.team&&S.teamStr!=null){S.teamStr=joinTeamStr(S.team,S.teamStr);S._joinV2=1;}
   S.mode=S.mode||'immersive';S.stageTotal=S.stageTotal||0;S.standings=S.standings||null;S.bracket=S.bracket||null;
   /* v4.10：教练模式已移除——老教练存档就地「光荣退役」，落到球员生涯终章页 */
   if(S.role==='coach'){delete S.coach;delete S.usedCoach;S.role='player';S.retired=true;UI={mode:'end'};}
@@ -1703,6 +1705,19 @@ function teamStrength(lg,team,base){
   if(rs==null)return base;
   return clamp((base||6)*.2+rs*.8,2,11);
 }
+/* v4.27.5 加盟强度快照：取该队「当前阵容实力」（与「查看其他球队」列表/排名同口径）。
+ * 旧版直接取 TEAMS 静态底子，与动态阵容脱节——「有玩家在的球队强度立马提升」：
+ * 底子高而阵容差的队，玩家加盟后比赛底盘凭空高一截（隐藏红利）。现在加盟即取账面，
+ * 强队强、弱队弱，与列表里显示的实力值完全同尺；world 未生成时自动回退底子（等价旧行为）。 */
+function joinTeamStr(team,fallback){
+  if(!team)return fallback||6;
+  for(const lg of ['nba','cba','euro','ncaa']){
+    const row=(TEAMS[lg]||[]).find(x=>x[0]===team);
+    if(row)return Math.round(teamStrength(lg,team,row[1])*10)/10;
+  }
+  return fallback||6;
+}
+function setJoinStr(team,fallback){S.teamStr=joinTeamStr(team,fallback);S._joinV2=1;}
 function leagueKey(){return S.league==='CBA'?'cba':S.league==='NBA'?'nba':S.league==='欧洲'?'euro':S.league==='NCAA'?'ncaa':'';}
 function myLeagueKey(){return leagueKey();}
 function myTeamName(){const p=crmMaskOn()?S._preDraft:null;return p?p.team:S.team;}
@@ -2309,7 +2324,7 @@ const FX=[
   /* ---- 归属 ---- */
   ['setPath',(v)=>{S.path=v;}],
   ['setStr',()=>{}], /* setTeam 的伴随键，仅作声明，避免告警 */
-  ['setTeam',(v,c,fx)=>{S.team=v;S.teamStr=fx.setStr||6;S.ts=3;if(!S.played.includes(S.team))S.played.push(S.team);c.push('加盟 '+S.team);S.log.push({y:seasonLabel(),t:'加盟 '+S.team});}],
+  ['setTeam',(v,c,fx)=>{S.team=v;setJoinStr(v,fx.setStr);S.ts=3;if(!S.played.includes(S.team))S.played.push(S.team);c.push('加盟 '+S.team);S.log.push({y:seasonLabel(),t:'加盟 '+S.team});}],
   ['setLeague',(v)=>{S.league=v;}],
   /* ---- 季后赛 ---- */
   ['pboost',(v)=>{S.playoff=S.playoff||{rounds:0,base:.5};S.playoff.base=clamp(S.playoff.base+v,.2,.9);}],
@@ -2345,7 +2360,7 @@ const FX=[
     const to=R.pick(pool.length?pool:TEAMS[lg].map(t=>t[0]).filter(t=>t!==oldTeam));
     const a=pickAssetOf(lg,D+1,1,to);
     if(a&&a.owner===to){a.prot=null;execPickTrade(lg,to,oldTeam,a);}   /* 我队收下对方的未来首轮 */
-    S.team=to;const tt=TEAMS[lg].find(x=>x[0]===to);S.teamStr=tt?tt[1]:6;S.ts=3;
+    S.team=to;const tt=TEAMS[lg].find(x=>x[0]===to);setJoinStr(to,tt?tt[1]:6);S.ts=3;
     if(!S.played.includes(S.team))S.played.push(S.team);
     setContract(S.team,S.league,2,'转会合同');
     c.push('📦 交易达成：'+oldTeam+' 将你送至 '+to+'，换回'+(a?' '+pickName(a):'未来资产')+'。新球队的发布会上，总经理说：「我们盯了你很久。」');
@@ -2363,8 +2378,8 @@ const FX=[
   ['rollDraft',(v,c)=>{doDraft(v,c);}],
   ['draftStock',(v,c)=>{if(!S.draft)return;const b=S.draft.stock;S.draft.stock=clamp(S.draft.stock-v,1,75);if(v)c.push((v>0?'📈 选秀行情上涨':'📉 选秀行情下滑')+'：预计顺位 '+Math.round(b)+' → '+Math.round(S.draft.stock)+'（'+draftRangeText(S.draft.stock)+'）');}],
   ['draftPromise',(v,c)=>{if(S.draft)S.draft.promise={team:v};c.push('🤝 '+v+' 的选秀承诺：只要你还在，我们就选你。');}],
-  ['rollEuro',(v,c)=>{if(ovr()<58){c.push('欧洲球队婉拒了报价（综评不足）');return;} /* 进入欧洲门槛：综评58+ */ const t=R.pick(TEAMS.euro);S.team=t[0];S.teamStr=t[1];S.league='欧洲';if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'欧洲',2,'转会合同');S.starter=starterScore()>=66;c.push('加盟 '+S.team);S.log.push({y:seasonLabel(),t:'加盟 '+S.team});}],
-  ['freeCBA',(v,c)=>{const t=R.pick(TEAMS.cba.slice(8));S.team=t[0];S.teamStr=t[1];S.league='CBA';S.ts=3;S.value=baseValue();if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'CBA',2,'自由签约');S.starter=starterScore()>=65;c.push('签约 '+S.team);S.log.push({y:seasonLabel(),t:'自由签约 '+S.team});}],
+  ['rollEuro',(v,c)=>{if(ovr()<58){c.push('欧洲球队婉拒了报价（综评不足）');return;} /* 进入欧洲门槛：综评58+ */ const t=R.pick(TEAMS.euro);S.team=t[0];setJoinStr(t[0],t[1]);S.league='欧洲';if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'欧洲',2,'转会合同');S.starter=starterScore()>=66;c.push('加盟 '+S.team);S.log.push({y:seasonLabel(),t:'加盟 '+S.team});}],
+  ['freeCBA',(v,c)=>{const t=R.pick(TEAMS.cba.slice(8));S.team=t[0];setJoinStr(t[0],t[1]);S.league='CBA';S.ts=3;S.value=baseValue();if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'CBA',2,'自由签约');S.starter=starterScore()>=65;c.push('签约 '+S.team);S.log.push({y:seasonLabel(),t:'自由签约 '+S.team});}],
   ['rollTrans',(v,c)=>{
     if(v==='strong'){
       let pool;
@@ -2373,19 +2388,19 @@ const FX=[
       else pool=TEAMS.euro.slice(0,3);
       const cand=pool.filter(x=>x[0]!==S.team);
       const t=R.pick(cand.length?cand:pool);
-      S.team=t[0];S.teamStr=t[1];S.ts=3;setContract(S.team,S.league,2,'转会合同');S.starter=starterScore()>=68; /* 首发判定含队内地位 */
+      S.team=t[0];setJoinStr(t[0],t[1]);S.ts=3;setContract(S.team,S.league,2,'转会合同');S.starter=starterScore()>=68; /* 首发判定含队内地位 */
       c.push('转会 '+S.team);S.log.push({y:seasonLabel(),t:'转会 '+S.team});
     }else{ /* abroad */
       let t;
       if(S.league==='CBA'){t=R.pick(TEAMS.euro);S.league='欧洲';}
       else if(R.chance(.5)){t=R.pick(TEAMS.cba);S.league='CBA';}
       else{t=R.pick(TEAMS.euro);S.league='欧洲';}
-      S.team=t[0];S.teamStr=t[1];setContract(S.team,S.league,2,'转会合同');S.starter=starterScore()>=66;
+      S.team=t[0];setJoinStr(t[0],t[1]);setContract(S.team,S.league,2,'转会合同');S.starter=starterScore()>=66;
       c.push('转会 '+S.team);S.log.push({y:seasonLabel(),t:'转会 '+S.team});
     }
   }],
   ['startTrial',(v,c)=>{const st=v;S.trial={kind:st.kind,team:st.team[0],teamStr:st.team[1],prevLeague:S.league,prevTeam:S.team,prevStr:S.teamStr};c.push(st.kind==='tenDay'?'与 '+st.team[0]+' 签下10天短合同':'加入 '+st.team[0]+' 发展联盟');S.log.push({y:seasonLabel(),t:(st.kind==='tenDay'?'10天短合同：':'发展联盟：')+st.team[0]});}],
-  ['joinNBA',(v,c)=>{const t=v;S.team=t[0];S.teamStr=t[1];S.league='NBA';S.ts=1;S.trial=null;S.value=baseValue();if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'NBA',3,'NBA合同');S.starter=starterScore()>=78;c.push('与 '+S.team+' 签下正式合同，登陆NBA！');S.log.push({y:seasonLabel(),t:'登陆NBA：'+S.team});}],
+  ['joinNBA',(v,c)=>{const t=v;S.team=t[0];setJoinStr(t[0],t[1]);S.league='NBA';S.ts=1;S.trial=null;S.value=baseValue();if(!S.played.includes(S.team))S.played.push(S.team);setContract(S.team,'NBA',3,'NBA合同');S.starter=starterScore()>=78;c.push('与 '+S.team+' 签下正式合同，登陆NBA！');S.log.push({y:seasonLabel(),t:'登陆NBA：'+S.team});}],
   ['tenDayFail',(v,c)=>{c.push('10天短合同到期，未能留队');S.log.push({y:seasonLabel(),t:'NBA 10天短合同，未能留队'});S.pendingReturn=true;}],
   ['gFail',(v,c)=>{c.push('发展联盟之旅结束，未获调令');S.log.push({y:seasonLabel(),t:'发展联盟历练，未获NBA调令'});S.pendingReturn=true;}],
   ['restorePrev',(v,c)=>{const t=S.trial||{};S.league=t.prevLeague||S.league;S.team=t.prevTeam||S.team;S.teamStr=t.prevStr||S.teamStr;S.trial=null;c.push('回到 '+S.team);S.log.push({y:seasonLabel(),t:'回到 '+S.team});}],
@@ -6703,7 +6718,7 @@ function doDraft(kind,changes){
     const so=cbaR1?draftOwnership('cba',cm.order,curDraftYear())[pick-1]:null;
     const team=so?so.team:slotOwnedBy('cba',curDraftYear(),slotTeam,2);
     const mt=(TEAMS.cba.find(x=>x[0]===team)||[,'6'])[1];
-    S.team=team;S.teamStr=mt;S.league='CBA';S.ts=3;S.value=baseValue();
+    S.team=team;setJoinStr(team,mt);S.league='CBA';S.ts=3;S.value=baseValue();
     if(!S.played.includes(S.team))S.played.push(S.team);
     setContract(S.team,'CBA',3,'新秀合同',Math.round(wageFor('CBA')*(pick<=3?1.25:pick<=10?1.1:pick<=20?1:.8)));
     S.starter=starterScore()>=70;
@@ -6745,7 +6760,7 @@ function doDraft(kind,changes){
   const team=so?so.team:slotOwnedBy('nba',curDraftYear(),slotTeam,2);
   const mt=(TEAMS.nba.find(x=>x[0]===team)||[,'5'])[1];
   S._preDraft={team:S.team,teamStr:S.teamStr,ts:S.ts,league:S.league,contract:S.contract};   /* v4.27.2：仪式期间对外仍显示原球队（防剧透） */
-  S.team=team;S.teamStr=mt;S.league='NBA';S.ts=2;S.value=baseValue();
+  S.team=team;setJoinStr(team,mt);S.league='NBA';S.ts=2;S.value=baseValue();
   if(!S.played.includes(S.team))S.played.push(S.team);
   const years=r1?4:3;
   setContract(team,'NBA',years,'新秀合同',Math.round(wageFor('NBA')*rookieWageMult(pick)));
