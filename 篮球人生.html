@@ -939,8 +939,8 @@ const DEF_POS={
 function defStats(){
   const k=(typeof effSkills==='function')?effSkills():(S.skills||{}),hu=(S.h.hustle||60);
   const stlMul=DEF_POS.stl[S.pos]||1,blkMul=DEF_POS.blk[S.pos]||1;
-  const spg=stlMul*(.55+(k.perdef||55)/100*1.1)+(hu-60)*.012+R.float(-.35,.5);
-  const bpg=blkMul*(.25+(k.block||55)/100*1.3)+(hu-60)*.006
+  const spg=stlMul*(.55+((k.perdef||55)*.4+(k.steal||55)*.35+(k.speed||55)*.25)/100*1.1)+(hu-60)*.012+R.float(-.35,.5);
+  const bpg=blkMul*(.25+(k.block||55)/100*1.3+((k.strength||55)-55)*.001)+(hu-60)*.006
     +((S.height||195)-195)*.006+((S.wingspan||200)-200)*.004+R.float(-.3,.45);
   return {spg:clamp(Math.round(spg*10)/10,0,4.5),bpg:clamp(Math.round(bpg*10)/10,0,5.5)};
 }
@@ -1023,8 +1023,8 @@ function stageTitle(t){
   const mo=stageMonthNow(key,S.stageDone||0,S.stageNeed||1)||STAGE_MONTH[key]||m[2];
   return (m[1]||'')+mo+' · '+m[3];
 }
-const SKILLS=[['three','三分'],['mid','中投'],['finish','终结'],['dunk','扣篮'],['handle','控球'],['pass','传球'],['perdef','外防'],['intdef','内防'],['block','盖帽'],['reb','篮板'],['clutch','关键']];
-const SKILL_NAME={three:'三分',mid:'中投',finish:'终结',dunk:'扣篮',handle:'控球',pass:'传球',perdef:'外防',intdef:'内防',block:'盖帽',reb:'篮板',clutch:'关键'};
+const SKILLS=[['three','三分'],['mid','中投'],['free','罚球'],['finish','终结'],['dunk','扣篮'],['handle','控球'],['pass','传球'],['perdef','外防'],['steal','抢断'],['intdef','内防'],['block','盖帽'],['reb','篮板'],['speed','速度'],['strength','力量'],['clutch','关键']];
+const SKILL_NAME={three:'三分',mid:'中投',free:'罚球',finish:'终结',dunk:'扣篮',handle:'控球',pass:'传球',perdef:'外防',steal:'抢断',intdef:'内防',block:'盖帽',reb:'篮板',speed:'速度',strength:'力量',clutch:'关键'};
 const COMP_TO_SKILL={outside:['three','mid'],inside:['finish','dunk'],play:['handle','pass'],def:['perdef','intdef','block'],reb:['reb']};
 const POS_BIAS={PG:{handle:4,pass:4,three:1},SG:{three:4,mid:3,finish:1},SF:{finish:2,mid:2,perdef:2,reb:1},PF:{intdef:3,reb:3,dunk:2},C:{intdef:4,block:3,reb:2}};
 const POS={
@@ -1315,6 +1315,17 @@ function ensureState(){
     const a=S.a;
     S.skills={three:a.outside||55,mid:a.outside||55,finish:a.inside||55,dunk:Math.max(40,(a.inside||55)-5),handle:a.play||55,pass:a.play||55,perdef:a.def||55,intdef:a.def||55,block:Math.max(40,(a.def||55)-5),reb:a.reb||55,clutch:S.h.clutch||55};
   }
+  /* v4.28.0：属性体系对齐 2K——补 4 项新技能（罚球/抢断/力量/速度，由既有属性推导，OVR 不跳变）
+   * + 身体基础 athBase（「身体素质」改为 基础.4+速度.3+力量.3 派生，事件与衰退改作用于 athBase）。
+   * 必须放在「六大项回推」之后：极简老档（skills 整体缺失）先回推出 11 项，这里再补齐 15 项。 */
+  if(S.skills){
+    if(S.skills.free==null)S.skills.free=clamp(Math.round(((S.skills.mid||55)*2+(S.skills.finish||55))/3),25,99);
+    if(S.skills.steal==null)S.skills.steal=clamp(S.skills.perdef||55,25,99);
+    if(S.skills.strength==null)S.skills.strength=clamp((S.a&&S.a.ath)||55,25,99);
+    if(S.skills.speed==null)S.skills.speed=clamp((S.a&&S.a.ath)||55,25,99);
+    if(S.a&&S.a.athBase==null)S.a.athBase=clamp(S.a.ath||50,20,99);
+    syncFromSkills();
+  }
   if(!S.tier)S.tier=tierOf(S.h.potential||70); /* 旧存档：潜力值映射档位 */
   if(!S.tierCap)S.tierCap=capFor(S.tier);
   syncCaps(); /* 能力上限 = 天赋基数 + 训练积累加成（每次读档都重算，保证与成长值一致） */
@@ -1383,15 +1394,16 @@ function raiseSkill(k,v){
 }
 
 /* ---- 派生数值：六大项 / OVR / 身价 ---- */
-function syncFromSkills(){ /* 由 11 项技能同步出六大项（供 OVR 与旧逻辑使用） */
+function syncFromSkills(){ /* v4.28.0：由 15 项技能合成六大项（2K 式归类：外线含罚球、防守含抢断、身体=基础+速度+力量） */
   if(!S||!S.skills)return;
   const k=S.skills;
-  S.a.outside=clamp(Math.round(k.three*.5+k.mid*.5),20,99);
-  S.a.inside=clamp(Math.round(k.finish*.5+k.dunk*.5),20,99);
-  S.a.play=clamp(Math.round(k.handle*.5+k.pass*.5),20,99);
-  S.a.def=clamp(Math.round(k.perdef*.4+k.intdef*.35+k.block*.25),20,99);
-  S.a.reb=clamp(k.reb,20,99);
-  S.a.ath=clamp(S.a.ath||50,20,99);
+  S.a.inside=clamp(Math.round((k.finish||55)*.5+(k.dunk||55)*.5),20,99);
+  S.a.outside=clamp(Math.round((k.three||55)*.5+(k.mid||55)*.3+(k.free||55)*.2),20,99);
+  S.a.play=clamp(Math.round((k.handle||55)*.5+(k.pass||55)*.5),20,99);
+  S.a.def=clamp(Math.round((k.perdef||55)*.32+(k.steal||55)*.18+(k.intdef||55)*.28+(k.block||55)*.22),20,99);
+  S.a.reb=clamp(k.reb||55,20,99);
+  if(S.a.athBase==null&&(k.speed!=null||k.strength!=null))S.a.athBase=clamp(S.a.ath||50,20,99);   /* 新档首次合成：身体基础取当前值 */
+  if(S.a.athBase!=null)S.a.ath=clamp(Math.round(S.a.athBase*.4+(k.speed||55)*.3+(k.strength||55)*.3),20,99);   /* 三键齐才派生；纯老档（全缺）保持原值待迁移 */
   S.h.clutch=k.clutch;
 }
 function ovr(){if(!S)return 0;if(S.skills)syncFromSkills();let s=0;const w=POS[S.pos].w;COMPONENTS.forEach(k=>s+=(S.a[k]||0)*w[k]);return Math.round(s);}
@@ -1400,7 +1412,7 @@ function ovr(){if(!S)return 0;if(S.skills)syncFromSkills();let s=0;const w=POS[S
 function starterScore(){return ovr()+tsNum()*ATTR.tsStarter;}
 
 function ovrOf(s){if(!s||!s.a||!s.pos)return 0;let x=0;const w=(POS[s.pos]||{}).w||{};COMPONENTS.forEach(k=>x+=(s.a[k]||0)*w[k]);return Math.round(x);}
-function skillLine(){return SKILLS.map(([k,n])=>n+' <b>'+S.skills[k]+'</b>').join(' ｜ ');}
+function skillLine(){syncFromSkills();return '内线 <b>'+S.a.inside+'</b> ｜ 外线 <b>'+S.a.outside+'</b> ｜ 组织 <b>'+S.a.play+'</b> ｜ 防守 <b>'+S.a.def+'</b> ｜ 篮板 <b>'+S.a.reb+'</b> ｜ 身体 <b>'+S.a.ath+'</b>'+' <span style="color:#5b6784">（详见 ☰ 更多 · 属性）</span>';}
 function isPro(){return S&&(S.league==='CBA'||S.league==='欧洲'||S.league==='NBA');}
 function ageCurve(a){if(a<=19)return .55;if(a===20)return .75;if(a===21)return .88;if(a<=27)return 1;if(a<=29)return .95;if(a===30)return .85;if(a===31)return .78;if(a===32)return .7;if(a===33)return .62;if(a===34)return .55;if(a===35)return .45;if(a===36)return .38;if(a===37)return .3;if(a===38)return .24;if(a===39)return .18;if(a===40)return .12;return .06;}
 function wageFor(league,o,a){
@@ -1446,8 +1458,8 @@ const MONEY_ITEMS=[
      return '耐久 → '+S.h.durability+'，稳定性 → '+S.h.stability;}},
   {id:'gym',g:'训练投入',n:'体能训练团队',d:'身体素质 +4、耐久 +4',lim:1,
    cost:W=>Math.max(18,Math.round(W*.2)),run:()=>{
-     S.a.ath=clamp(S.a.ath+4,20,99);S.h.durability=clamp(S.h.durability+4,10,99);
-     return '身体素质 → '+S.a.ath+'，耐久 → '+S.h.durability;}},
+     S.a.athBase=clamp((S.a.athBase||50)+4,20,99);S.h.durability=clamp(S.h.durability+4,10,99);
+     return '身体素质 → '+S.a.athBase+'，耐久 → '+S.h.durability;}},
   /* ---- 投资理财：形成资产，赛季末产生收益（可能亏） ---- */
   {id:'fund',g:'投资理财',n:'稳健理财',d:'年化 +7%，几乎无风险',lim:3,asset:{rate:.07,risk:.02},
    cost:W=>Math.max(10,Math.round(W*.2))},
@@ -2296,7 +2308,7 @@ window.addEventListener('resize',()=>{if(document.getElementById('bktSvg')){if(_
  * 新增效果类型：在 FX 数组追加一条 [key, handler] 即可，无需改动其他代码。 */
 const FX=[
   /* ---- 属性成长（同时累计「训练积累」，用于抬高能力上限） ---- */
-  ['ath',(v,c)=>{const b=S.a.ath;S.a.ath=clamp(Math.round(S.a.ath+v),20,99);addGrind(Math.max(0,S.a.ath-b));c.push('身体素质'+fmt(v));
+  ['ath',(v,c)=>{const b=S.a.athBase||50;S.a.athBase=clamp(Math.round(S.a.athBase+v),20,99);addGrind(Math.max(0,S.a.athBase-b));c.push('身体素质'+fmt(v));
     if(v>0)addShotTend('inside',v*SHOT.athToIn);}],   /* 力量/对抗也是篮下产量：罚球率会跟着涨 */
   ['stability',(v,c)=>{S.h.stability=clamp(Math.round(S.h.stability+v),10,99);c.push(HIDDEN.stability+fmt(v));}],
   ['hustle',(v,c)=>{S.h.hustle=clamp(Math.round(S.h.hustle+v),10,99);c.push(HIDDEN.hustle+fmt(v));}],
@@ -7216,7 +7228,7 @@ function shotRates(inp){
    * 因为当时手感只影响球队分差，这个符号错误一直没暴露。 */
   const oppAdj=clamp((opp-6)*.012,-.035,.06);
   const formAdj=clamp((form-60)*.0016,-.06,.06);
-  const three=sk.three||60,mid=sk.mid||60,fin=sk.finish||60,dnk=sk.dunk||60,clu=sk.clutch||60;
+  const three=sk.three||60,mid=sk.mid||60,fin=sk.finish||60,dnk=sk.dunk||60,clu=sk.clutch||60,fr=sk.free||60;
   const share=clamp(SHOT.shareBase+(pw.outside-.20)*.9+(three-60)*SHOT.sharePerSkill
     +clamp(st.outside*SHOT.sharePerOut,0,SHOT.shareCap),.07,.62);
   const p2=clamp(SHOT.p2Base+(mid-60)*SHOT.p2PerSkill.mid+(fin-60)*SHOT.p2PerSkill.finish
@@ -7224,8 +7236,8 @@ function shotRates(inp){
   const p3=clamp(SHOT.p3Base+(three-60)*SHOT.p3PerSkill+formAdj*.8-oppAdj*.7,.20,.55);
   const pft=clamp(SHOT.ftPctBase+(mid-60)*SHOT.ftPctPerMid+(clu-60)*SHOT.ftPctPerClutch
     +clamp((form-60)*.0005,-.025,.025)+clamp(st.inside*SHOT.ftPctPerIn,0,SHOT.ftPctCap),.48,.94);
-  const ftRate=clamp(SHOT.ftBase+(fin-60)*SHOT.ftPerFinish+((pos==='C'||pos==='PF')?SHOT.ftCBPF:0)
-    +clamp(st.inside*SHOT.ftPerIn,0,SHOT.ftCap),.06,.55);
+  const ftRate=clamp(SHOT.ftBase+(fr-60)*SHOT.ftPerFinish+((pos==='C'||pos==='PF')?SHOT.ftCBPF:0)
+    +clamp(st.inside*SHOT.ftPerIn,0,SHOT.ftCap),.06,.55);   /* v4.28.0：罚球率由「罚球」属性驱动（原由终结代管） */
   return {share:share,p2:p2,p3:p3,pft:pft,ftRate:ftRate,pw:pw,oppAdj:oppAdj,formAdj:formAdj};
 }
 /* 一次出手折合多少分：两分/三分命中 + 附带罚球（FGA 反推的分母） */
@@ -7330,7 +7342,7 @@ function simGame(game,plan){
   if(box.pts>us-3)box=shootLine(Object.assign({},shotInp,{fgaScale:(us-3)/Math.max(1,box.pts)}));
   if(box.pts>us-1)box.pts=Math.max(0,us-1);
   const mf=clamp(min/32,.25,1.3);
-  const reb=clamp(Math.round(((SK.reb*.05)+(S.pos==='C'?4.2:S.pos==='PF'?3.2:S.pos==='SF'?2.2:1.4)+hustleRpgAdd()*.7)*mf+R.float(-1.6,1.6)),0,24);
+  const reb=clamp(Math.round(((SK.reb*.05)+(SK.strength||55)*.004+(S.pos==='C'?4.2:S.pos==='PF'?3.2:S.pos==='SF'?2.2:1.4)+hustleRpgAdd()*.7)*mf+R.float(-1.6,1.6)),0,24);   /* v4.28.0：力量 → 篮板对抗微加成 */
   const astBase=(SK.pass*.055)+(S.pos==='PG'?2.6:S.pos==='SG'?.8:0)+(tw.apg*.55)+(tsNum()*ATTR.tsApg*.8);
   const ast=clamp(Math.round(astBase*mf*(plan==='pass'?1.35:1)+R.float(-1.4,2.2)),0,20);
   /* 防守数据表按出场时间缩放（乘一个收敛系数：单场抢断 2.8 会显得太夸张，现实顶级也就 2 次上下） */
@@ -8617,10 +8629,10 @@ function nextYear(){
       if(cur>t)S.skills[k]=clamp(Math.round(t+(cur-t)*GROWTH.overKeep),25,99);
     });
   }
-  if(S.age>=29)S.a.ath=clamp(S.a.ath-1,20,99);
-  if(S.age>=32){S.a.ath=clamp(S.a.ath-1,20,99);S.skills.perdef=clamp(S.skills.perdef-1,25,99);S.skills.intdef=clamp(S.skills.intdef-1,25,99);}
-  if(S.age>=36){S.a.ath=clamp(S.a.ath-2-(injSiteTotal()>=3?1:0),20,99);S.skills.finish=clamp(S.skills.finish-1,25,99);S.skills.dunk=clamp(S.skills.dunk-1,25,99);S.skills.reb=clamp(S.skills.reb-1,25,99);}
-  if(S.age>41){S.a.ath=clamp(S.a.ath-2,20,99);}
+  if(S.age>=29)S.a.athBase=clamp((S.a.athBase||50)-1,20,99);
+  if(S.age>=32){S.a.athBase=clamp((S.a.athBase||50)-1,20,99);S.skills.perdef=clamp(S.skills.perdef-1,25,99);S.skills.intdef=clamp(S.skills.intdef-1,25,99);}
+  if(S.age>=36){S.a.athBase=clamp((S.a.athBase||50)-2-(injSiteTotal()>=3?1:0),20,99);S.skills.finish=clamp(S.skills.finish-1,25,99);S.skills.dunk=clamp(S.skills.dunk-1,25,99);S.skills.reb=clamp(S.skills.reb-1,25,99);S.skills.speed=clamp(S.skills.speed-1,25,99);}
+  if(S.age>41){S.a.athBase=clamp((S.a.athBase||50)-2,20,99);}
   if(S.age>=25&&S.age<=35&&R.chance(.5)){const sk=R.pick(SKILLS)[0];S.skills[sk]=clamp(S.skills[sk]+1,25,99);}
   S.value=baseValue();S.peakV=Math.max(S.peakV,S.value);S.peakO=Math.max(S.peakO,ovr());
   UI={mode:'event',ev:getEvent()};save();renderGame();
@@ -8708,6 +8720,30 @@ function showEnd(){
   $('#app').innerHTML=html;
 }
 /* ☰ 更多（v4.18.0）：行动栏减负——15 个按钮收敛为 5 个，次要功能集中到这个覆盖层 */
+/* v4.28.0：2K 式属性清单——按五大类分组（内线得分/外线投篮/组织传球/防守/篮板/身体素质），
+ * 每项名称 + 数值色条（85+ 金 / 75+ 绿 / 65+ 蓝 / 65- 红），OVR 大字置顶。 */
+function showAttrs(){
+  syncFromSkills();
+  const k=S.skills,ab=(S.a.athBase||50);
+  const row=(n,v)=>{const c=v>=85?'#fbbf24':v>=75?'#6eee9c':v>=65?'#7ab8ff':'#f09595';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
+      +'<span style="width:52px;color:#aab2c5;font-size:12px">'+n+'</span>'
+      +'<div style="flex:1;height:8px;background:#232c40;border-radius:4px;overflow:hidden"><i style="display:block;height:100%;width:'+clamp(v,2,99)+'%;background:'+c+'"></i></div>'
+      +'<b style="width:30px;text-align:right;color:'+c+'">'+v+'</b></div>';};
+  const grp=(t,items)=>{const v=Math.round(items.reduce((s,x)=>s+x[1],0)/items.length);
+    const c=v>=85?'#fbbf24':v>=75?'#6eee9c':v>=65?'#7ab8ff':'#f09595';
+    return '<div style="margin:12px 0 4px;display:flex;justify-content:space-between"><span style="color:#ffd479;font-size:12px">'+t+'</span><b style="font-size:12px;color:'+c+'">'+v+'</b></div>'
+      +items.map(x=>row(x[0],x[1])).join('');};
+  openOvl('<h3>📊 '+esc(S.name)+' · OVR <b style="color:#fbbf24">'+ovr()+'</b></h3>'
+    +'<div class="mini">'+POS[S.pos].n+' · '+esc(S.league)+' · 属性按 NBA 2K 分类归组</div><hr style="border-color:#232c40">'
+    +grp('🏀 内线得分',[['终结',k.finish||55],['扣篮',k.dunk||55]])
+    +grp('🎯 外线投篮',[['三分',k.three||55],['中投',k.mid||55],['罚球',k.free||55]])
+    +grp('🧭 组织传球',[['控球',k.handle||55],['传球',k.pass||55]])
+    +grp('🛡 防守',[['外防',k.perdef||55],['抢断',k.steal||55],['内防',k.intdef||55],['盖帽',k.block||55]])
+    +grp('💪 篮板',[['篮板',k.reb||55]])
+    +grp('⚡ 身体素质',[['速度',k.speed||55],['力量',k.strength||55],['身体基础',ab]])
+    +'<button class="btn ghost" style="margin-top:14px" onclick="closeOvl()">关闭</button>');
+}
 function openMore(){
   const pro=(S.league==='CBA'||S.league==='NBA'||S.league==='欧洲');
   const mb=(t,fn)=>'<button class="btn" style="flex:1 1 44%;min-width:118px" onclick="'+fn+'">'+t+'</button>';
@@ -8719,6 +8755,7 @@ function openMore(){
     mb('📋 档案','showArchive()')
   ].join('');
   const tools=[
+    mb('📊 属性','showAttrs()'),
     mb('🧭 倾向','showTendHelp()'),
     mb(sfxEnabled()?'🔊 音效开':'🔇 音效关','toggleSfx()'),
     mb('📤 导出存档','exportSave()'),
@@ -9590,7 +9627,7 @@ function renderCreate(){
   </div>
   <button class="btn" onclick="doCreate()">下一步：分配属性 ▶</button>
   <button class="btn ghost" onclick="renderModeSelect()">↩ 返回选择模式</button>
-  <div class="hint">建档后进入属性分配页：11项属性基础${CFG.SKILL_BASE} · 单项最高${CFG.SKILL_CAP} · 共${CFG.ALLOC_POINTS}点自由分配</div>`;
+  <div class="hint">建档后进入属性分配页：15项属性基础${CFG.SKILL_BASE} · 单项最高${CFG.SKILL_CAP} · 共${CFG.ALLOC_POINTS}点自由分配</div>`;
   const pr=$('#fProv');REGIONS.provinces.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pr.appendChild(o);});
   pr.value=prev?prev.prov:REGIONS.provinces[0];
   refreshCities(prev?prev.city:null);

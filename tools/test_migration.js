@@ -62,7 +62,7 @@ module.exports = run('老存档迁移', ({ win, doc, check }) => {
   check('极简老档迁移不抛异常', !err, err && err.message);
   check('老档能被读出', p && p.ok === true, JSON.stringify(p && p.loadFailed));
   if (p && p.ok) {
-    check('缺失的 skills 被回推补齐（11 项）', p.skills === 11, String(p.skills));
+    check('缺失的 skills 被回推补齐（15 项，v4.28.0 补罚球/抢断/力量/速度）', p.skills === 15, String(p.skills));
     check('缺失的 shot 被补齐为对象', p.shot === 'object', p.shot);
     check('缺失的 tend / history 被补齐', p.tend === 'object' && p.historyLen === 0, p.tend + '/' + p.historyLen);
     check('career 里后加的防守/出手字段补 0',
@@ -157,6 +157,6 @@ module.exports = run('老存档迁移', ({ win, doc, check }) => {
   })())`);
   const RT = JSON.parse(round);
   check('迁移后存档往返字段一致', RT.diff.length === 0, RT.diff.join(','));
-  check('往返后技能表仍完整（11 项）', RT.skills === 11, String(RT.skills));
+  check('往返后技能表仍完整（15 项，v4.28.0 新体系）', RT.skills === 15, String(RT.skills));
   check('往返后球员世界仍在', RT.world === true);
 });
