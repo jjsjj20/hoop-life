@@ -57,6 +57,7 @@ STEPS = [
     ("patch_ovr2k.py",          "㊴ OVR 属性体系对齐 2K（15 项技能+五大类+属性面板）", True),
     ("patch_alloc2k.py",        "㊵ 建档分配页 2K 式改版（分组+OVR 预览）", True),
     ("patch_archive2k.py",      "㊶ 生涯档案页 2K 式收敛（六大项+雷达 15 项）", True),
+    ("patch_radar6.py",         "㊷ 能力雷达改六大项", True),
     ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
     ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]

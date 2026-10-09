@@ -9268,8 +9268,8 @@ function showArchive(){
   h+=`<div class="mini" style="margin:6px 0 0">15 项细分属性（罚球/抢断/力量/速度…）→ ☰ 更多 · 📊 属性 查看。</div>`;
   h+=`<label>隐藏天赋</label><div class="mini">天赋评级：<b style="color:var(--gold)">${S.tier||'C'} 档</b> · 天赋上限 ${S.tierCap||70} ＋ 训练加成 <b style="color:#ffd479">+${grindBonus()}</b> ＝ 实际上限 <b style="color:#ffd479">${(S.tierCap||70)+grindBonus()}</b>（各位置再加位置加成）<br>训练积累 <b>${Math.round(S.grind||0)}</b> 点（加练、特训、自费训练都会累积，最高把上限抬 ${GROWTH.grindMax} 点）｜ 身体耐久：${S.h.durability>=80?'硬朗':S.h.durability>=60?'一般':'玻璃'} ｜ 进攻稳定：${S.h.stability} ｜ 拼抢：${S.h.hustle}</div>`;
   h+=`<label>🧭 打法倾向（选择进数据）</label><div class="mini">本赛季：${esc(tendDesc(S.tend))}<br>生涯累计：${esc(tendCareerText(S.tendAll))}</div>`;
-  h+=`<label>🕸 能力雷达（15 项）</label><div class="radwrap">
-   <div class="radcol">${radarSVG(280,240,true)}</div>
+  h+=`<label>🕸 能力雷达（六大项 · 细分见右）</label><div class="radwrap">
+   <div class="radcol">${radarSVG(280,240,true,COMPONENTS)}</div>
    <div class="listcol">${SKILLS.map(([k,nm])=>{const v=S.skills[k];
        const tag=v>=85?'<span class="gold">顶尖</span>':v>=70?'<span class="up">优秀</span>':v>=55?'':'<span class="down">短板</span>';
        return `<i>${nm}</i><b>${v}</b> ${tag}`;}).join('<br>')}</div></div>`;
@@ -9863,8 +9863,13 @@ function statGrid(items){
   }).join('')+'</div>';
 }
 /* ── 能力雷达图：11 项能力一眼看出「他是什么类型的球员」 ── */
-function radarSVG(w,h,labels){
-  const n=SKILLS.length,cx=w/2,cy=h/2,R=Math.min(w,h)/2-(labels?26:12);
+function radarSVG(w,h,labels,keys){
+  /* v4.28.3：keys 传入六大项键（COMPONENTS）时按六大项画（数值源 S.a、中文短标签）——
+   * 15 项细项雷达轴距仅 24°、标签重叠难读，且明细已在右侧清单/📊 属性；
+   * 不传 keys 保持原 15 项行为（表驱动）。 */
+  const CN={inside:'内线',outside:'外线',play:'组织',def:'防守',reb:'篮板',ath:'身体'};
+  const items=keys?keys.map(k=>[k,CN[k]||k]):SKILLS;
+  const n=items.length,cx=w/2,cy=h/2,R=Math.min(w,h)/2-(labels?26:12);
   const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;
     return [cx+Math.cos(a)*r,cy+Math.sin(a)*r];};
   const poly=rs=>rs.map((r,i)=>pt(i,r).map(v=>v.toFixed(1)).join(',')).join(' ');
@@ -9872,11 +9877,11 @@ function radarSVG(w,h,labels){
   [.25,.5,.75,1].forEach(k=>{g+=`<polygon points="${poly(new Array(n).fill(R*k))}" fill="none" stroke="#222b3f" stroke-width="1"/>`;});
   for(let i=0;i<n;i++){const[x,y]=pt(i,R);
     g+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#1a2130" stroke-width="1"/>`;}
-  const rs=SKILLS.map(([k])=>R*clamp((S.skills&&S.skills[k])||0,0,99)/99);
+  const rs=items.map(([k])=>R*clamp((keys?(S.a&&S.a[k])||0:(S.skills&&S.skills[k])||0),0,99)/99);
   g+=`<polygon points="${poly(rs)}" fill="rgba(249,115,22,.26)" stroke="#f97316" stroke-width="2" stroke-linejoin="round"/>`;
-  SKILLS.forEach(([k],i)=>{const[x,y]=pt(i,rs[i]);
+  items.forEach(([k],i)=>{const[x,y]=pt(i,rs[i]);
     g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.3" fill="#ffb37a"/>`;});
-  if(labels)SKILLS.forEach(([k,nm],i)=>{const[x,y]=pt(i,R+13);
+  if(labels)items.forEach(([k,nm],i)=>{const[x,y]=pt(i,R+13);
     g+=`<text x="${x.toFixed(1)}" y="${(y+3.4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#8b93a7">${esc(nm)}</text>`;});
   return `<svg class="radar" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">${g}</svg>`;
 }
@@ -10122,7 +10127,7 @@ function renderSide(){
     ${statGrid([{v:avg('pts'),l:'得分',cls:'hot'},{v:avg('reb'),l:'篮板'},{v:avg('ast'),l:'助攻'},
                 {v:avg('stl'),l:'抢断'},{v:avg('blk'),l:'盖帽'}])}
     <div class="mini">防守评价 ${seas?Math.round(defScore({stats:{stl:avg('stl'),blk:avg('blk'),reb:avg('reb')},record:'0'})):0}</div></div>
-   <div class="summ"><h3>🕸 能力雷达</h3>${radarSVG(258,232,true)}</div>
+   <div class="summ"><h3>🕸 能力雷达（六大项）</h3>${radarSVG(258,232,true,COMPONENTS)}</div>
    <div class="summ"><h3>🏅 最近荣誉</h3>${medalHTML(hs,'还没有荣誉')}
     <div class="mini">🧭 打法倾向：${esc(tendDesc(S.tend))}</div></div>`;
 }
