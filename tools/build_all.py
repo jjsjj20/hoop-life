@@ -55,6 +55,7 @@ STEPS = [
     ("patch_draft_pages.py",    "㊲ 选秀与签位抽签（两个独立页面）", True),
     ("patch_join_str.py",       "㊳ 加盟强度快照回正（底子→账面）", True),
     ("patch_ovr2k.py",          "㊴ OVR 属性体系对齐 2K（15 项技能+五大类+属性面板）", True),
+    ("patch_alloc2k.py",        "㊵ 建档分配页 2K 式改版（分组+OVR 预览）", True),
     ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
     ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
