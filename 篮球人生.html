@@ -9509,7 +9509,7 @@ let STAGE_STACK=[];   /* v5.0.1 桌面：功能页覆盖事件区——原内容
 function openOvl(html,width){
   if(window.matchMedia&&window.matchMedia('(min-width:900px)').matches){
     const st=document.querySelector('#stage');
-    if(st){STAGE_STACK.push(st.innerHTML);
+    if(st){STAGE_STACK.push({html:st.innerHTML,fid:FUNC_CUR||null});
       st.innerHTML='<div class="funcpage">'+html+'</div><button class="btn ghost" style="margin-top:14px" onclick="closeOvl()">↩ 返回</button>';
       window.scrollTo(0,0);
       return;}
@@ -9519,7 +9519,9 @@ function openOvl(html,width){
 function closeOvl(){
   if(window.matchMedia&&window.matchMedia('(min-width:900px)').matches&&STAGE_STACK.length){
     const st=document.querySelector('#stage');
-    if(st)st.innerHTML=STAGE_STACK.pop();
+    const it=STAGE_STACK.pop();
+    if(st)st.innerHTML=it.html;
+    FUNC_CUR=it.fid||null;markFunc(FUNC_CUR);
     return;
   }
   $('#ovl').classList.remove('on');const b=$('#ovlBody');if(b)b.innerHTML='';
@@ -10280,17 +10282,33 @@ function dtimeHTML(){
     +'<span class="dt-money">💰 '+money(S.value)+' ｜ 💵 '+money(S.cash)+' ｜ 📄 '+esc(contractLabel())+'</span></div>';
 }
 function funcbarHTML(){
-  const b=(t,fn,cls)=>'<button'+(cls?' class="'+cls+'"':'')+' onclick="'+fn+'">'+t+'</button>';
-  let h=b('👥 阵容','showRoster()')
-    +((S.league==='CBA'||S.league==='NBA'||S.league==='欧洲')?b('📊 排名','showStandings()'):'')
-    +(isPro()?b('📋 签位','showPickAssets()'):'')
-    +(S.bracket?b('🏆 对阵图','showBracket()'):'')
-    +b('💼 财务','showMoney()')+b('🏅 成就','showCodex()')+b('📋 档案','showArchive()')
-    +b('📊 属性','showAttrs()','hot')+b('🧭 倾向','showTendHelp()')+b('🔊 音效','toggleSfx()')
-    +b('📤 导出','exportSave()')+b('📥 导入','openImport()')+b('💾 存档','saveNow()')
-    +b('🏁 结束生涯','endNow()','dim');
+  /* v5.0.2：按钮改 data-f + openFunc 分发——页面类打开时高亮对应按钮（当前页面指示） */
+  const b=(f,t,cls)=>'<button data-f="'+f+'"'+(cls?' class="'+cls+'"':'')+' onclick="openFunc(\''+f+'\')">'+t+'</button>';
+  let h=b('roster','👥 阵容')
+    +((S.league==='CBA'||S.league==='NBA'||S.league==='欧洲')?b('standings','📊 排名'):'')
+    +(isPro()?b('picks','📋 签位'):'')
+    +(S.bracket?b('bracket','🏆 对阵图'):'')
+    +b('money','💼 财务')+b('codex','🏅 成就')+b('archive','📋 档案')
+    +b('attrs','📊 属性','hot')+b('tend','🧭 倾向')
+    +b('sfx','🔊 '+(sfxEnabled()?'音效开':'音效关'))
+    +b('export','📤 导出')+b('import','📥 导入')+b('save','💾 存档')
+    +b('end','🏁 结束生涯','dim');
   return '<div class="fbhead">功能</div>'+h;
 }
+const FUNC_PAGE={roster:'showRoster()',standings:'showStandings()',picks:'showPickAssets()',bracket:'showBracket()',money:'showMoney()',codex:'showCodex()',archive:'showArchive()',attrs:'showAttrs()',tend:'showTendHelp()',import:'openImport()'};
+const FUNC_ACT={sfx:'toggleSfx()',export:'exportSave()',save:'saveNow()',end:'endNow()'};
+let FUNC_CUR=null;   /* v5.0.2：当前功能页 id（funcbar 高亮指示） */
+function markFunc(fid){
+  document.querySelectorAll('.funcbar button[data-f]').forEach(b=>b.classList.toggle('on',b.getAttribute('data-f')===fid));
+}
+function openFunc(fid){
+  const page=FUNC_PAGE[fid];
+  if(page){new Function(page)();   /* 页面函数内部先 push 被覆盖层（此时 FUNC_CUR=旧层） */
+    FUNC_CUR=fid;markFunc(fid);}
+  else{FUNC_ACT[fid]&&new Function(FUNC_ACT[fid])();
+    if(fid==='sfx')renderFuncbar();}   /* 音效开关文案刷新 */
+}
+function renderFuncbar(){const fb=document.querySelector('.funcbar');if(fb)fb.innerHTML=funcbarHTML();}
 function chapterTitle(){
   if(S.stage==='playoffs')return '季后赛';
   if(S.age<=17)return '青训岁月';if(S.age===18)return '十字路口';
@@ -10301,6 +10319,7 @@ function renderGame(){
   try{
     if(!UI)UI={mode:'event',ev:null};
     STAGE_STACK=[];   /* v5.0.1：界面重渲=功能页栈作废 */
+    FUNC_CUR=null;
     const head=(S.stage==='playoffs'
        ?`<div class="chapter">${S.bracket&&S.bracket.march?'🎱 疯狂三月':'🏆 季后赛'} · ${PLAYOFF_WHEN}${S.bracket&&!S.bracket.done&&bktMetaOf(S.bracket.currentStage).n?(' · '+bktMetaOf(S.bracket.currentStage).n):''}</div>`
        :`<div class="chapter">第${S.age-14}章 · ${useMonth()

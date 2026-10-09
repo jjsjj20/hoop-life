@@ -63,6 +63,7 @@ STEPS = [
     ("patch_draft2k.py",        "㊻ NBA 选秀对标 2K（班底 84 顶·行情收紧）", True),
     ("patch_desktop.py",        "㊼ 桌面端布局重构（功能竖栏+顶栏三段+时间栏）", True),
     ("patch_desktop_func.py",   "㊽ 功能页桌面直接覆盖事件区（栈式返回）", True),
+    ("patch_funcadapt.py",      "㊾ 功能页适配新界面（高亮指示+分发）", True),
     ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
     ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
