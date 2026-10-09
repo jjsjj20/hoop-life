@@ -10,9 +10,10 @@ module.exports = run('NBA门槛', ({ win, check, html }) => {
   win.eval('doCreate(); allocRandom(); confirmAlloc();');
   win.eval("S.age=20; S.league='NBA'; S.stage='winter';");
 
-  /* 与产物一致的行情公式（v4.27.2：58-(o-40)/0.55 + 年龄修正，无随机） */
+  /* 与产物一致的行情公式（v4.30.0：1+(84-o)/0.35 + 年龄修正，无随机） */
   const expStock = (o, age) => Math.max(1, Math.min(72, Math.round(
-    58 - (o - 40) / 0.55 + (age >= 23 ? 4 : age >= 22 ? 3 : age >= 21 ? 1 : 0) - (age <= 19 ? 1 : 0))));
+    (o > 65.3 ? Math.max(1, 87 - o) : 12 + (65.3 - o) / 0.55)
+    + (age >= 23 ? 4 : age >= 22 ? 3 : age >= 21 ? 1 : 0) - (age <= 19 ? 1 : 0))));
   const boost = t => win.eval(`
     (function(to){let d=to-ovr();if(d>0){Object.keys(S.skills).forEach(k=>{S.skills[k]=Math.min(99,Math.round((S.skills[k]||60)+d));});}})(${t});
     S.age=20;
@@ -31,7 +32,8 @@ module.exports = run('NBA门槛', ({ win, check, html }) => {
   }
 
   check('旧档位已移除（70 分档 33-55）', html.indexOf('base=R.float(33,55)') < 0);
-  check('新公式就位（班底曲线逆函数 58-(o-40)/0.55）', html.indexOf('58-(o-40)/0.55') >= 0);
+  check('新公式就位（分段：乐透级 87-o / 普通 12+(65.3-o)/0.55）', html.indexOf('o>65.3?Math.max(1,87-o)') >= 0 && html.indexOf('12+(65.3-o)/0.55') >= 0);
+  check('旧行情公式已移除（58-(o-40)/0.55 与 1+(84-o)/0.35）', html.indexOf('58-(o-40)/0.55') < 0 && html.indexOf('1+(84-o)/0.35') < 0);
 
   check('NBA FMVP 新公式就位（去除 35% 下限）', html.indexOf('clamp(.05+(o-70)*.05+(top?.2:0),.05,.85)') >= 0);
   check('CBA/欧洲 FMVP 新公式就位', html.indexOf('clamp(.05+(o-70)*.05+(_board.my.mvp<=3?.15:0),.05,.85)') >= 0);

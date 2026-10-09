@@ -120,14 +120,14 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   const cnCnt = win.eval(`(function(){let c=0;for(let i=0;i<300;i++){if(/[\\u4e00-\\u9fa5]/.test(draftProspect().n))c++;}return c;})()`);
   check('中国球员存在但稀少（1~30 / 300，约 4%）', cnCnt >= 1 && cnCnt <= 30, String(cnCnt));
 
-  /* ── ⑦b 班底按顺位加权 + 整体降格（v4.27.1 膨胀平衡修复） ── */
+  /* ── ⑦b 班底 2K 对标（v4.30.0：状元 84 顶、按顺位递减） ── */
   const curve = JSON.parse(win.eval(`JSON.stringify((function(){
     let a=0,b=0;for(let k=0;k<200;k++){a+=draftProspect(3).o;b+=draftProspect(55).o;}
     return {a:Math.round(a/200*10)/10,b:Math.round(b/200*10)/10};
   })())`));
   check('班底按顺位加权（探花期望 − 55 号期望 ≥ 15）', curve.a - curve.b >= 15, `探花 ${curve.a} vs 55号 ${curve.b}`);
   const classAvgO = win.eval(`(function(){let s=0,n=0;for(let r=0;r<10;r++)for(let pk=1;pk<=60;pk++){s+=draftProspect(pk).o;n++;}return Math.round(s/n*10)/10;})()`);
-  check('班底整体降格（全届平均能力 48~62）', classAvgO >= 48 && classAvgO <= 62, String(classAvgO));
+  check('班底 2K 对标（前 11 顺位乐透级 86~75 + 旧曲线主体，全届均值 56~62）', classAvgO >= 56 && classAvgO <= 62, String(classAvgO));
 
   /* ── ⑧ 玩家参选仪式：场景一「落选」（stock=72 → 顺位必 >60） ── */
   const nightScene = win.eval(`

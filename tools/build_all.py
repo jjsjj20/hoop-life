@@ -60,6 +60,7 @@ STEPS = [
     ("patch_radar6.py",         "㊷ 能力雷达改六大项", True),
     ("patch_ovr2kw.py",         "㊸ OVR 公式 2K 化（15 项技能直加权）", True),
     ("patch_po_avg.py",         "㊹ 季后赛断/帽场均精度修复（2 位小数）", True),
+    ("patch_draft2k.py",        "㊻ NBA 选秀对标 2K（班底 84 顶·行情收紧）", True),
     ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
     ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]
