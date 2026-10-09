@@ -9261,13 +9261,16 @@ function showArchive(){
    <span style="margin-top:2px">${S.height}cm / 臂展${S.wingspan}cm / ${S.weight}kg</span></div></div>
   <div class="mini">效力：${esc(teamLabel())} ｜ 身价 ${money(S.value)} ｜ 合同：${esc(contractLabel())}</div>
   <hr style="border:none;border-top:1px dashed var(--line);margin:12px 0">`;
-  SKILLS.forEach(([k,n])=>{h+=`<label style="display:flex;justify-content:space-between;margin:10px 0 2px"><span>${n}</span><b style="color:#fff">${S.skills[k]}</b></label><div class="bar"><i style="width:${S.skills[k]}%;background:${barColor(S.skills[k])}"></i></div>`;});
+  /* v4.28.2：六大项概览（2K 式，与结果页/📊 属性同口径）——15 项明细在 ☰ 更多 · 📊 属性 */
+  syncFromSkills();
+  const ARC=[['inside','内线得分'],['outside','外线投篮'],['play','组织传球'],['def','防守'],['reb','篮板'],['ath','身体素质']];
+  ARC.forEach(([k,n])=>{const v=S.a[k]||0;h+=`<label style="display:flex;justify-content:space-between;margin:10px 0 2px"><span>${n}</span><b style="color:#fff">${v}</b></label><div class="bar"><i style="width:${v}%;background:${barColor(v)}"></i></div>`;});
+  h+=`<div class="mini" style="margin:6px 0 0">15 项细分属性（罚球/抢断/力量/速度…）→ ☰ 更多 · 📊 属性 查看。</div>`;
   h+=`<label>隐藏天赋</label><div class="mini">天赋评级：<b style="color:var(--gold)">${S.tier||'C'} 档</b> · 天赋上限 ${S.tierCap||70} ＋ 训练加成 <b style="color:#ffd479">+${grindBonus()}</b> ＝ 实际上限 <b style="color:#ffd479">${(S.tierCap||70)+grindBonus()}</b>（各位置再加位置加成）<br>训练积累 <b>${Math.round(S.grind||0)}</b> 点（加练、特训、自费训练都会累积，最高把上限抬 ${GROWTH.grindMax} 点）｜ 身体耐久：${S.h.durability>=80?'硬朗':S.h.durability>=60?'一般':'玻璃'} ｜ 进攻稳定：${S.h.stability} ｜ 拼抢：${S.h.hustle}</div>`;
   h+=`<label>🧭 打法倾向（选择进数据）</label><div class="mini">本赛季：${esc(tendDesc(S.tend))}<br>生涯累计：${esc(tendCareerText(S.tendAll))}</div>`;
-  h+=`<label>🕸 能力雷达（11 项）</label><div class="radwrap">
+  h+=`<label>🕸 能力雷达（15 项）</label><div class="radwrap">
    <div class="radcol">${radarSVG(280,240,true)}</div>
-   <div class="listcol">${['three','mid','finish','dunk','handle','pass','perdef','intdef','block','reb','clutch']
-     .map(k=>{const nm=(SKILLS.find(s=>s[0]===k)||[k,k])[1],v=S.skills[k];
+   <div class="listcol">${SKILLS.map(([k,nm])=>{const v=S.skills[k];
        const tag=v>=85?'<span class="gold">顶尖</span>':v>=70?'<span class="up">优秀</span>':v>=55?'':'<span class="down">短板</span>';
        return `<i>${nm}</i><b>${v}</b> ${tag}`;}).join('<br>')}</div></div>`;
   h+=`<label>📈 生涯曲线（场均得分）</label>${sparkSVG('ppg','分',420,132)}`;
