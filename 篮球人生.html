@@ -1034,6 +1034,17 @@ const POS={
   PF:{n:'大前锋 PF',w:{inside:.20,outside:.14,play:.12,def:.20,reb:.18,ath:.16},b:{inside:56,outside:48,play:42,def:55,reb:58,ath:50},h:206,ws:214,wt:106},
   C:{n:'中锋 C',w:{inside:.24,outside:.10,play:.10,def:.20,reb:.22,ath:.14},b:{inside:62,outside:40,play:36,def:58,reb:62,ath:44},h:212,ws:222,wt:114}
 };
+/* v4.29.0：2K 式 OVR 权重表——5 位置 × 15 属性直加权（clutch 保持隐藏属性不进 OVR）。
+ * 由 _gen_skillw.py 生成：旧公式隐含权重 + 2K 位置特异偏好 δ，双约束（Σw=1 且
+ * Σw×x0=旧公式典型 OVR）最小二乘投影——分布守恒（五位置典型画像 diff=0、
+ * 三档画像漂移 ≤0.02）+ 2K 式强差异（内线型跨位差 10 / 后卫型跨位差 13）。 */
+const SKILL_W={
+  PG:{three:0.13838, mid:0.05617, free:0.03417, finish:0.04197, dunk:0.04966, handle:0.14805, pass:0.14805, perdef:0.03234, steal:0.03717, intdef:0.04623, block:0.05258, reb:0.0544, athBase:0.05712, speed:0.06343, strength:0.04029},
+  SG:{three:0.13116, mid:0.0857, free:0.05363, finish:0.07686, dunk:0.05732, handle:0.1177, pass:0.07424, perdef:0.07166, steal:0.04252, intdef:0.04221, block:0.05081, reb:0.04086, athBase:0.06624, speed:0.05516, strength:0.03393},
+  SF:{three:0.11453, mid:0.02974, free:0.03494, finish:0.09453, dunk:0.09494, handle:0.06494, pass:0.06056, perdef:0.07893, steal:0.06636, intdef:0.04857, block:0.04919, reb:0.10097, athBase:0.06174, speed:0.06332, strength:0.03675},
+  PF:{three:0.04885, mid:0.04477, free:0.01434, finish:0.09131, dunk:0.10417, handle:0.0585, pass:0.0585, perdef:0.07104, steal:0.0645, intdef:0.06374, block:0.06747, reb:0.18774, athBase:0.05104, speed:0.02469, strength:0.04931},
+  C:{three:0.04711, mid:0.02546, free:0.00963, finish:0.11051, dunk:0.10633, handle:0.04128, pass:0.04963, perdef:0.06548, steal:0.05728, intdef:0.06651, block:0.0515, reb:0.22818, athBase:0.05282, speed:0.04814, strength:0.04018}
+};
 const POS_ORDER=['PG','SG','SF','PF','C'];
 const REGIONS={
   provinces:['北京','天津','上海','重庆','河北','山西','辽宁','吉林','黑龙江','江苏','浙江','安徽','福建','江西','山东','河南','湖北','湖南','广东','广西','海南','四川','贵州','云南','陕西','甘肃','青海','内蒙古','西藏','宁夏','新疆','香港','澳门','台湾'],
@@ -1406,7 +1417,18 @@ function syncFromSkills(){ /* v4.28.0：由 15 项技能合成六大项（2K 式
   if(S.a.athBase!=null)S.a.ath=clamp(Math.round(S.a.athBase*.4+(k.speed||55)*.3+(k.strength||55)*.3),20,99);   /* 三键齐才派生；纯老档（全缺）保持原值待迁移 */
   S.h.clutch=k.clutch;
 }
-function ovr(){if(!S)return 0;if(S.skills)syncFromSkills();let s=0;const w=POS[S.pos].w;COMPONENTS.forEach(k=>s+=(S.a[k]||0)*w[k]);return Math.round(s);}
+function ovr(){ /* v4.29.0：2K 式——15 项技能按位置直加权（SKILL_W），六大项仍合成供展示 */
+  if(!S)return 0;
+  if(S.skills)syncFromSkills();
+  const W=SKILL_W[S.pos];
+  if(!W){let s=0;COMPONENTS.forEach(k=>s+=(S.a[k]||0)*(POS[S.pos].w||{})[k]);return Math.round(s);}   /* 防御：无权重表回退旧公式 */
+  let s=0;
+  for(const k in W){
+    const v=k==='athBase'?((S.a&&S.a.athBase)||55):((S.skills&&S.skills[k])||55);
+    s+=v*W[k];
+  }
+  return Math.round(s);
+}
 /* 首发判定分：能力 + 队内地位权重。全项目共用这一个口径——以前这句话在 8 个地方各手写一遍，
  * 改一个阈值就会漏掉另几处（测试里也是靠这个函数验「地位进首发判定」）。 */
 function starterScore(){return ovr()+tsNum()*ATTR.tsStarter;}
