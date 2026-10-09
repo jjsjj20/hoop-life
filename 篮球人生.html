@@ -8141,7 +8141,7 @@ function computeSeason(pr,wpcIn,po){
   let pstats=null;
   if(po&&po.games>0){
     pstats={games:po.games,ppg:Math.round(po.pts/po.games*10)/10,rpg:Math.round(po.reb/po.games*10)/10,apg:Math.round(po.ast/po.games*10)/10,
-      spg:Math.round((po.stl||0)/po.games*10)/10,bpg:Math.round((po.blk||0)/po.games*10)/10,
+      spg:Math.round((po.stl||0)/po.games*100)/100,bpg:Math.round((po.blk||0)/po.games*100)/100,   /* v4.29.1：断/帽场均 2 位小数——1 位时场均×场次与总计对不上（观感 bug） */
       pts:po.pts,reb:po.reb,ast:po.ast,stl:Math.round((po.stl||0)*10)/10,blk:Math.round((po.blk||0)*10)/10};
   }
   const H=[];
