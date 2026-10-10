@@ -255,7 +255,8 @@ select:disabled{color:var(--dim)}
 /* ── v5.0.3 桌面宽度适配：#app 放宽 + 事件页限阅读宽（:has 精准区分） ── */
 @media(min-width:900px){
   #app{max-width:1080px}
-  #stage:has(.scene){max-width:760px;margin:0 auto}   /* 事件/结果页限阅读宽；功能页（无 .scene）通栏 */
+  #stage{max-width:760px;margin:0 auto}               /* 事件/功能页默认限阅读宽 */
+  #stage:has(.attrswide){max-width:none}              /* 仅属性页通栏（v5.0.4 收窄） */
 }
 /* ── v5.0.0 桌面布局重构：左功能竖栏 + 顶栏三段 + 时间栏（only-d/only-m 分端） ── */
 .only-d{display:none}
@@ -8820,7 +8821,7 @@ function showAttrs(){
     const c=v>=85?'#fbbf24':v>=75?'#6eee9c':v>=65?'#7ab8ff':'#f09595';
     return '<div style="margin:12px 0 4px;display:flex;justify-content:space-between"><span style="color:#ffd479;font-size:12px">'+t+'</span><b style="font-size:12px;color:'+c+'">'+v+'</b></div>'
       +items.map(x=>row(x[0],x[1])).join('');};
-  openOvl('<h3>📊 '+esc(S.name)+' · OVR <b style="color:#fbbf24">'+ovr()+'</b></h3>'
+  openOvl('<div class="attrswide"><h3>📊 '+esc(S.name)+' · OVR <b style="color:#fbbf24">'+ovr()+'</b></h3>'
     +'<div class="mini">'+POS[S.pos].n+' · '+esc(S.league)+' · 属性按 NBA 2K 分类归组</div><hr style="border-color:#232c40">'
     +grp('🏀 内线得分',[['终结',k.finish||55],['扣篮',k.dunk||55]])
     +grp('🎯 外线投篮',[['三分',k.three||55],['中投',k.mid||55],['罚球',k.free||55]])
@@ -8828,7 +8829,7 @@ function showAttrs(){
     +grp('🛡 防守',[['外防',k.perdef||55],['抢断',k.steal||55],['内防',k.intdef||55],['盖帽',k.block||55]])
     +grp('💪 篮板',[['篮板',k.reb||55]])
     +grp('⚡ 身体素质',[['速度',k.speed||55],['力量',k.strength||55],['身体基础',ab]])
-    +'<button class="btn ghost" style="margin-top:14px" onclick="closeOvl()">关闭</button>');
+    +'<button class="btn ghost" style="margin-top:14px" onclick="closeOvl()">关闭</button></div>');
 }
 function openMore(){
   const pro=(S.league==='CBA'||S.league==='NBA'||S.league==='欧洲');
