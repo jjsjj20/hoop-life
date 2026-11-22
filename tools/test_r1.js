@@ -30,8 +30,8 @@ module.exports = run('R1发版保障', ({ check, html }) => {
   check('打包逻辑含 manifest/sw/icons 与两份日志',
     ['manifest.json', 'sw.js', 'icons', '更新日志.md', '更新日志.html', 'README-build.md']
       .every(f => ba.indexOf("'" + f + "'" ) >= 0 || ba.indexOf('"' + f + '"') >= 0));
-  check('ZIP 版本号取自更新日志（当前版本：…）',
-    ba.indexOf('当前版本：') >= 0 && ba.indexOf('zipfile') >= 0);
+  check('ZIP 版本号兼容中英文冒号',
+    ba.indexOf('def release_version') >= 0 && ba.indexOf('[:：]?') >= 0 && ba.indexOf('zipfile') >= 0);
 
   // ── ③ ZIP 实物存在且含关键字段（本机验证；CI 只查脚本存在性）──
   const distZip = path.join(root, 'dist', 'hoop-life-v4.15.0.zip');

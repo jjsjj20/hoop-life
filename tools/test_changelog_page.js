@@ -8,7 +8,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
 
   // ── 2. 版本段落被正确切分与归类 ─────────────────────
   const secs = [...doc.querySelectorAll('section.ver')];
-  check('版本段被包进 section.ver', secs.length === 76, '实得 ' + secs.length);
+  check('版本段被包进 section.ver', secs.length === 77, '实得 ' + secs.length);
   check('总览/附录没有被误判成版本段', secs.every(s => /^sec-v/.test(s.id)));
   // 顺序守卫：版本段物理顺序必须与版本号严格倒序一致（防止补录条目插错位置）
   const verNums = secs.map(s => (s.querySelector('.vpill').textContent.match(/v[\d.]+/) || [''])[0]);
@@ -92,9 +92,9 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   // ── 3. 版本标题被拆成「徽章 + 主题」──────────────────
   const h = secs[0].querySelector('h2');
   check('版本标题有徽章元素', !!h.querySelector('.vpill'));
-  check('徽章文字含最新版本号', /v5\.0\.5/.test(h.querySelector('.vpill').textContent), h.querySelector('.vpill').textContent);
+  check('徽章文字含最新版本号', /v5\.0\.6/.test(h.querySelector('.vpill').textContent), h.querySelector('.vpill').textContent);
   const vt = (h.querySelector('.vt') || {}).textContent || '';
-  check('主题文字已从版本号里拆出来', vt.length > 6 && vt.indexOf('v5.0.5') < 0, JSON.stringify(vt.slice(0, 30)));
+  check('主题文字已从版本号里拆出来', vt.length > 6 && vt.indexOf('v5.0.6') < 0, JSON.stringify(vt.slice(0, 30)));
   /* v4.21.1 起正文不再回填提交哈希，按稳定锚点检查历史记录，避免新增版本后偏移。 */
   check('提交哈希仍在标题里', /[0-9a-f]{7}/.test((doc.querySelector('#v4210 .sha') || {}).textContent || ''));
 
@@ -108,7 +108,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
     const s = secs.find(x => noOf(x) === no);
     return s && r.querySelector('.dot').className === 'dot k-' + kindOf(s);
   }));
-  check('字符增量列有量级条（±0 与补录条目无量级条属正常）', rows.filter(r => r.querySelector('.mg')).length >= rows.length - 3,
+  check('字符增量列有量级条（±0 与补录条目无量级条属正常）', rows.filter(r => r.querySelector('.mg')).length >= rows.length - 4,
     rows.filter(r => r.querySelector('.mg')).length + '/' + rows.length);
   check('单元格带 data-label（窄屏卡片化用）',
     rows[0].querySelectorAll('td[data-label]').length >= 3);
@@ -164,7 +164,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   check('每个手机版本选项都有有效目标', [...doc.querySelectorAll('#versionSelect option[value]')].filter(o => o.value).every(o => doc.getElementById(o.value)));
   const search = doc.getElementById('logSearch');
   const input = value => { search.value = value; search.dispatchEvent(new win.Event('input', { bubbles: true })); };
-  input('v5.0.5');
+  input('v5.0.6');
   const found = secs.filter(s => !s.classList.contains('hide'));
   check('按版本号搜索可定位到最新记录', found.length === 1 && found[0] === secs[0]);
   check('搜索同步更新目录与总览', verChips.filter(a => !a.hidden).length === 1 && rows.filter(r => !r.classList.contains('hide')).length === 1);
@@ -195,12 +195,12 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
 
   // ── 8. 内容完整性：一个字都没少 ────────────────────
   const text = doc.body.textContent;
-  const must = ['v5.0.5', 'v5.0.4', 'v5.0.3', 'v5.0.2', 'v5.0.1', 'v5.0.0', 'v4.30.0', 'v4.29.1', 'v4.29.0', 'v4.28.3', 'v4.28.2', 'v4.28.1', 'v4.28.0', 'v4.27.5', 'v4.27.4', 'v4.27.3', 'v4.27.2', 'v4.27.1', 'v4.27.0', 'v4.26.2', 'v4.26.1', 'v4.26.0', 'v4.25.0', 'v4.24.0', 'v4.23.0', 'v4.22.0', 'v4.21.2', 'v4.21.1', 'v4.21.0', 'v4.20.5', 'v4.20.4', 'v4.20.3', 'v4.20.2', 'v4.20.1', 'v4.20.0', 'v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', 'v3.5', '视觉精修', 'v35halo', 'v3.4', '实时事件流', '冰敷之后', 'v3.3', '世界体育报', 'v3.2', '联赛校验', 'v3.1', 'AI 致辞', 'v3.0', 'AI 点评层', '加时', '鏖战至加时', '版本总览', '附录', '音效技术备忘',
+  const must = ['v5.0.6', 'v5.0.5', 'v5.0.4', 'v5.0.3', 'v5.0.2', 'v5.0.1', 'v5.0.0', 'v4.30.0', 'v4.29.1', 'v4.29.0', 'v4.28.3', 'v4.28.2', 'v4.28.1', 'v4.28.0', 'v4.27.5', 'v4.27.4', 'v4.27.3', 'v4.27.2', 'v4.27.1', 'v4.27.0', 'v4.26.2', 'v4.26.1', 'v4.26.0', 'v4.25.0', 'v4.24.0', 'v4.23.0', 'v4.22.0', 'v4.21.2', 'v4.21.1', 'v4.21.0', 'v4.20.5', 'v4.20.4', 'v4.20.3', 'v4.20.2', 'v4.20.1', 'v4.20.0', 'v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', 'v3.5', '视觉精修', 'v35halo', 'v3.4', '实时事件流', '冰敷之后', 'v3.3', '世界体育报', 'v3.2', '联赛校验', 'v3.1', 'AI 致辞', 'v3.0', 'AI 点评层', '加时', '鏖战至加时', '版本总览', '附录', '音效技术备忘',
     '14 队加权乐透', '首轮签在交易里送走了', '季池', 'AST 静态审查脚本', 'hoop_life_save_v1', '对抗烈度', '通往 NBA 的门槛', '阵容说话', '取样深度补偿', '选中即入队', '一台一台念', '念到你为止', '人人满级', '班底曲线的逆函数', '计划键冲突', '顶级球星不再直通冠军', '强度快照', 'NBA 2K', '弗拉格'];
   must.forEach(k => check('内容未丢失：' + k, text.indexOf(k) >= 0));
   check('表格数量未变（40 个）', doc.querySelectorAll('table').length === 40,
     String(doc.querySelectorAll('table').length));
-  check('全部历史卡片及 v5.0.5 共 78 个', doc.querySelectorAll('.card').length === 78,
+  check('全部历史卡片及 v5.0.6 共 79 个', doc.querySelectorAll('.card').length === 79,
     String(doc.querySelectorAll('.card').length));
 
   // ── 8. 无控制台告警 ───────────────────────────────

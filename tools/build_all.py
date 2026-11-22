@@ -4,7 +4,7 @@
 
     python3 tools/build_all.py
 
-  产物在 dist/：篮球人生.html + assets/（106 张 webp）
+  产物在 dist/：篮球人生.html + assets/（当前 105 张 webp）
   可选参数：
     --src  原版游戏文件（默认 src/篮球人生-v4.8-原版.html）
     --out  输出目录（默认 dist/）
@@ -15,6 +15,7 @@
 import argparse
 import hashlib
 import os
+import re
 import subprocess
 import sys
 
@@ -75,6 +76,17 @@ STEPS = [
 def sha16(path):
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()[:16]
+
+
+def release_version(text):
+    """Extract the release version from the changelog header.
+
+    Older changelogs used a Chinese colon while the current Markdown header
+    omits it, so accept either form (and optional whitespace) without making
+    the ZIP filename depend on one punctuation style.
+    """
+    m = re.search(r"当前版本\s*[:：]?\s*\*\*(v[\d.]+)\*\*", text)
+    return m.group(1) if m else None
 
 
 def main():
@@ -144,15 +156,12 @@ def main():
 
     # ── R1（v4.15.1）：--zip 自动打包交付包（版本号取自更新日志） ──
     if args.zip:
-        import re as _re
         import zipfile as _zipfile
         ver = None
         md_path = os.path.join(ROOT, "更新日志.md")
         if os.path.exists(md_path):
             with open(md_path, encoding="utf-8") as f:
-                m = _re.search(r"当前版本：\*\*(v[\d.]+)\*\*", f.read())
-            if m:
-                ver = m.group(1)
+                ver = release_version(f.read())
         zip_path = os.path.join(args.out, "hoop-life-%s.zip" % (ver or "dev"))
         if os.path.exists(zip_path):
             os.remove(zip_path)

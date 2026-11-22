@@ -10,7 +10,7 @@ python3 tools/build_all.py
 ```
 
 - 输入：`src/篮球人生-v4.8-原版.html`（未打补丁的原始游戏，重建的唯一输入）
-- 输出：`dist/篮球人生.html` + `dist/assets/`（106 张 webp）
+- 输出：`dist/篮球人生.html` + `dist/assets/`（当前 105 张 webp）
 - 脚本最后会**自动与仓库根的成品做哈希比对**——不一致说明构建或源文件有问题
 
 依赖：
@@ -18,7 +18,7 @@ python3 tools/build_all.py
 | 依赖               | 用途                | 缺失会怎样                |
 | :--------------- | :---------------- | :------------------- |
 | Python 3.10+     | 构建                | 无法构建                 |
-| Pillow           | 图片按显示尺寸重采样（第 ⑦ 步） | 自动跳过该步并警告，产物体积会大 40% |
+| Pillow           | 图片按显示尺寸重采样（可选步骤） | 自动跳过该步并警告，产物体积会大一些 |
 | Node ≥ 18（建议 20） | 跑测试（与构建无关）        | 无法跑验证                |
 
 > **⚠️ Node 版本别乱升**：`jsdom` 已锁定 **26.1.0**（兼容 Node ≥ 18）。  
@@ -37,26 +37,26 @@ python3 tools/build_all.py
 ## 跑验证（改完代码必做）
 
 ```bash
-npm install          # 只装测试依赖（jsdom / acorn / acorn-walk），游戏本体零依赖
+python tools/test_build_contract.py  # 版本号与 SW 缓存边界
+npm ci                 # 只装测试依赖（jsdom / acorn / acorn-walk）
 node tools/verify_all.js
 ```
 
-它会依次跑 9 个测试脚本 + AST 静态审查，汇总成一张表，**任何一项失败退出码非 0**。  
-CI（`.github/workflows/verify.yml`）在每次 push / PR 时自动跑同一套。
+它会自动发现并依次跑当前全部 27 个 `test_*.js` 脚本，再加 AST 静态审查，汇总成一张表，**任何一项失败退出码非 0**。新增测试文件只要以 `test_` 开头就会自动纳入。
+CI（`.github/workflows/verify.yml`）会先从原版源文件重建并校验根目录成品，再安装依赖跑同一套验证。
 
-### 9 个测试脚本各管什么
+### 当前测试覆盖
 
 | 脚本                       | 覆盖                                        |
 | :----------------------- | :---------------------------------------- |
-| `test_smoke.js`          | 建档 → 事件 → 键盘 → 结算 → 继续的全链路，加上资源外链、存档导出导入  |
-| `test_robustness.js`     | 未捕获异常的日志与档案可见、AI 密钥提示与一键清除                |
-| `test_draft_lottery.js`  | 乐透抽签的结构与**概率分布**（20000 次蒙特卡洛对官方赔率，偏差 <1%） |
-| `test_pick_events.js`    | 签位主题事件的注册、门槛、内容、剧情线跳转、**抽取可达性**           |
-| `test_season.js`         | 连推 10 个赛季的不变量 + 存档往返                      |
-| `test_playoffs.js`       | 资格判定分档、对阵结构、夺冠/出局链路、结果文案                  |
-| `test_coach.js`          | 教练模式整季循环、战绩、选秀新人、存档往返、终章                  |
-| `test_migration.js`      | 老存档迁移（缺字段回推 / v1 界面状态 / 脏数据 / 损坏 JSON）    |
-| `test_changelog_page.js` | 更新日志页面的切分、归类、筛选、折叠、内容完整性                  |
+| 脚本类别 | 覆盖 |
+| :-- | :-- |
+| 核心流程（`test_smoke.js`、`test_season.js`、`test_playoffs.js`） | 建档、事件、赛季推进、结算、继续、存档往返、季后赛链路 |
+| 选秀与交易（`test_draft_*`、`test_pick_*`、`test_team_str.js`） | 抽签概率、签位事件、交易保护、球队强度与页面数据 |
+| 内容与数值（`test_balance.js`、`test_drama_quota.js`、`test_focus_league.js` 等） | 事件池可达性、成长/难度、联赛门槛与内容配额 |
+| 存档与分享（`test_migration.js`、`test_join_str.js`、`test_share_card.js`、`test_pwa_card.js`） | 老存档迁移、分享卡、PWA manifest/SW/图标与离线守卫 |
+| UI 与发布页面（`test_ui.js`、`test_func_return.js`、`test_changelog_page.js`） | 响应式界面、功能页返回、键盘操作、更新日志交互与历史完整性 |
+| 静态审查（`audit.js`） | AST 重复声明、事件/效果注册、跳转目标、死配置和严重问题 |
 
 ### 加新测试
 
@@ -73,23 +73,17 @@ AST 级检查：顶层重复函数声明、状态对象多处构造的字段一�
 fx 键是否已注册、跳转目标是否存在、事件 id 唯一性、死配置、死代码、空数组取值。  
 有严重问题会以非零退出码结束（CI 因此变红）。
 
-## 构建管线分几步
+## 构建管线
 
-|  步骤 | 脚本                       | 做什么                                              |
-| :-: | :----------------------- | :----------------------------------------------- |
-|  ①  | `extract_images.py`      | 把 106 张内嵌 base64 webp 拆成 `assets/`，HTML 改为相对路径引用 |
-|  ②  | `patch_keyboard_save.py` | 键盘操作 + 存档导出导入                                    |
-|  ③  | `patch_perf.py`          | 首屏图片 preload、fetchpriority 分级、空闲预热插画             |
-|  ④  | `patch_robustness.py`    | 未捕获异常可见化 + AI 密钥提示与清除                            |
-|  ⑤  | `patch_draft_lottery.py` | 真实签位系统（战绩倒序 + 加权乐透）                              |
-|  ⑥  | `patch_pick_events.py`   | 签位主题事件 + 季池抽取修复                                  |
-|  ⑦  | `patch_audit_fixes.py`   | 选秀数据收敛为唯一工厂 `newDraft()`（自查修复）                   |
-|  ⑧  | `patch_drama_quota.py`   | 戏剧配额防饿死（允许戏剧事件撞题材出场）                             |
-|  ⑨  | `patch_remove_coach.py`  | 彻底移除教练模式（含老教练存档就地退役迁移，删除 bench 横幅）               |
-|  ⑩  | `patch_pick_trades.py`   | 签位资产板 + 签位交易（保护条款 / 选秀夜按归属播报）                      |
-|  ⑪  | `patch_share_card.py`    | 生涯分享卡（自包含单文件，终章页生成）                              |
-|  ⑫  | `patch_p4_polish.py`     | P4 收尾：放开双指缩放 + 季后赛结果收敛唯一工厂                       |
-|  ⑬  | `optimize_images.py`     | 图片按实际显示尺寸重采样（需 Pillow，缺失自动跳过）                    |
+当前 `tools/build_all.py` 编排 51 个步骤：50 个必需步骤从 v4.8 原版逐项应用唯一匹配补丁，最后运行 `patch_sw_cache.py` 对齐最终 HTML 哈希；`optimize_images.py` 是可选的第 51 项图片优化步骤。每次构建都会生成 `dist/`，并把 `dist/篮球人生.html` 与仓库根成品做 SHA-256 前 16 位比对。
+
+主要阶段包括：
+
+1. 拆出 105 张图片资源并建立相对路径。
+2. 依次应用玩法、内容、存档、分享卡和 PWA 补丁。
+3. 应用桌面布局、移动端响应式和功能页返回等界面补丁。
+4. 用最终 HTML 哈希生成版本化 Service Worker 缓存名。
+5. 可选地按显示尺寸重采样图片；CI 使用 `--skip-optimize`，避免依赖 Pillow，同时仍验证完整补丁链和成品哈希。
 
 每一步都要求**精确唯一匹配**才会改动——匹配不上就中止，绝不半途而废。
 
@@ -112,7 +106,7 @@ fx 键是否已注册、跳转目标是否存在、事件 id 唯一性、死配�
 
 **Q：重建出来的文件和仓库根的成品不一致？**  
 先确认 `--src` 指向的是未打补丁的 v4.8 原版（`src/篮球人生-v4.8-原版.html`），  
-再确认 13 个步骤全部成功（ optimize 步骤被跳过会导致体积偏差）。
+再确认 50 个必需步骤全部成功；若本地跳过可选图片优化，使用与 CI 相同的 `--skip-optimize` 参数，避免把优化步骤的体积差异误判为代码问题。
 
 **Q：测试报「未注册的效果键」？**  
 `applyFx` 对未知键只 `console.warn` 不报错。往 `FX` 注册表里补上，  

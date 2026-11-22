@@ -1,4 +1,5 @@
 node_modules/
+__pycache__/
 dist/
 tools/sim_part_*.json
 tools/sim_raw*.json

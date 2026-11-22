@@ -1,4 +1,4 @@
-/* 一次跑完所有验证：9 个测试脚本 + AST 静态审查
+/* 一次跑完所有验证：自动发现全部 test_*.js + AST 静态审查
  *
  * 本地和 CI 跑同一件事：node tools/verify_all.js
  *

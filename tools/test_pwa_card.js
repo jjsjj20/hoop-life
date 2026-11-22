@@ -65,6 +65,7 @@ module.exports = run('PWA与图片分享卡', ({ win, doc, check, html }) => {
   check('sw.js 含版本化缓存常量', /const CACHE = 'hoop-life-/.test(sw));
   check('sw.js 页面请求网络优先（navigate）', sw.indexOf("req.mode === 'navigate'") >= 0);
   check('sw.js 资产缓存优先且清理旧缓存', sw.indexOf('caches.match(req)') >= 0 && sw.indexOf('caches.delete') >= 0);
+  check('sw.js 只清理 hoop-life 缓存', sw.indexOf("k.indexOf('hoop-life-') === 0 && k !== CACHE") >= 0 && sw.indexOf("ks.filter(k => k !== CACHE)") < 0);
   check('sw.js 不拦截跨域请求（AI 接口）', sw.indexOf('origin !== location.origin') >= 0);
   check('HTML 含 manifest 链接', html.indexOf('rel="manifest" href="./manifest.json"') >= 0);
   check('SW 注册带协议守卫（file:// 不注册）', html.indexOf("/^https?:$/.test(location.protocol)") >= 0);
