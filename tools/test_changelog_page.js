@@ -8,7 +8,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
 
   // ── 2. 版本段落被正确切分与归类 ─────────────────────
   const secs = [...doc.querySelectorAll('section.ver')];
-  check('版本段被包进 section.ver', secs.length === 75, '实得 ' + secs.length);
+  check('版本段被包进 section.ver', secs.length === 76, '实得 ' + secs.length);
   check('总览/附录没有被误判成版本段', secs.every(s => /^sec-v/.test(s.id)));
   // 顺序守卫：版本段物理顺序必须与版本号严格倒序一致（防止补录条目插错位置）
   const verNums = secs.map(s => (s.querySelector('.vpill').textContent.match(/v[\d.]+/) || [''])[0]);
@@ -92,11 +92,11 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   // ── 3. 版本标题被拆成「徽章 + 主题」──────────────────
   const h = secs[0].querySelector('h2');
   check('版本标题有徽章元素', !!h.querySelector('.vpill'));
-  check('徽章文字含版本号', /v5\.0\.4/.test(h.querySelector('.vpill').textContent), h.querySelector('.vpill').textContent);
+  check('徽章文字含最新版本号', /v5\.0\.5/.test(h.querySelector('.vpill').textContent), h.querySelector('.vpill').textContent);
   const vt = (h.querySelector('.vt') || {}).textContent || '';
-  check('主题文字已从版本号里拆出来', vt.length > 6 && vt.indexOf('v5.0.4') < 0, JSON.stringify(vt.slice(0, 30)));
-  /* v4.21.1 起正文不再回填提交哈希（发布即入库），哈希检查落在 v4.21.0 段上 */
-  check('提交哈希仍在标题里', /[0-9a-f]{7}/.test((secs[27].querySelector('h2 .sha') || {}).textContent || ''));
+  check('主题文字已从版本号里拆出来', vt.length > 6 && vt.indexOf('v5.0.5') < 0, JSON.stringify(vt.slice(0, 30)));
+  /* v4.21.1 起正文不再回填提交哈希，按稳定锚点检查历史记录，避免新增版本后偏移。 */
+  check('提交哈希仍在标题里', /[0-9a-f]{7}/.test((doc.querySelector('#v4210 .sha') || {}).textContent || ''));
 
   // ── 4. 总览表：类型圆点 / 量级条 / 移动端 data-label ──
   const ov = doc.querySelector('.ovtable');
@@ -116,9 +116,9 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   // ── 5. 工具条 ────────────────────────────────────
   const jump = doc.getElementById('tbJump');
   const chips = [...jump.querySelectorAll('a')];
-  check('目录芯片被搬进工具条（75 版 + 附录）', chips.length === 76, String(chips.length));
+  check('版本目录被搬进工具条（全部版本 + 附录）', chips.length === secs.length + 1, String(chips.length));
   const verChips = chips.filter(a => /^#v\d/.test(a.getAttribute('href')));
-  check('版本芯片都带上了类型色', verChips.length === 75 && verChips.every(a => /k-(art|play|eng|fix|other)/.test(a.className)),
+  check('版本目录保留类型色', verChips.length === secs.length && verChips.every(a => /k-(art|play|eng|fix|other)/.test(a.className)),
     verChips.filter(a => !/k-/.test(a.className)).map(a => a.textContent).join(','));
   check('附录芯片保持中性（不属于任何版本类型）', /k-/.test((chips.find(a => /appendix/.test(a.getAttribute('href'))) || {}).className || '') === false);
   check('目录源标记仍在原位（只是运行时被搬走）', /<nav class="toc">/.test(html) && !doc.querySelector('header .toc'));
@@ -145,7 +145,7 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   const colBtn = doc.getElementById('tbCollapse');
   colBtn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   const collapsed = secs.filter(s => s.classList.contains('col'));
-  check('「只看最近 5 版」收起后 5 个展开', collapsed.length === 75 - 5, String(collapsed.length));
+  check('收起旧版本后仅前 5 个展开', collapsed.length === secs.length - 5, String(collapsed.length));
   check('收起的是旧版本不是最新版', !secs.slice(0, 5).some(s => s.classList.contains('col')));
   check('按钮文字切换', colBtn.textContent.indexOf('展开全部') >= 0, colBtn.textContent);
   colBtn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
@@ -157,14 +157,50 @@ module.exports = run('更新日志页面', ({ win, doc, check, errors, warns, ht
   h.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   check('再点展开', !secs[0].classList.contains('col'));
 
-  // ── 7. 内容完整性：一个字都没少 ────────────────────
+  // ── 7. 阅读导航：搜索与筛选组合、空结果、版本直达、键盘折叠 ──
+  const overview = doc.querySelector('details.overview-panel');
+  check('完整总览默认折叠，最新内容可直接阅读', overview && !overview.open && !secs[0].classList.contains('col'));
+  check('正文和版本导航各有独立语义区域', !!doc.querySelector('main#updates') && !!doc.querySelector('aside[aria-label="查找更新"]'));
+  check('每个手机版本选项都有有效目标', [...doc.querySelectorAll('#versionSelect option[value]')].filter(o => o.value).every(o => doc.getElementById(o.value)));
+  const search = doc.getElementById('logSearch');
+  const input = value => { search.value = value; search.dispatchEvent(new win.Event('input', { bubbles: true })); };
+  input('v5.0.5');
+  const found = secs.filter(s => !s.classList.contains('hide'));
+  check('按版本号搜索可定位到最新记录', found.length === 1 && found[0] === secs[0]);
+  check('搜索同步更新目录与总览', verChips.filter(a => !a.hidden).length === 1 && rows.filter(r => !r.classList.contains('hide')).length === 1);
+  artBtn.click();
+  check('搜索和类型筛选共同生效，无交集显示空结果', !doc.getElementById('emptyResults').hidden && secs.every(s => s.classList.contains('hide')));
+  doc.getElementById('resetFilters').click();
+  check('空结果可一键重置并恢复全部版本', search.value === '' && secs.every(s => !s.classList.contains('hide')) && kbtns[0].getAttribute('aria-pressed') === 'true');
+  input('首轮签在交易里送走了');
+  const bodyMatches = secs.filter(s => !s.classList.contains('hide'));
+  check('关键词也能搜索历史正文', bodyMatches.length > 0 && bodyMatches.every(s => s.textContent.includes('首轮签在交易里送走了')));
+  doc.getElementById('clearSearch').click();
+  check('清除搜索恢复记录并保留输入焦点', secs.every(s => !s.classList.contains('hide')) && doc.activeElement === search);
+  colBtn.click();
+  artBtn.click();
+  const target = secs.find(s => noOf(s) === 'v4.5');
+  const select = doc.getElementById('versionSelect');
+  select.value = target.querySelector('h2').id;
+  select.dispatchEvent(new win.Event('change', { bubbles: true }));
+  check('版本跳转可打开已收起且被筛选隐藏的记录', !target.classList.contains('col') && !target.classList.contains('hide') && win.location.hash === '#' + target.querySelector('h2').id);
+  check('跳转到被筛掉的版本会重置筛选', kbtns[0].getAttribute('aria-pressed') === 'true');
+  const targetHead = target.querySelector('h2');
+  targetHead.dispatchEvent(new win.KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+  check('空格可折叠版本并同步可访问状态', target.classList.contains('col') && targetHead.querySelector('.version-toggle').getAttribute('aria-expanded') === 'false');
+  targetHead.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  check('Enter 可重新展开版本', !target.classList.contains('col') && targetHead.querySelector('.version-toggle').getAttribute('aria-expanded') === 'true');
+  colBtn.click();
+  check('交互后仍无页面脚本异常', errors.length === 0, errors.slice(0, 3).join(' | '));
+
+  // ── 8. 内容完整性：一个字都没少 ────────────────────
   const text = doc.body.textContent;
-  const must = ['v5.0.4', 'v5.0.3', 'v5.0.2', 'v5.0.1', 'v5.0.0', 'v4.30.0', 'v4.29.1', 'v4.29.0', 'v4.28.3', 'v4.28.2', 'v4.28.1', 'v4.28.0', 'v4.27.5', 'v4.27.4', 'v4.27.3', 'v4.27.2', 'v4.27.1', 'v4.27.0', 'v4.26.2', 'v4.26.1', 'v4.26.0', 'v4.25.0', 'v4.24.0', 'v4.23.0', 'v4.22.0', 'v4.21.2', 'v4.21.1', 'v4.21.0', 'v4.20.5', 'v4.20.4', 'v4.20.3', 'v4.20.2', 'v4.20.1', 'v4.20.0', 'v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', 'v3.5', '视觉精修', 'v35halo', 'v3.4', '实时事件流', '冰敷之后', 'v3.3', '世界体育报', 'v3.2', '联赛校验', 'v3.1', 'AI 致辞', 'v3.0', 'AI 点评层', '加时', '鏖战至加时', '版本总览', '附录', '音效技术备忘',
+  const must = ['v5.0.5', 'v5.0.4', 'v5.0.3', 'v5.0.2', 'v5.0.1', 'v5.0.0', 'v4.30.0', 'v4.29.1', 'v4.29.0', 'v4.28.3', 'v4.28.2', 'v4.28.1', 'v4.28.0', 'v4.27.5', 'v4.27.4', 'v4.27.3', 'v4.27.2', 'v4.27.1', 'v4.27.0', 'v4.26.2', 'v4.26.1', 'v4.26.0', 'v4.25.0', 'v4.24.0', 'v4.23.0', 'v4.22.0', 'v4.21.2', 'v4.21.1', 'v4.21.0', 'v4.20.5', 'v4.20.4', 'v4.20.3', 'v4.20.2', 'v4.20.1', 'v4.20.0', 'v4.19.2', 'v4.19.1', 'v4.19.0', 'v4.18.0', 'v4.17.0', 'v4.16.0', 'v4.15.1', 'v4.15.0', 'v4.14.0', 'v4.13.0', 'v4.12.0', 'v4.11.0', 'v4.10.0', 'v4.9.6', 'v4.9.5', 'v4.9', 'v4.8', 'v4.4', 'v3.6', 'v3.5', '视觉精修', 'v35halo', 'v3.4', '实时事件流', '冰敷之后', 'v3.3', '世界体育报', 'v3.2', '联赛校验', 'v3.1', 'AI 致辞', 'v3.0', 'AI 点评层', '加时', '鏖战至加时', '版本总览', '附录', '音效技术备忘',
     '14 队加权乐透', '首轮签在交易里送走了', '季池', 'AST 静态审查脚本', 'hoop_life_save_v1', '对抗烈度', '通往 NBA 的门槛', '阵容说话', '取样深度补偿', '选中即入队', '一台一台念', '念到你为止', '人人满级', '班底曲线的逆函数', '计划键冲突', '顶级球星不再直通冠军', '强度快照', 'NBA 2K', '弗拉格'];
   must.forEach(k => check('内容未丢失：' + k, text.indexOf(k) >= 0));
   check('表格数量未变（40 个）', doc.querySelectorAll('table').length === 40,
     String(doc.querySelectorAll('table').length));
-  check('卡片数量未变（77 个）', doc.querySelectorAll('.card').length === 77,
+  check('全部历史卡片及 v5.0.5 共 78 个', doc.querySelectorAll('.card').length === 78,
     String(doc.querySelectorAll('.card').length));
 
   // ── 8. 无控制台告警 ───────────────────────────────

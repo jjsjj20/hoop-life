@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>篮球人生 · 更新文档</title>
+<title>篮球人生 · 更新日志</title>
 <style>:root{
   --bg:#070a11;--bg2:#0b1019;--card:#141b29;--card2:#101623;--raise:#1a2233;
   --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
@@ -243,32 +243,163 @@ td:first-child{white-space:nowrap}
   code{color:#8a5a00;background:#f6f6f6;border-color:#ddd}
   a{color:#0a58ca}
 }
+
+/* ── 阅读排版：版本侧栏 / 最新内容优先 / 窄屏工具栏 ── */
+:root{--bar:24px;--dim2:#919bad}
+body{font-size:15px;line-height:1.85;background-image:radial-gradient(1000px 480px at 85% -120px,rgba(249,115,22,.08),transparent 65%)}
+.wrap{max-width:1180px;padding:42px 30px 88px}
+header{text-align:left;padding:0 0 26px;margin-bottom:30px;border-bottom:1px solid var(--line)}
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:15px}
+.wordmark{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--org)}
+.wordmark .ball{font-size:20px;animation:none}
+.header-links{display:flex;gap:20px;font-size:12px}
+.header-links a{color:var(--dim);text-decoration:none}
+.header-links a:hover{color:var(--org)}
+h1{margin:0 0 7px;font-size:32px;letter-spacing:1px;background:none;color:var(--txt);-webkit-text-fill-color:currentColor}
+.sub{font-size:14px;line-height:1.8;color:var(--dim)}
+.badges{justify-content:flex-start;margin:18px 0 0;gap:7px}
+.badge{font-size:11px;padding:3px 10px;background:transparent}
+.history-note{margin-top:13px;font-size:12px;color:var(--dim);max-width:790px}
+.history-note summary{cursor:pointer;width:fit-content;padding:3px 0;color:var(--dim)}
+.history-note p{margin:7px 0 0;font-size:12px;color:var(--dim)}
+.skip-link{position:fixed;top:-80px;left:20px;z-index:100;padding:10px 16px;background:var(--org);color:#111;border-radius:8px}
+.skip-link:focus{top:8px}
+.log-layout{display:grid;grid-template-columns:222px minmax(0,1fr);gap:36px;align-items:start}
+.reading{min-width:0}
+.toolbar{position:sticky;top:24px;z-index:15;margin:0;padding:17px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(14,19,29,.94);backdrop-filter:blur(14px);max-height:calc(100dvh - 48px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.search-label,.nav-label{display:block;color:var(--dim);font-size:11px;letter-spacing:.06em;margin-bottom:7px}
+.searchbox{position:relative}
+.searchbox input{font:inherit;font-size:13px;color:var(--txt);background:#080d15;width:100%;min-width:0;height:42px;border:1px solid var(--line2);border-radius:8px;padding:8px 31px 8px 10px}
+.searchbox input::placeholder{color:var(--dim2)}
+.search-clear{position:absolute;right:3px;top:3px;width:34px;height:36px;border:0;background:transparent;color:var(--dim);cursor:pointer;font-size:20px;border-radius:6px}
+.search-clear[hidden]{display:none}
+.tb-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:14px 0}
+.kbtn{font:inherit;font-size:11px;padding:6px 2px;min-height:34px;white-space:nowrap;border-radius:6px;letter-spacing:0}
+.tb-tools{display:flex;gap:7px;margin-bottom:16px}
+.tb-btn{width:100%;min-height:36px;border-radius:7px;font-size:12px;padding:5px 8px}
+.version-select{display:none;font:inherit;font-size:12px;min-width:0;color:var(--txt2);border:1px solid var(--line2);background:var(--bg2);border-radius:7px;padding:7px}
+.nav-label{padding-top:13px;border-top:1px solid var(--line);margin-bottom:8px}
+.tb-scroll{max-height:46dvh;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--line2) transparent;overscroll-behavior:contain}
+.toc{display:flex;flex-direction:column;gap:3px;padding:0}
+.toc a{display:block;flex:none;min-height:49px;white-space:normal;padding:7px 9px;border-radius:7px;border:1px solid transparent;background:transparent;font-size:12px;line-height:1.4}
+.toc a:hover{background:rgba(255,255,255,.035)}
+.toc a span{display:block;font-weight:650;color:var(--txt2)}
+.toc a small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;margin-top:3px;color:var(--dim)}
+.toc a[hidden]{display:none}
+.toc a.act,.toc a[class*="k-"].act{background:rgba(255,147,73,.08);border-color:rgba(255,147,73,.24);color:var(--org)}
+.toc a.act span{color:var(--org)}
+.reading-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px;color:var(--dim);font-size:12px}
+.reading-meta a{color:var(--org);text-decoration:none}
+.overview-panel{border:1px solid var(--line);border-radius:10px;margin-bottom:25px;background:rgba(255,255,255,.015)}
+.overview-panel>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;padding:13px 17px;font-size:13px;color:var(--txt2);min-height:48px}
+.overview-panel>summary::-webkit-details-marker{display:none}
+.overview-panel>summary small{color:var(--dim);font-size:11px;margin-left:auto}
+.overview-panel>summary::after{content:'＋';font-size:18px;color:var(--dim)}
+.overview-panel[open]>summary::after{content:'−'}
+.overview-panel>.card{border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;background:transparent;padding:10px 16px;margin:0}
+.overview-panel>.card::before{display:none}
+.overview-panel .ovtable td:nth-child(1){width:82px}
+.overview-panel .ovtable td:nth-child(3){width:94px;white-space:nowrap;font-size:11px;color:var(--dim)}
+.ovtable .mg{display:inline-block;height:4px;margin-right:7px;border-radius:4px;vertical-align:middle;opacity:.6;background:var(--cyan)}
+.ovtable .mg.neg{background:var(--org)}
+.overview-link{font-weight:650;text-decoration:none;color:var(--txt);display:inline-flex;align-items:center;gap:7px}
+.ver{margin-bottom:24px;scroll-margin-top:calc(var(--bar) + 16px)}
+h2.vhead{margin:0;padding:14px 18px;min-height:64px;gap:12px;background:#111824;border:1px solid var(--line);border-radius:12px 12px 0 0;line-height:1.6}
+h2.vhead.col{border-radius:12px}
+h2 .vpill{font-size:12px;padding:3px 8px;letter-spacing:0;border:0;white-space:nowrap;background:rgba(255,255,255,.05)}
+h2 .vt{font-size:15px;flex:1;min-width:0;font-weight:650;overflow-wrap:anywhere}
+h2.vhead .tgl{font-size:10px;color:var(--dim);margin-left:auto;flex:none}
+h2 .sha{order:3;margin:0;font-size:10px}
+.latest h2.vhead{border-top:2px solid var(--org);background:linear-gradient(110deg,rgba(249,115,22,.1),#111824 70%)}
+.latest-tag{font-size:10px;font-weight:600;color:var(--org);border:1px solid rgba(249,115,22,.22);border-radius:4px;padding:1px 5px;margin-left:7px;vertical-align:middle;white-space:nowrap}
+.ver>.card{border-radius:0 0 12px 12px;border-top:0;padding:22px 26px;margin:0;background:linear-gradient(180deg,#101722,#0e141e);box-shadow:none}
+.ver>.card::before{display:none}
+.ver .card+.card{border-top:1px solid var(--line);border-radius:0}
+h3{font-size:13px;margin:26px 0 10px;color:var(--txt);letter-spacing:.02em}
+h3::before{background:var(--org);height:12px}
+p,li{color:#bac4d4;overflow-wrap:anywhere}
+p{margin:10px 0}li{margin:10px 0}li li{margin:6px 0}
+li::marker{color:#677389;font-size:.8em}
+ul,ol{padding-left:21px}
+.mini{font-size:12px;line-height:1.9;color:var(--dim);margin-top:18px;padding-top:13px;border-top:1px solid var(--line)}
+.card>p.dim:first-child{font-size:11px;margin:0 0 18px;color:var(--dim)}
+code{font-size:.84em;word-break:break-word}
+.tw{max-width:100%;scrollbar-width:thin}
+th{color:#9da8bc}th,td{padding:10px 12px}
+.empty-results{text-align:center;border:1px dashed var(--line2);border-radius:12px;padding:42px 20px;color:var(--dim)}
+.empty-results strong{display:block;color:var(--txt);font-size:17px;margin-bottom:8px}
+.empty-results button{margin-top:14px;min-height:42px;color:var(--org);background:transparent;border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:8px 17px;cursor:pointer}
+[hidden]{display:none!important}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--org);outline-offset:4px}
+#appendix{margin-top:32px}
+.foot{text-align:left;font-size:11px;line-height:1.9;margin-top:36px}
+@media(max-width:899px){
+  :root{--bar:190px}
+  .wrap{max-width:800px;padding:24px 18px 64px}
+  header{margin-bottom:22px;padding-bottom:22px}h1{font-size:27px}
+  .log-layout{display:block}.toolbar{top:0;margin:0 -4px 22px;padding:12px;max-height:none;overflow:visible;border-radius:0 0 12px 12px}
+  .search-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .tb-kinds{display:flex;gap:5px;margin:9px 0;overflow:auto;scrollbar-width:none}.kbtn{flex:1;min-width:48px;min-height:35px;padding:5px 8px}
+  .tb-tools{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  .version-select{display:block;width:100%;height:38px}.tb-btn{width:auto;min-height:38px;white-space:nowrap}
+  .nav-label,.tb-scroll{display:none}.reading-meta{font-size:11px;margin-bottom:12px}
+  .ver>.card{padding:19px 20px}.ver{margin-bottom:20px}
+  .overview-panel{margin-bottom:20px}.overview-panel>.card{padding:6px 13px}
+  .ovtable tr:has(th){display:none}.ovtable td[data-label="主题"]{display:block}.ovtable td[data-label="主题"]::before{display:none}
+  .ovtable td[data-label="版本"]::before{display:none}.ovtable td[data-label="字符增量"]::before{font-size:10px}
+  .ovtable tr{padding:12px 0}.ovtable td{font-size:12px;line-height:1.8}
+}
+@media(max-width:480px){
+  .wrap{padding:20px 12px 56px}.masthead{gap:8px}.wordmark{font-size:9px;letter-spacing:.12em}.header-links{gap:13px;font-size:11px}
+  h1{font-size:25px;letter-spacing:0}.sub{font-size:12px}.badge{font-size:10px;padding:3px 8px}.badges{gap:5px;margin-top:14px}
+  .history-note{font-size:11px;margin-top:10px}.history-note p{font-size:11px}.toolbar{margin-inline:-2px;padding:10px}
+  .kbtn{font-size:10px;padding:5px 4px;min-width:42px}.version-select,.tb-btn{font-size:11px}
+  h2.vhead{padding:13px 14px;gap:8px;align-items:flex-start}h2 .vpill{font-size:11px;padding:2px 6px}
+  h2 .vt{font-size:14px;line-height:1.7}h2 .sha{display:none}h2.vhead .tgl{padding-top:4px}
+  .ver>.card{padding:16px 16px 19px}.ver .card{font-size:14px;line-height:1.9}h3{margin-top:24px;font-size:13px}
+  .latest-tag{display:none}.overview-panel>summary{padding:11px 14px}.overview-panel>summary small{font-size:10px}
+  #toTop{width:42px;height:42px;right:13px;bottom:14px}
+}
+@media print{
+  .log-layout{display:block}.toolbar,.history-note,.reading-meta,.skip-link,.header-links,.latest-tag{display:none!important}
+  .wrap{max-width:none;padding:0}header{margin-bottom:20px}.ver>.card,h2.vhead,.latest h2.vhead{background:white;border-color:#ccc;color:#111}
+  .ver.col>.card{display:block}.ver.hide,.ovtable tr.hide{display:revert}h2 .vt,h3,li,p{color:#222}.ver{break-inside:avoid}
+  .overview-panel{display:none}h2.vhead .tgl{display:none}.mini,.dim,.foot{color:#555}
+}
+h2.vhead{padding:0;display:block}
+.version-toggle{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;padding:14px 18px;border:0;border-radius:inherit;background:transparent;color:inherit;font:inherit;line-height:1.6;text-align:left;cursor:pointer}
+.version-toggle:hover{background:rgba(255,255,255,.02)}
+#updates{scroll-margin-top:calc(var(--bar) + 14px)}
+.searchbox input::-webkit-search-cancel-button{-webkit-appearance:none}
+@media(max-width:480px){.version-toggle{align-items:flex-start;gap:8px;padding:13px 14px}}
+@media print{.version-toggle{padding:14px 0;cursor:default}}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#updates">跳到更新内容</a>
 <div class="wrap">
 <header>
-<span class="ball">🏀</span>
-<h1>篮球人生 · 更新文档</h1>
-<div class="sub">线上游戏：<a href="https://jjsjj20.github.io/hoop-life/%E7%AF%AE%E7%90%83%E4%BA%BA%E7%94%9F.html">jjsjj20.github.io/hoop-life</a> · <a href="https://github.com/jjsjj20/hoop-life">GitHub 仓库</a><br>按版本倒序汇总全部更新 · 点击工具条可按版本跳转 / 按类型筛选</div>
-<div class="badges"><span class="badge">当前版本 <b>v5.0.4</b></span><span class="badge">资源外置 · 105 张 WebP</span><span class="badge">离线可玩 · 零外部依赖</span><span class="badge">老存档一直兼容</span></div><div class="mini" style="margin:8px 0 0;opacity:.75">写在前面：最早几篇（v3.0~v3.5）是后来补写的。带 AI 的功能已在 v4.21.0 做减法时整体拿掉，游戏本体不受影响——名人堂判定、加时判定这些「本体逻辑」都还在。AI 那一层的来龙去脉见 v3.1 条目里的谱系表。</div>
-<nav class="toc"><a href="#v5004">v5.0.4</a><a href="#v5003">v5.0.3</a><a href="#v5002">v5.0.2</a><a href="#v5010">v5.0.1</a><a href="#v5000">v5.0.0</a><a href="#v4300">v4.30.0</a><a href="#v4291">v4.29.1</a><a href="#v4290">v4.29.0</a><a href="#v4283">v4.28.3</a><a href="#v4282">v4.28.2</a><a href="#v4281">v4.28.1</a><a href="#v4280">v4.28.0</a><a href="#v4275">v4.27.5</a><a href="#v4274">v4.27.4</a><a href="#v4273">v4.27.3</a><a href="#v4272">v4.27.2</a><a href="#v4271">v4.27.1</a><a href="#v4270">v4.27.0</a><a href="#v4262">v4.26.2</a><a href="#v4261">v4.26.1</a><a href="#v4260">v4.26.0</a><a href="#v4250">v4.25.0</a><a href="#v4240">v4.24.0</a><a href="#v4230">v4.23.0</a><a href="#v4220">v4.22.0</a><a href="#v4212">v4.21.2</a><a href="#v4211">v4.21.1</a><a href="#v4210">v4.21.0</a><a href="#v4205">v4.20.5</a><a href="#v4204">v4.20.4</a><a href="#v4203">v4.20.3</a><a href="#v4202">v4.20.2</a><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#v35">v3.5</a><a href="#v34">v3.4</a><a href="#v33">v3.3</a><a href="#v32">v3.2</a><a href="#v31">v3.1</a><a href="#v30">v3.0</a><a href="#appendix">附录</a></nav>
+<div class="masthead"><div class="wordmark"><span class="ball" aria-hidden="true">🏀</span> HOOP LIFE / CHANGELOG</div><div class="header-links"><a href="篮球人生.html">进入游戏 ↗</a><a href="https://github.com/jjsjj20/hoop-life">GitHub ↗</a></div></div>
+<h1>篮球人生 · 更新日志</h1>
+<div class="sub">新功能、体验改进与问题修复，按版本完整记录。</div>
+<div class="badges"><span class="badge">当前版本 <b>v5.0.5</b></span><span class="badge">资源外置 · 105 张 WebP</span><span class="badge">离线可玩 · 零外部依赖</span><span class="badge">老存档一直兼容</span></div><details class="history-note"><summary>关于早期版本与 AI 功能</summary><p>写在前面：最早几篇（v3.0~v3.5）是后来补写的。带 AI 的功能已在 v4.21.0 做减法时整体拿掉，游戏本体不受影响——名人堂判定、加时判定这些「本体逻辑」都还在。AI 那一层的来龙去脉见 v3.1 条目里的谱系表。</p></details>
+<nav class="toc"><a href="#v5005">v5.0.5</a><a href="#v5004">v5.0.4</a><a href="#v5003">v5.0.3</a><a href="#v5002">v5.0.2</a><a href="#v5010">v5.0.1</a><a href="#v5000">v5.0.0</a><a href="#v4300">v4.30.0</a><a href="#v4291">v4.29.1</a><a href="#v4290">v4.29.0</a><a href="#v4283">v4.28.3</a><a href="#v4282">v4.28.2</a><a href="#v4281">v4.28.1</a><a href="#v4280">v4.28.0</a><a href="#v4275">v4.27.5</a><a href="#v4274">v4.27.4</a><a href="#v4273">v4.27.3</a><a href="#v4272">v4.27.2</a><a href="#v4271">v4.27.1</a><a href="#v4270">v4.27.0</a><a href="#v4262">v4.26.2</a><a href="#v4261">v4.26.1</a><a href="#v4260">v4.26.0</a><a href="#v4250">v4.25.0</a><a href="#v4240">v4.24.0</a><a href="#v4230">v4.23.0</a><a href="#v4220">v4.22.0</a><a href="#v4212">v4.21.2</a><a href="#v4211">v4.21.1</a><a href="#v4210">v4.21.0</a><a href="#v4205">v4.20.5</a><a href="#v4204">v4.20.4</a><a href="#v4203">v4.20.3</a><a href="#v4202">v4.20.2</a><a href="#v4201">v4.20.1</a><a href="#v4200">v4.20.0</a><a href="#v4192">v4.19.2</a><a href="#v4191">v4.19.1</a><a href="#v4190">v4.19.0</a><a href="#v4180">v4.18.0</a><a href="#v4170">v4.17.0</a><a href="#v4160">v4.16.0</a><a href="#v4151">v4.15.1</a><a href="#v4150">v4.15.0</a><a href="#v4140">v4.14.0</a><a href="#v4130">v4.13.0</a><a href="#v4120">v4.12.0</a><a href="#v4110">v4.11.0</a><a href="#v4100">v4.10.0</a><a href="#v496">v4.9.6</a><a href="#v495">v4.9.5</a><a href="#v494">v4.9.4</a><a href="#v493">v4.9.3</a><a href="#v492">v4.9.2</a><a href="#v491">v4.9.1</a><a href="#v49">v4.9</a><a href="#v48">v4.8</a><a href="#v47">v4.7</a><a href="#v46">v4.6</a><a href="#v45">v4.5</a><a href="#v44">v4.4</a><a href="#v43">v4.3</a><a href="#v42">v4.2</a><a href="#v41">v4.1</a><a href="#v40">v4.0</a><a href="#v391">v3.9.1</a><a href="#v39">v3.9</a><a href="#v38">v3.8</a><a href="#v371">v3.7.1</a><a href="#v37">v3.7</a><a href="#v36">v3.6</a><a href="#v35">v3.5</a><a href="#v34">v3.4</a><a href="#v33">v3.3</a><a href="#v32">v3.2</a><a href="#v31">v3.1</a><a href="#v30">v3.0</a><a href="#appendix">附录</a></nav>
 </header><!-- CHANGELOG-UI-START -->
 <div class="pbar" aria-hidden="true"><i id="pbar"></i></div>
-<div class="toolbar" id="toolbar">
-  <div class="tb-row"><span class="tb-label">跳到版本</span><div class="tb-scroll" id="tbJump"></div></div>
-  <div class="tb-row">
-    <span class="tb-label">只看</span>
-    <div class="tb-kinds" id="tbKinds"></div>
-    <button class="tb-btn" id="tbCollapse" type="button">只看最近 5 版</button>
-  </div>
-</div>
+<aside class="toolbar" id="toolbar" aria-label="查找更新">
+  <label class="search-label" for="logSearch">查找更新</label>
+  <div class="searchbox"><input id="logSearch" type="search" placeholder="搜索版本或关键词" autocomplete="off" aria-controls="updates"><button id="clearSearch" class="search-clear" type="button" aria-label="清除搜索" hidden>×</button></div>
+  <div class="tb-kinds" id="tbKinds" role="group" aria-label="更新类型"></div>
+  <div class="tb-tools"><select id="versionSelect" class="version-select" aria-label="跳转到版本"><option value="">跳到指定版本</option></select><button class="tb-btn" id="tbCollapse" type="button" aria-pressed="false">只展开最近 5 版</button></div>
+  <span class="nav-label">版本目录</span><div class="tb-scroll" id="tbJump"></div>
+</aside>
 <!-- CHANGELOG-UI-END -->
 
 <hr>
 <h2>📋 版本总览</h2>
 <div class="card"><div class="tw"><table>
 <tr><th>版本</th><th>主题</th><th>字符增量</th></tr>
+<tr><td><b>v5.0.5</b></td><td>界面优化与交互修复：首页与存档入口重排 · 事件选择和结果反馈更清晰 · 手机布局修正 · 桌面功能页一键返回事件并保留选项交互</td><td>+12,308</td></tr>
 <tr><td><b>v5.0.4</b></td><td>界面微调：桌面通栏收窄——只有「属性」页保持大界面通栏，其余功能页与事件页统一限回 760px 居中</td><td>+93</td></tr>
 <tr><td><b>v5.0.3</b></td><td>界面优化：桌面宽度适配——#app 放宽到 1080px（功能页/数据页通栏）· 事件页 :has 限阅读宽 760px 居中</td><td>+194</td></tr>
 <tr><td><b>v5.0.2</b></td><td>界面优化：功能竖栏当前页高亮指示（点了哪个功能哪个按钮亮起，返回跟随恢复）· 功能页适配事件区排版</td><td>+1,113</td></tr>
@@ -345,6 +476,31 @@ td:first-child{white-space:nowrap}
 <tr><td><b>v3.1</b></td><td>AI 致辞扩展：里程碑纪念词 + 退役/名人堂/执教谢幕（<b>已于 v4.21.0 移除</b>）</td><td>+3,740</td></tr>
 <tr><td><b>v3.0</b></td><td>AI 点评层：焦点战战报 + 颁奖夜点评（<b>已移除</b>）；v3.0.1 含<b>加时判定修复（仍生效）</b></td><td>—</td></tr>
 </table></div></div>
+<h2 id="v5005">✨ v5.0.5 · 界面优化与交互修复：生涯入口、事件阅读与功能页返回</h2>
+<div class="card">
+<p class="dim">更新日期：2026-11-22。</p>
+<h3>界面与阅读</h3>
+<ul>
+<li><b>首页重排</b>：球场封面与生涯旅程说明分区展示，桌面双栏、手机单栏；有存档时突出「继续生涯」，导入、导出、清除收进「存档管理」，保留自动备份恢复入口。</li>
+<li><b>事件选择更清楚</b>：增加「做出你的选择」标题与选项数量，调整正文行距、选项间距和点击区域；手机端把倾向标签放到选项正文下方，长句不再被右侧标签挤窄。</li>
+<li><b>结果反馈更集中</b>：回显本次选择，紧接结果叙述与数值变化；完整球员状态默认折叠，按需展开。修正结果正文嵌套段落导致的排版问题。</li>
+<li><b>桌面导航更明确</b>：功能侧栏按球队赛事、球员成长、生涯管理分组，补齐当前页高亮；调整内容区可用宽度，切换音效后仍保留当前功能指示。</li>
+<li><b>手机布局修正</b>：隐藏重复的桌面顶栏与时间栏，压缩首页封面占高；修复底栏「继续」被通用样式覆盖的问题，恢复橙色主操作与至少 44px 的点击高度。</li>
+</ul>
+<h3>功能页直接返回事件</h3>
+<ul>
+<li><b>桌面端新增直返入口</b>：点击侧栏「▶ 当前事件」或功能页顶部「← 返回事件」，即可回到原事件或结果页；再次点击当前已选中的功能也会直接收起。</li>
+<li><b>同级切换不再叠页</b>：连续查看属性、倾向、阵容等功能后，一次即可返回事件；嵌套功能仍可「返回上一级」，Escape 可关闭当前功能页，手机保持弹层交互。</li>
+<li><b>修复返回后选项失效</b>：保留原事件按钮与点击交互，返回后可正常作出选择；结果页展开状态、已结算结果与生涯进度一并保留，避免重复结算。</li>
+</ul>
+<h3>键盘与验证</h3>
+<ul>
+<li>模式卡支持 Enter / 空格激活；折叠面板、链接和工具按钮的原生键盘操作不再被剧情快捷键抢走，关闭按钮补齐可访问名称。</li>
+<li>完整构建成功，生成成品与仓库根成品一致；完整验证 <b>28/28 项、771/771 条断言通过</b>，AST 严重问题 <b>0</b>，其中新增功能返回专项检查 <b>21 条</b>。</li>
+<li>浏览器实测覆盖功能切换、直接返回、返回后继续选择，以及结果状态保留；检查 320–1200px 多档宽度，无横向溢出。</li>
+</ul>
+<div class="mini">游戏文件较 v5.0.4 增加 <b>12,308 字符</b>；不改变数值平衡、存档格式与事件推进规则，继续兼容旧存档。</div>
+</div>
 <h2 id="v5004">🖥️ v5.0.4 · 界面微调：只有属性页保持大界面</h2>
 <div class="card">
 <p>上一版把桌面放宽到 1080px 后，所有功能页都跟着通栏了——想了想范围有点大，收一收：<b>只有「属性」页保持大界面通栏</b>（一屏看全 15 项属性条），<b>其余功能页与事件页统一限回 760px 居中</b>，阅读宽度回到舒适的节奏。手机端不变。</p>
@@ -1780,6 +1936,10 @@ td:first-child{white-space:nowrap}
     h.appendChild(p);h.appendChild(t);
     if(shaTxt){var s=document.createElement('span');s.className='sha';s.textContent=shaTxt;h.appendChild(s);}
     h.appendChild(g);
+    var toggle=document.createElement('button');toggle.type='button';toggle.className='version-toggle';
+    toggle.setAttribute('aria-expanded','true');
+    while(h.firstChild)toggle.appendChild(h.firstChild);
+    h.appendChild(toggle);
     /* 卡片：类型色 + 折叠联动 */
     var sec=document.createElement('section');
     sec.className='ver';sec.id='sec-'+h.id;sec.setAttribute('data-kind',kind);
@@ -1789,12 +1949,36 @@ td:first-child{white-space:nowrap}
       var mv=nxt.nextSibling;sec.appendChild(nxt);nxt=mv;
     }
     [].forEach.call(sec.querySelectorAll('.card'),function(c){c.setAttribute('data-kind',kind);});
-    vers.push({id:h.id,no:no,kind:kind,theme:theme,sec:sec,h:h});
-    h.addEventListener('click',function(){
-      var col=sec.classList.toggle('col');h.classList.toggle('col',col);
+    var v={id:h.id,no:no,kind:kind,theme:theme,sec:sec,h:h,search:(no+' '+theme+' '+sec.textContent).toLowerCase()};
+    vers.push(v);
+    h.addEventListener('click',function(){setCollapsed(v,!sec.classList.contains('col'));});
+    h.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();h.click();}
     });
   });
   if(!vers.length)return;
+  function setCollapsed(v,col){
+    v.sec.classList.toggle('col',col);v.h.classList.toggle('col',col);
+    v.h.querySelector('.version-toggle').setAttribute('aria-expanded',String(!col));
+  }
+  vers[0].sec.classList.add('latest');
+  var latestTag=document.createElement('span');latestTag.className='latest-tag';latestTag.textContent='最新';
+  vers[0].h.querySelector('.vpill').appendChild(latestTag);
+
+  /* 将导航与正文分列；源文件中的版本锚点和正文保持原样。 */
+  var bar=document.getElementById('toolbar');
+  var layout=document.createElement('div');layout.className='log-layout';
+  var reading=document.createElement('main');reading.className='reading';reading.id='updates';reading.tabIndex=-1;
+  wrap.insertBefore(layout,bar);layout.appendChild(bar);
+  while(layout.nextSibling)reading.appendChild(layout.nextSibling);
+  layout.appendChild(reading);
+  if(reading.firstElementChild&&reading.firstElementChild.tagName==='HR')reading.firstElementChild.remove();
+  var meta=document.createElement('div');meta.className='reading-meta';
+  meta.innerHTML='<span id="resultCount" role="status" aria-live="polite"></span><a href="#'+vers[0].id+'">阅读最新更新 ↓</a>';
+  reading.prepend(meta);
+  var empty=document.createElement('div');empty.className='empty-results';empty.id='emptyResults';empty.hidden=true;
+  empty.innerHTML='<strong>没有找到相关更新</strong><span>试试版本号，或“选秀”“存档”等关键词。</span><br><button type="button" id="resetFilters">查看全部更新</button>';
+  vers[0].sec.before(empty);
 
   /* ── 2. 总览表：加类型圆点、字符增量量级条、移动端 data-label ── */
   /* 源标记里的总览表没有 class（不去动它），运行时按「版本总览标题后面那张表」认出来 */
@@ -1820,7 +2004,7 @@ td:first-child{white-space:nowrap}
       var v=vers.filter(function(x){return tds[0]&&tds[0].textContent.trim()===x.no;})[0];
       if(v&&!tds[0].querySelector('.dot')){
         var d=document.createElement('span');d.className='dot k-'+v.kind;
-        tds[0].innerHTML='';var sp=document.createElement('span');sp.className='vno';
+        tds[0].innerHTML='';var sp=document.createElement('a');sp.className='vno overview-link';sp.href='#'+v.id;
         sp.appendChild(d);sp.appendChild(document.createTextNode(v.no));tds[0].appendChild(sp);
       }
       var dt=tds[2]&&tds[2].textContent.trim();
@@ -1838,8 +2022,17 @@ td:first-child{white-space:nowrap}
     });
   }
 
-  /* ── 3. 工具条：把目录芯片搬进来 + 类型筛选 + 折叠 + 进度 + 回顶 ── */
-  var bar=document.getElementById('toolbar');
+  var overviewPanel=null;
+  if(ov&&ovHead){
+    overviewPanel=document.createElement('details');overviewPanel.className='overview-panel';
+    var summary=document.createElement('summary');
+    summary.innerHTML='版本总览 <small>'+vers.length+' 条版本记录 · 点击展开</small>';
+    ovHead.before(overviewPanel);overviewPanel.appendChild(summary);
+    overviewPanel.appendChild(ov.closest('.card'));ovHead.remove();
+  }
+
+  /* ── 3. 侧栏 / 窄屏工具条：搜索、类型筛选与版本跳转 ── */
+  var versionSelect=document.getElementById('versionSelect');
   var jump=document.getElementById('tbJump');
   var toc=document.querySelector('.toc');
   if(toc&&jump){jump.appendChild(toc);}
@@ -1847,11 +2040,43 @@ td:first-child{white-space:nowrap}
   chips.forEach(function(a){
     var id=a.getAttribute('href').replace('#','');
     var v=vers.filter(function(x){return x.id===id;})[0];
-    if(v)a.classList.add('k-'+v.kind);
+    if(v){
+      a.classList.add('k-'+v.kind);a.textContent='';
+      var no=document.createElement('span');no.textContent=v.no;
+      var theme=document.createElement('small');theme.textContent=v.theme;
+      a.appendChild(no);a.appendChild(theme);a.title=v.no+' · '+v.theme;
+    }
+    var option=document.createElement('option');option.value=id;option.textContent=v?v.no+' · '+v.theme:'附录 · 音效技术备忘';
+    versionSelect.appendChild(option);
   });
+  versionSelect.addEventListener('change',function(){if(this.value)goToVersion(this.value);});
+  reading.addEventListener('click',jumpFromLink);
+  toc.addEventListener('click',jumpFromLink);
+  function jumpFromLink(e){
+    var a=e.target.closest('a[href^="#"]');
+    if(!a||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||e.button!==0)return;
+    var id=a.getAttribute('href').slice(1);
+    if(vers.some(function(v){return v.id===id;})||id==='appendix'){
+      e.preventDefault();goToVersion(id);
+    }
+  }
+  function goToVersion(id){
+    var target=document.getElementById(id);if(!target)return;
+    var v=vers.filter(function(x){return x.id===id;})[0];
+    if(v&&v.sec.classList.contains('hide'))resetFilters();
+    if(v)setCollapsed(v,false);
+    if(overviewPanel)overviewPanel.open=false;
+    if(location.hash!=='#'+id)history.pushState(null,'','#'+id);
+    if(target.scrollIntoView)target.scrollIntoView({block:'start'});
+    var focusTarget=v?target.querySelector('.version-toggle'):target;
+    if(!v)focusTarget.tabIndex=-1;
+    focusTarget.focus({preventScroll:true});
+    versionSelect.value=id;onScroll();
+  }
 
   var kindsBox=document.getElementById('tbKinds');
-  var kindFilter='all';
+  var kindFilter='all',query='';
+  var search=document.getElementById('logSearch'),clearSearch=document.getElementById('clearSearch');
   if(kindsBox){
     var defs=[['all','全部'],['art','美术'],['play','玩法'],['eng','工程'],['fix','修复'],['other','其他']];
     defs.forEach(function(d){
@@ -1873,20 +2098,38 @@ td:first-child{white-space:nowrap}
     });
   }
   function applyFilter(){
+    var count=0;
     vers.forEach(function(v){
-      var show=(kindFilter==='all'||v.kind===kindFilter);
+      var show=(kindFilter==='all'||v.kind===kindFilter)&&(!query||v.search.indexOf(query)>=0);
       v.sec.classList.toggle('hide',!show);
+      if(show){count++;if(query)setCollapsed(v,false);}
+    });
+    chips.forEach(function(a){
+      var v=vers.filter(function(x){return a.getAttribute('href')==='#'+x.id;})[0];
+      a.hidden=!!(v&&v.sec.classList.contains('hide'));
     });
     if(ov){
       [].forEach.call(ov.querySelectorAll('tr'),function(tr){
         var td=tr.querySelector('td');if(!td)return;
         var no=(td.textContent||'').trim();
         var v=vers.filter(function(x){return x.no===no;})[0];
-        tr.classList.toggle('hide',!!(v&&kindFilter!=='all'&&v.kind!==kindFilter));
+        tr.classList.toggle('hide',!!(v&&v.sec.classList.contains('hide')));
       });
     }
+    document.getElementById('resultCount').textContent=(query||kindFilter!=='all')?'找到 '+count+' / '+vers.length+' 条版本记录':'共 '+vers.length+' 条版本记录 · 按时间倒序';
+    empty.hidden=count>0;clearSearch.hidden=!search.value;
+    onScroll();
     window.__applyFilter=applyFilter;
   }
+  function resetFilters(){
+    query='';kindFilter='all';search.value='';
+    [].forEach.call(kindsBox.children,function(b,i){b.setAttribute('aria-pressed',String(i===0));});
+    applyFilter();
+  }
+  search.addEventListener('input',function(){query=this.value.trim().toLowerCase();applyFilter();});
+  search.addEventListener('keydown',function(e){if(e.key==='Escape'){this.value='';query='';applyFilter();}});
+  clearSearch.addEventListener('click',function(){search.value='';query='';applyFilter();search.focus();});
+  document.getElementById('resetFilters').addEventListener('click',resetFilters);
 
   /* 折叠：默认全展开（老读者能一路翻），一键收起最近的以外 */
   var colBtn=document.getElementById('tbCollapse');
@@ -1895,11 +2138,8 @@ td:first-child{white-space:nowrap}
     colBtn.addEventListener('click',function(){
       collapsed=!collapsed;
       colBtn.setAttribute('aria-pressed',collapsed?'true':'false');
-      colBtn.textContent=collapsed?'展开全部':'只看最近 5 版';
-      vers.forEach(function(v,i){
-        var col=collapsed&&i>=5;
-        v.sec.classList.toggle('col',col);v.h.classList.toggle('col',col);
-      });
+      colBtn.textContent=collapsed?'展开全部':'只展开最近 5 版';
+      vers.forEach(function(v,i){setCollapsed(v,collapsed&&i>=5);});
     });
   }
 
@@ -1910,22 +2150,35 @@ td:first-child{white-space:nowrap}
     if(pb)pb.style.width=(max>0?(window.scrollY/max*100):0)+'%';
     if(topBtn)topBtn.classList.toggle('show',window.scrollY>600);
     /* 目录高亮：找最后一个已经划过顶部的版本 */
-    var y=window.scrollY+parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bar'))+30;
-    var cur=null;
-    vers.forEach(function(v){if(v.h.offsetTop<=y)cur=v;});
+    var narrow=window.matchMedia?window.matchMedia('(max-width:899px)').matches:window.innerWidth<=899;
+    var offset=narrow?bar.offsetHeight+18:24;
+    document.documentElement.style.setProperty('--bar',offset+'px');
+    var y=window.scrollY+offset+30;
+    var cur=vers.filter(function(v){return !v.sec.classList.contains('hide');})[0]||null;
+    vers.forEach(function(v){
+      if(!v.sec.classList.contains('hide')&&v.h.getBoundingClientRect().top+window.scrollY<=y)cur=v;
+    });
+    var appendix=document.getElementById('appendix');
+    if(appendix&&appendix.getBoundingClientRect().top+window.scrollY<=y)cur={id:'appendix'};
     chips.forEach(function(a){
-      var on=!!(cur&&a.getAttribute('href')==='#'+cur.id);
+      var on=!!(cur&&a.getAttribute('href')==='#'+cur.id),was=a.classList.contains('act');
       a.classList.toggle('act',on);
-      if(on&&jump&&jump.scrollWidth>jump.clientWidth){
-        var want=a.offsetLeft-jump.clientWidth/2+a.offsetWidth/2;
-        jump.scrollLeft=Math.max(0,want);
+      if(on)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');
+      if(on&&!was&&jump&&jump.clientHeight){
+        var ar=a.getBoundingClientRect(),jr=jump.getBoundingClientRect();
+        if(ar.top<jr.top||ar.bottom>jr.bottom)jump.scrollTop+=ar.top-jr.top-jump.clientHeight/2+a.offsetHeight/2;
       }
     });
   }
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',onScroll);
-  if(topBtn)topBtn.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
-  onScroll();
+  window.addEventListener('hashchange',function(){goToVersion(location.hash.slice(1));});
+  if(topBtn)topBtn.addEventListener('click',function(){
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+  });
+  applyFilter();
+  if(location.hash)requestAnimationFrame(function(){goToVersion(location.hash.slice(1));});
 })();
 </script><!-- CHANGELOG-JS-END -->
 </body>

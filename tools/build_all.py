@@ -66,6 +66,7 @@ STEPS = [
     ("patch_funcadapt.py",      "㊾ 功能页适配新界面（高亮指示+分发）", True),
     ("patch_desktop_size.py",   "㊿ 桌面宽度适配（#app 1080 + 事件页限阅读宽）", True),
     ("patch_attrs_wide.py",     "㊺ 桌面通栏收窄（仅属性页适配大界面）", True),
+    ("patch_ui_event.py",       "51. 界面层级与响应式精修", True),
     ("patch_sw_cache.py",       "㉛ SW 缓存名=最终产物哈希",    True),
     ("optimize_images.py",      "㉜ 图片按显示尺寸重采样",      False),   # 需要 Pillow，单独处理
 ]

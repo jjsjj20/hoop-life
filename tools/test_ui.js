@@ -80,6 +80,32 @@ module.exports = run('移动端布局', ({ win, doc, check, html }) => {
     !doc.getElementById('resScene').classList.contains('show') &&
     doc.getElementById('resFoldBtn').textContent.indexOf('展开剧情') >= 0);
 
+  // ── 原生折叠和工具控件不能被全局剧情快捷键抢走 ──
+  const summary = doc.querySelector('.result-status summary');
+  const beforeKeys = win.eval('JSON.stringify(UI)');
+  for (const key of ['Enter', ' ']) {
+    const event = new win.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+    summary.dispatchEvent(event);
+    check('状态折叠的 ' + (key === ' ' ? '空格' : key) + ' 保留原生行为且不推进剧情',
+      !event.defaultPrevented && win.eval('JSON.stringify(UI)') === beforeKeys);
+  }
+  summary.click();
+  check('完整状态可以按需展开', doc.querySelector('.result-status').open);
+  const foldKey = new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+  doc.getElementById('resFoldBtn').dispatchEvent(foldKey);
+  check('聚焦剧情折叠按钮时 Enter 不误触继续',
+    !foldKey.defaultPrevented && win.eval('JSON.stringify(UI)') === beforeKeys);
+  const handledKey = new win.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+  handledKey.preventDefault();
+  doc.dispatchEvent(handledKey);
+  check('已处理的按键不会再次推进剧情', win.eval('JSON.stringify(UI)') === beforeKeys);
+
+  // 侧栏重绘（例如切换音效）仍须指示正在阅读的功能页。
+  win.eval("FUNC_CUR='attrs';markFunc(FUNC_CUR);renderFuncbar();");
+  const activeFunc = doc.querySelector('.funcbar button.on');
+  check('侧栏重绘保留选中页与无障碍状态',
+    activeFunc && activeFunc.dataset.f === 'attrs' && activeFunc.getAttribute('aria-current') === 'page');
+
   // ── ④ 事件内容不因切换丢失 ──
   check('切换 HUD 后事件仍在（renderGame 保留 UI.ev）', !!win.eval('UI.ev'));
 });
