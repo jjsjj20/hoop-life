@@ -94,9 +94,13 @@ module.exports = run('选秀与抽签页面', ({ win, doc, check }) => {
   /* ── ⑤ 新秀标记：进入下一年后 rk 保留 ── */
   win.eval('nextYear();');
   check('休赛期结束进入下一年', win.eval('S.age') === ageBefore + 1, String(win.eval('S.age')));
-  const rkKept = win.eval(`(function(){
-    return S.world.nba.some(w=>w.n===${JSON.stringify(topPick.n)}&&w.t===${JSON.stringify(topPick.team)}&&w.rk===1&&!w.pend);})()`);
-  check('刚选中的新秀首季保留参评标记（rk=1，pend 已清）', rkKept === true);
+  const rookieAfter = JSON.parse(win.eval(`(function(){
+    const ps=S.world.nba.filter(w=>w.n===${JSON.stringify(topPick.n)}&&w.p===${JSON.stringify(topPick.p)});
+    return JSON.stringify(ps.map(w=>({n:w.n,t:w.t,a:w.a,rk:w.rk,pend:w.pend})));
+  })()`));
+  const rkKept = rookieAfter.some(w=>w.rk===1&&!w.pend&&w.a===topPick.a+1);
+  check('刚选中的新秀首季保留参评标记（rk=1，pend 已清）', rkKept === true,
+    JSON.stringify({expectedName:topPick.n,originalTeam:topPick.team,after:rookieAfter}));
 
   /* ── 玩家参选路径：resolveDraftInto 把玩家插进顺位、其余照常落位 ── */
   const meCheck = win.eval(`(function(){
